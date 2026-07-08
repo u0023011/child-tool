@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -12,14 +10,6 @@
   <meta name="theme-color" content="#8b6f47">
 
   <link rel="apple-touch-icon" href="/icon-512.png">
-
-<script>
-if (sessionStorage.getItem("toolLogin") !== "ok") {
-    window.location.href = "../";
-}
-</script>
-
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="幼兒檢核">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -320,9 +310,16 @@ if (sessionStorage.getItem("toolLogin") !== "ok") {
       }
     }
   </style>
-<script>if(sessionStorage.getItem('portalAuth')==='ok'){window.__PORTAL_AUTH__=true;}</script></head>
 
-<body data-portal-auth='1'>
+<script>
+if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") {
+    window.location.href = "../";
+}
+</script>
+
+</head>
+
+<body>
   <div class="container">
     <h1>幼兒年齡與檢核表階段計算工具</h1>
 
