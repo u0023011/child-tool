@@ -23,66 +23,7 @@ h1{text-align:center;color:#5a432b;margin:8px 0}.subtitle{text-align:center;colo
 .result{display:none;margin-top:18px;padding:18px;background:#fff8ec;border-left:6px solid #c9a46a;border-radius:14px}.result h2{color:#5a432b;margin-top:0}.rcard{background:#fffdf8;border:1px solid #eadcc6;border-radius:12px;padding:16px;margin-top:14px}.tag{display:inline-block;font-size:13px;border-radius:99px;padding:3px 9px;background:#eee1c9;color:#5a432b;margin:0 6px 8px 0}.line{line-height:1.8;margin:6px 0}.line strong{color:#5a432b}.lawbox{margin-top:12px;padding:14px;border-radius:12px;border:1px solid #eadcc6;background:#fff}.lawbox.futurelaw{background:#fff0e8;border-color:#efb58c}.lawbox-title{font-weight:bold;color:#5a432b;font-size:18px;margin-bottom:8px}.lawbox-subtitle{font-weight:bold;color:#7a4d20;margin-top:8px}.note-warn{color:#b85c38;font-weight:bold}.flags{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.flag{background:#fff5e7;border-radius:8px;padding:8px;font-size:14px;line-height:1.5}.future{background:#fff0e8;border:1px solid #efb58c;border-radius:10px;padding:10px;margin-top:10px;line-height:1.7}.empty{color:#b85c38;font-weight:bold;line-height:1.8}
 @media(max-width:760px){.grid,.buttons{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.step{border-right:0;border-bottom:1px solid #d9c9ad}.flags{grid-template-columns:1fr}.container{padding:16px}}
 </style>
-<style>
-#passwordGate {
-  position: fixed;
-  inset: 0;
-  background: #f7f3ec;
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  box-sizing: border-box;
-}
-.password-card {
-  width: 100%;
-  max-width: 420px;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 18px rgba(0,0,0,.12);
-  padding: 26px;
-  text-align: center;
-  border: 1px solid #eadcc6;
-}
-.password-card h2 {
-  margin: 0 0 12px;
-  color: #5a432b;
-  font-size: 26px;
-}
-.password-card p {
-  color: #777;
-  line-height: 1.7;
-  margin: 0 0 18px;
-}
-.password-card input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 14px;
-  font-size: 20px;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  text-align: center;
-  margin-bottom: 12px;
-}
-.password-card button {
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
-  padding: 14px 18px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  background: #8b6f47;
-  color: white;
-}
-#passwordMsg {
-  margin-top: 12px;
-  color: #b85c38;
-  font-weight: bold;
-  min-height: 24px;
-}
-</style>
+
 <style>
 /* 手機版寬度修正 */
 html, body {
@@ -339,49 +280,16 @@ input[placeholder*="搜尋"],
 }
 </style>
 
-<script>if(sessionStorage.getItem('portalAuth')==='ok'){window.__PORTAL_AUTH__=true;}</script></head>
-<body data-portal-auth='1'>
-<div id="passwordGate">
-<div class="password-card">
-<h2>托育法規工具</h2>
-<p>請輸入密碼後進入。</p>
-<input autocomplete="off" id="passwordInput" inputmode="numeric" placeholder="輸入密碼" type="password"/>
-<button onclick="checkPassword()">進入工具</button>
-<div id="passwordMsg"></div>
-</div>
-</div>
+
 <script>
-(function () {
-  const saved = sessionStorage.getItem("lawToolUnlocked");
-  if (saved === "yes") {
-    const gate = document.getElementById("passwordGate");
-    if (gate) gate.style.display = "none";
-  }
-
-  window.checkPassword = function () {
-    const input = document.getElementById("passwordInput");
-    const msg = document.getElementById("passwordMsg");
-    if ((input.value || "").trim() === "3728") {
-      sessionStorage.setItem("lawToolUnlocked", "yes");
-      document.getElementById("passwordGate").style.display = "none";
-    } else {
-      msg.textContent = "密碼不正確，請再試一次。";
-      input.value = "";
-      input.focus();
-    }
-  };
-
-  window.addEventListener("DOMContentLoaded", function () {
-    const input = document.getElementById("passwordInput");
-    if (input) {
-      input.focus();
-      input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") checkPassword();
-      });
-    }
-  });
-})();
+if (sessionStorage.getItem("toolLogin") !== "ok") {
+    window.location.href = "../";
+}
 </script>
+
+</head>
+<body>
+
 <div class="container">
 <h1>托育違規法規對照工具</h1><div class="subtitle">先選問題類型，再勾選細項，最後產生法規對照。</div>
 <div class="steps"><div class="step active" id="s1" onclick="go1()">① 問題類型</div><div class="step" id="s2" onclick="go2()">② 違規細項</div><div class="step" id="s3" onclick="go3()">③ 結果產出</div></div>
