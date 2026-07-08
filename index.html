@@ -7,7 +7,7 @@
 body{font-family:"Microsoft JhengHei",sans-serif;background:#f5ecdf;margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}
 .card{background:#fff;border-radius:20px;padding:28px;max-width:430px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 h1{text-align:center;color:#8b6a3f}.logo{text-align:center;font-size:56px}
-input,button{width:100%;padding:14px;border-radius:12px;font-size:18px;margin-top:12px}
+input,button{display:block;width:100%;max-width:100%;padding:14px;border-radius:12px;font-size:18px;margin-top:12px;box-sizing:border-box}
 button{background:#9a7b4f;color:#fff;border:none;cursor:pointer}
 .item{display:none;background:#faf7f2;padding:14px;border-radius:12px;margin-top:12px;text-decoration:none;color:#333}
 </style></head><body><div class='card'>
@@ -24,4 +24,6 @@ function show(){login.style.display='none';document.querySelectorAll('.item').fo
 if(localStorage.getItem('toolLoginUntil')>Date.now())show();
 pw.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
 function go(){if(pw.value==='3728'){localStorage.setItem('toolLoginUntil',Date.now()+30*24*60*60*1000);show();}else alert('密碼錯誤');}
+</script><script>
+if(localStorage.getItem('toolLoginUntil')>Date.now()){sessionStorage.setItem('portalAuth','ok');}
 </script></body></html>
