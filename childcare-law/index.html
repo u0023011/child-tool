@@ -282,7 +282,7 @@ input[placeholder*="搜尋"],
 
 
 <script>
-if (sessionStorage.getItem("toolLogin") !== "ok") {
+if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") {
     window.location.href = "../";
 }
 </script>
