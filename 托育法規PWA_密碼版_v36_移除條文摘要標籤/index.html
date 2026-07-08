@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<link href="/manifest.json" rel="manifest"/>
+<meta content="#8b6f47" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="托育法規" name="apple-mobile-web-app-title"/>
+<meta content="default" name="apple-mobile-web-app-status-bar-style"/>
+<link href="/icon-192.png" rel="apple-touch-icon"/>
+<style>
+body{font-family:"Microsoft JhengHei",Arial,sans-serif;background:#f7f3ec;margin:0;padding:16px;color:#333}
+.container{max-width:1120px;margin:auto;background:#fff;border-radius:18px;padding:22px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+h1{text-align:center;color:#5a432b;margin:8px 0}.subtitle{text-align:center;color:#777;line-height:1.7;margin-bottom:20px}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #d9c9ad;border-radius:12px;overflow:hidden;margin:18px 0 24px}
+.step{padding:14px;text-align:center;font-weight:bold;color:#9d9182;border-right:1px solid #d9c9ad;cursor:pointer}.step:last-child{border-right:0}.step.active{background:#8b6f47;color:white}.step.done{background:#eee1c9;color:#5a432b}
+.panel{display:none}.panel.active{display:block}.title{font-size:22px;font-weight:bold;color:#4b3b2a;border-left:6px solid #c9a46a;padding-left:10px;margin:20px 0 10px}.helper{color:#777;line-height:1.7;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card,.item{background:#fffdf8;border:1px solid #eadcc6;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;cursor:pointer}.item{margin:10px 0;background:#fff}.card input,.item input{margin-top:5px;transform:scale(1.2)}.card.selected{background:#fff6e8;border-color:#8b6f47;box-shadow:0 0 0 2px rgba(139,111,71,.12)}.ct{font-weight:bold;font-size:18px;color:#3f3329;line-height:1.5}.cs{font-size:14px;color:#777;line-height:1.5;margin-top:4px}
+.block{border:1px solid #eadcc6;background:#fbfaf7;border-radius:14px;padding:16px;margin:14px 0}.block h2{font-size:20px;color:#5a432b;margin:0 0 8px}.search input{width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;font-size:16px;box-sizing:border-box;margin-bottom:10px}
+.count-box{background:#fffdf8;border:1px solid #eadcc6;border-radius:14px;padding:14px;margin:12px 0 16px}.count-title{font-weight:bold;color:#5a432b;font-size:18px;margin-bottom:8px}.count-note{font-size:14px;color:#777;line-height:1.6;margin-bottom:10px}.count-table{width:100%;border-collapse:separate;border-spacing:0 8px}.count-table th{font-size:15px;color:#5a432b;text-align:center;padding:6px}.count-table td{padding:4px 6px;text-align:center}.count-table td:first-child{text-align:left;font-weight:bold;color:#4b3b2a;white-space:nowrap}.count-input{width:100%;max-width:110px;padding:10px;border:1px solid #ccc;border-radius:10px;font-size:16px;text-align:center;box-sizing:border-box}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}button{border:0;border-radius:12px;padding:14px 18px;font-size:17px;font-weight:bold;cursor:pointer}.primary{background:#8b6f47;color:#fff}.secondary{background:#eee1c9;color:#5a432b}.ghost{background:#f8f1e5;color:#6b4f35}
+.result{display:none;margin-top:18px;padding:18px;background:#fff8ec;border-left:6px solid #c9a46a;border-radius:14px}.result h2{color:#5a432b;margin-top:0}.rcard{background:#fffdf8;border:1px solid #eadcc6;border-radius:12px;padding:16px;margin-top:14px}.tag{display:inline-block;font-size:13px;border-radius:99px;padding:3px 9px;background:#eee1c9;color:#5a432b;margin:0 6px 8px 0}.line{line-height:1.8;margin:6px 0}.line strong{color:#5a432b}.lawbox{margin-top:12px;padding:14px;border-radius:12px;border:1px solid #eadcc6;background:#fff}.lawbox.futurelaw{background:#fff0e8;border-color:#efb58c}.lawbox-title{font-weight:bold;color:#5a432b;font-size:18px;margin-bottom:8px}.lawbox-subtitle{font-weight:bold;color:#7a4d20;margin-top:8px}.note-warn{color:#b85c38;font-weight:bold}.flags{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.flag{background:#fff5e7;border-radius:8px;padding:8px;font-size:14px;line-height:1.5}.future{background:#fff0e8;border:1px solid #efb58c;border-radius:10px;padding:10px;margin-top:10px;line-height:1.7}.empty{color:#b85c38;font-weight:bold;line-height:1.8}
+@media(max-width:760px){.grid,.buttons{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.step{border-right:0;border-bottom:1px solid #d9c9ad}.flags{grid-template-columns:1fr}.container{padding:16px}}
+</style>
+<style>
+#passwordGate {
+  position: fixed;
+  inset: 0;
+  background: #f7f3ec;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.password-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.12);
+  padding: 26px;
+  text-align: center;
+  border: 1px solid #eadcc6;
+}
+.password-card h2 {
+  margin: 0 0 12px;
+  color: #5a432b;
+  font-size: 26px;
+}
+.password-card p {
+  color: #777;
+  line-height: 1.7;
+  margin: 0 0 18px;
+}
+.password-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  font-size: 20px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.password-card button {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #8b6f47;
+  color: white;
+}
+#passwordMsg {
+  margin-top: 12px;
+  color: #b85c38;
+  font-weight: bold;
+  min-height: 24px;
+}
+</style>
+<style>
+/* 手機版寬度修正 */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #f7f3ec !important;
+  }
+
+  .container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  h1 {
+    font-size: 24px !important;
+    line-height: 1.35 !important;
+  }
+
+  .subtitle,
+  .helper,
+  .line,
+  .cs {
+    font-size: 16px !important;
+    line-height: 1.75 !important;
+  }
+
+  .title {
+    font-size: 21px !important;
+    line-height: 1.5 !important;
+  }
+
+  .steps {
+    width: 100% !important;
+    margin: 12px 0 18px !important;
+  }
+
+  .step {
+    font-size: 16px !important;
+    padding: 12px 8px !important;
+  }
+
+  .grid,
+  .buttons,
+  .flags {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .block,
+  .rcard,
+  .lawbox,
+  .future,
+  .item,
+  .card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .block {
+    padding: 10px !important;
+    margin: 12px 0 !important;
+  }
+
+  .rcard {
+    padding: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  .lawbox {
+    padding: 12px !important;
+  }
+
+  .line {
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .rcard h3 {
+    font-size: 20px !important;
+    line-height: 1.55 !important;
+  }
+
+  .flag {
+    font-size: 16px !important;
+  }
+
+  .count-table {
+    display: block !important;
+    overflow-x: auto !important;
+  }
+
+  .count-input {
+    min-width: 82px !important;
+  }
+}
+</style>
+<style>
+/* v10：強制移除搜尋欄與舊說明 */
+input[placeholder*="搜尋"], 
+.searchbar, .search-box, .searchBox, #searchBox, #keywordSearch, #searchInput,
+.helper, .hint {
+  display: none !important;
+}
+.subtitle {
+  text-align: center;
+  margin-top: 12px;
+  margin-bottom: 28px;
+}
+</style>
+<style>
+/* v16：罰鍰、廢止、退準公重點檢視 */
+.focus-box {
+  border: 2px solid #b8863b;
+  background: #fff8ee;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+.focus-title {
+  font-weight: 800;
+  color: #5b3a1e;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+.focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.focus-item {
+  background: #ffffff;
+  border: 1px solid #ead7bd;
+  border-radius: 12px;
+  padding: 10px 12px;
+  line-height: 1.65;
+}
+.focus-item strong {
+  display: block;
+  color: #7a4d1d;
+  margin-bottom: 4px;
+}
+.focus-critical {
+  border-color: #b85c38;
+  background: #fff3ec;
+}
+@media (max-width: 760px) {
+  .focus-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+
+
+<style>
+/* v22：條文摘要對齊修正 */
+.article-summary {
+  margin-top: 10px;
+}
+.article-row {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.25em;
+  align-items: start;
+  margin: 8px 0;
+  line-height: 1.85;
+}
+.article-row strong {
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .article-row {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+}
+</style>
+
+
+<style>
+/* v32：第二步違規項目依嚴重程度排序與標示 */
+.item.item-critical {
+  border-color: #c9673f !important;
+  background: #fff3ec !important;
+}
+.item.item-warn {
+  border-color: #d0a24c !important;
+  background: #fff8e8 !important;
+}
+.item.item-normal {
+  border-color: #ead7bd !important;
+}
+.item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.item-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+.item-badge.critical {
+  background: #ffe7dc;
+  color: #8b2f17;
+  border-color: #e4a082;
+}
+.item-badge.warn {
+  background: #fff0c7;
+  color: #7a4d00;
+  border-color: #d9b35b;
+}
+.item-badge.info {
+  background: #eef4ff;
+  color: #29527a;
+  border-color: #b9cbe3;
+}
+.priority-note {
+  margin: 8px 0 16px;
+  color: #7c6d5b;
+  font-size: 15px;
+  line-height: 1.7;
+}
+</style>
+
+
+
+<style>
+/* v35：罰鍰、廢止、停止等處分關鍵字紅字粗體 */
+.penalty-key {
+  color: #b42318;
+  font-weight: 900;
+}
+</style>
+
+</head>
+<body>
+<div id="passwordGate">
+<div class="password-card">
+<h2>托育法規工具</h2>
+<p>請輸入密碼後進入。</p>
+<input autocomplete="off" id="passwordInput" inputmode="numeric" placeholder="輸入密碼" type="password"/>
+<button onclick="checkPassword()">進入工具</button>
+<div id="passwordMsg"></div>
+</div>
+</div>
+<script>
+(function () {
+  const saved = sessionStorage.getItem("lawToolUnlocked");
+  if (saved === "yes") {
+    const gate = document.getElementById("passwordGate");
+    if (gate) gate.style.display = "none";
+  }
+
+  window.checkPassword = function () {
+    const input = document.getElementById("passwordInput");
+    const msg = document.getElementById("passwordMsg");
+    if ((input.value || "").trim() === "3728") {
+      sessionStorage.setItem("lawToolUnlocked", "yes");
+      document.getElementById("passwordGate").style.display = "none";
+    } else {
+      msg.textContent = "密碼不正確，請再試一次。";
+      input.value = "";
+      input.focus();
+    }
+  };
+
+  window.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("passwordInput");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") checkPassword();
+      });
+    }
+  });
+})();
+</script>
+<div class="container">
+<h1>托育違規法規對照工具</h1><div class="subtitle">先選問題類型，再勾選細項，最後產生法規對照。</div>
+<div class="steps"><div class="step active" id="s1" onclick="go1()">① 問題類型</div><div class="step" id="s2" onclick="go2()">② 違規細項</div><div class="step" id="s3" onclick="go3()">③ 結果產出</div></div>
+<div class="panel active" id="p1"><div class="title">步驟一：選擇問題類型</div><div class="helper">可複選。兒童托育服務法不放在這裡，會依勾選內容於結果中補充。</div><div class="grid" id="cats"></div><div class="buttons"><button class="ghost" onclick="clearAll()">清除全部</button><button class="primary" onclick="go2()">下一步：勾選細項</button></div></div>
+<div class="panel" id="p2"><div class="title">步驟二：勾選細項／填寫收托人數</div><div class="helper"></div><div class="search"></div><div id="details"></div><div class="buttons"><button class="secondary" onclick="go1()">上一步：問題類型</button><button class="primary" onclick="go3()">下一步：產生結果</button></div></div>
+<div class="panel" id="p3"><div class="title">步驟三：法規對照結果</div><div class="helper">每一項會優先檢視：是否有罰鍰、是否廢止登記、是否命中準公共第8點退場，再列其他處分與兒托法補充。</div><div class="buttons"><button class="secondary" onclick="go2()">上一步：修改細項</button><button class="primary" onclick="generate()">重新產生結果</button></div><div class="result" id="result"></div></div>
+</div>
+<script>
+const categories=[{"id": "reg", "title": "登記、證書與資格", "sub": "登記、證書懸掛、換發、變更、停復托、異動報備"}, {"id": "ratio", "title": "收托人數、收托方式", "sub": "收托上限、未滿2歲人數、共同托育、到宅托育計算"}, {"id": "care", "title": "照顧服務與兒童安全", "sub": "照顧品質、環境安全、契約、保險、訓練、兒童保護"}, {"id": "fee", "title": "收費、退費與準公共", "sub": "超收、額外收費、臺南市收費上限、準公共終止契約"}, {"id": "inspect", "title": "檢查、訪視與配合義務", "sub": "拒訪、拒檢、未提供資料、屆期未改善、停止服務與轉介"}];
+const items=[{"cat": "reg", "id": "A01", "title": "未辦理登記即收托", "law": "兒少權法第26條第1項、第90條", "summary": "居家式托育服務提供者應辦理登記；未辦理登記即提供居家托育服務，進入兒少權法第90條處理。", "effect": "處6,000元以上3萬元以下罰鍰並命限期改善；屆期未改善者再罰並命一個月內轉介；拒不轉介或改善期間新增收托另有處理。", "penalty": "6,000～30,000；屆期未改善可再罰；拒不轉介或改善期間新增收托亦可裁罰。", "fine": "是", "improve": "是", "per": "是", "stop": "可能", "transfer": "是", "revoke": "否／未登記不屬廢止登記；但可命停止及轉介", "public": "不符合準公共基本資格", "future": "第13條明定取得居家托育服務證書後，始得提供居家托育服務。<br><strong>罰則：</strong>依第78條，違反第13條第1項規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。<br><br><strong>可能連動第71條加重處罰：</strong>第71條規定，未依規定申請托育機構設立許可而收托兒童者，處新臺幣6萬元以上30萬元以下罰鍰，並令其限期改善；屆期未改善者，得按次處罰。情節重大或經處罰三次後仍未改善者，得令其停止收托兒童。居家托育人員違反收托人數規定，且收托人數五人以上者，亦適用前述加重處罰。"}, {"cat": "reg", "id": "A02", "title": "申請登記文件未備齊且屆期未補正", "law": "管理辦法第8條第3項", "summary": "申請托育服務登記文件、資料未備齊者，主管機關應書面限期補正；屆期未補正者，以書面駁回申請。", "effect": "尚未取得登記前不得提供托育服務；若仍收托，可能轉為未辦理登記即收托。", "penalty": "無直接罰鍰；若未登記即收托，依兒少權法第90條。", "fine": "否／轉為未登記收托時會", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "不符合準公共簽約資格", "future": ""}, {"cat": "reg", "id": "A03", "title": "服務登記證書未懸掛於明顯處", "law": "管理辦法第11條第2項", "summary": "提供在宅托育服務者，應將服務登記證書懸掛於服務登記處所足資辨識之明顯處。", "effect": "通常列入輔導或限期改善；屆期未改善可能作為後續處理紀錄。", "penalty": "多屬輔導改善，現行法未見直接專屬罰鍰。", "fine": "否／視後續改善", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "屢次未改善可能影響準公共評估", "future": ""}, {"cat": "reg", "id": "A04", "title": "服務登記證書有效期限屆滿未申請換發", "law": "管理辦法第12條", "summary": "服務登記證書有效期間為六年；屆滿前三個月內應申請換發；屆期未申請換發者，廢止其服務登記。", "effect": "廢止服務登記；若仍收托，可能變成未登記收托。", "penalty": "本項直接效果為廢止登記；未登記後仍收托再依兒少權法第90條。", "fine": "否／後續可能", "improve": "否", "per": "否", "stop": "可能", "transfer": "可能", "revoke": "是", "public": "準公共合作資格重大影響", "future": ""}, {"cat": "reg", "id": "A05", "title": "服務登記證書租借或轉讓他人", "law": "管理辦法第13條第1項；準公共要點第3點、第8點", "summary": "托育人員不得將服務登記證書租借或轉讓他人。", "effect": "最近二年違反第13條第1項，準公共不得簽約／不予續約；契約中發生亦可能終止契約。", "penalty": "現行管理辦法本身未列專屬罰鍰；但涉及準公共資格與後續行政處理。", "fine": "否／視情節", "improve": "視情節", "per": "否", "stop": "視情節", "transfer": "視情節", "revoke": "視情節", "public": "準公共作業要點第8點：若屬收托比違反法令規定，應即終止契約；並不得簽約／不予續約／可能終止契約", "future": ""}, {"cat": "reg", "id": "A06", "title": "證書記載事項變更未於30日內辦理", "law": "管理辦法第14條第1項；準公共要點第8點", "summary": "姓名、性別、出生年月日、資格證明等證書記載事項變更，應於事實發生日起30日內辦理變更登記。", "effect": "可列入改善；準公共合作對象若違反第14條且經命限期改善達一定次數或科處罰鍰，可能終止契約。", "penalty": "現行多依改善處理；若進入準公共第8點條件，影響契約。", "fine": "否／視情節", "improve": "是", "per": "否／視情節", "stop": "否", "transfer": "否", "revoke": "否", "public": "可能終止契約", "future": ""}, {"cat": "reg", "id": "A07", "title": "服務登記處所變更未事先申請核准", "law": "管理辦法第14條第2項", "summary": "服務登記處所地址變更，應事先申請核准變更後，始得於變更後處所提供托育服務。", "effect": "未核准處所收托可能被列為登記處所不符；視情節要求停止、改善或另依未登記處所處理。", "penalty": "可能限期改善；若涉及未核准處所持續收托，可能衍生兒少權法第90條風險。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "可能", "transfer": "可能", "revoke": "視情節", "public": "需辦理契約變更，否則影響準公共", "future": ""}, {"cat": "reg", "id": "A08", "title": "停止或恢復托育服務未依規定辦理", "law": "管理辦法第15條", "summary": "托育人員停止托育服務應於30日內申請；恢復托育服務應經主管機關同意。", "effect": "未依規定停復托可列入輔導或改善；未經同意恢復收托則有資格與管理風險。", "penalty": "多屬輔導改善；若實際不符登記狀態仍收托，可能衍生裁處。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "可能", "transfer": "可能", "revoke": "視情節", "public": "可能影響準公共；若符合準公共作業要點第8點，應即終止契約", "future": ""}, {"cat": "reg", "id": "A09", "title": "開始、結束收托或收托異動未於7日內報備", "law": "管理辦法第16條", "summary": "開始或結束收托兒童、收托方式或收托時間異動，應依規定期限向主管機關或居家托育服務中心報備。", "effect": "可列入輔導或改善；若影響收托人數、收托比或準公共資料正確性，可能衍生其他處理。", "penalty": "多屬輔導改善；與準公共費用申報不符時另行處理。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "可能影響費用申報或準公共管理", "future": ""}, {"cat": "ratio", "id": "B04", "title": "未將托育人員未滿3歲子女或受監護者列入收托人數", "law": "管理辦法第7條第2項；兒少權法第90條；準公共作業要點第8點", "summary": "收托人數應以托育服務時間實際照顧兒童數計算，並包括托育人員未滿3歲子女與受其監護者。<br><br>管理辦法第7條：居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br>兒少權法第90條：居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。", "effect": "若未列入導致超收，即屬違反收托人數規定。；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。", "penalty": "違反收托人數規定者，6,000～30,000元；限期改善；屆期未改善得按次罰，情節重大或三次仍未改善得廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "否／視情節", "transfer": "否", "revoke": "可能", "public": "準公共作業要點第8點：收托比違反法令規定，應即終止契約", "future":"若因此造成違反收托人數規定，兒童托育服務法亦有相關罰則。<br><strong>罰則：</strong>收托人數未滿5人者，依第78條第1項第2款，違反第13條第5項所定辦法中有關收托人數規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。<br><br><strong>收托人數5人以上者：</strong>依第71條加重處罰，處新臺幣6萬元以上30萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得令其停止收托兒童。"}, {"cat": "ratio", "id": "B05", "title": "未將三親等內未滿5歲兒童列入收托人數", "law": "管理辦法第7條第2項；兒少權法第90條；準公共作業要點第8點", "summary": "收托人數應包括托育人員未滿5歲之三親等內兒童。<br><br>管理辦法第7條：居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br>兒少權法第90條：居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。", "effect": "若未列入導致超收，即屬違反收托人數規定。；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。", "penalty": "若因此造成實際收托人數超過規定，依兒少權法第90條第5項，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。：6,000～30,000元、限期改善、按次處罰、重大或三次仍未改善得廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "否／視情節", "transfer": "否", "revoke": "可能", "public": "準公共作業要點第8點：收托比違反法令規定，應即終止契約", "future":"若因此造成違反收托人數規定，兒童托育服務法亦有相關罰則。<br><strong>罰則：</strong>收托人數未滿5人者，依第78條第1項第2款，違反第13條第5項所定辦法中有關收托人數規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。<br><br><strong>收托人數5人以上者：</strong>依第71條加重處罰，處新臺幣6萬元以上30萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得令其停止收托兒童。"}, {"cat": "ratio", "id": "B06", "title": "未將未滿12歲且未收取托育費用兒童列入收托人數", "law": "管理辦法第7條第2項；兒少權法第90條；準公共作業要點第8點", "summary": "收托人數應包括未滿12歲之未收取托育費用兒童。<br><br>管理辦法第7條：居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br>兒少權法第90條：居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。", "effect": "若同一托育服務時間實際照顧，仍要列入收托人數計算。；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。", "penalty": "若因此造成實際收托人數超過規定，依兒少權法第90條第5項，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "否／視情節", "transfer": "否", "revoke": "可能", "public": "準公共作業要點第8點：收托比違反法令規定，應即終止契約", "future":"若因此造成違反收托人數規定，兒童托育服務法亦有相關罰則。<br><strong>罰則：</strong>收托人數未滿5人者，依第78條第1項第2款，違反第13條第5項所定辦法中有關收托人數規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。<br><br><strong>收托人數5人以上者：</strong>依第71條加重處罰，處新臺幣6萬元以上30萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得令其停止收托兒童。"}, {"cat": "ratio", "id": "B07", "title": "到宅托育未以該住所實際受照顧兒童人數計算", "law": "管理辦法第7條第3項；準公共作業要點第8點", "summary": "提供到宅托育服務，收托人數以該住所或居所實際受照顧兒童人數計算。<br><br>管理辦法第7條：居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br>兒少權法第90條：居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。", "effect": "若實際照顧人數超過規定，仍屬收托人數違規。；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。", "penalty": "若因此造成實際收托人數超過規定，依兒少權法第90條第5項，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "否／視情節", "transfer": "否", "revoke": "可能", "public": "準公共作業要點第8點：收托比違反法令規定，應即終止契約", "future":"若因此造成違反收托人數規定，兒童托育服務法亦有相關罰則。<br><strong>罰則：</strong>收托人數未滿5人者，依第78條第1項第2款，違反第13條第5項所定辦法中有關收托人數規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。<br><br><strong>收托人數5人以上者：</strong>依第71條加重處罰，處新臺幣6萬元以上30萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得令其停止收托兒童。"}, {"cat": "ratio", "id": "B08", "title": "二名以上托育人員共同托育未分配主要照顧人", "law": "管理辦法第7條第4項；準公共作業要點第8點", "summary": "二名以上托育人員於同一處所共同托育，應就收托兒童分配主要照顧人。<br><br>管理辦法第7條：居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br>兒少權法第90條：居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。", "effect": "可列入輔導或改善；若伴隨超收或責任不清，可能加重管理風險。；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。", "penalty": "通常先輔導改善；若涉及收托人數違規則依第90條。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "準公共作業要點第8點：收托比違反法令規定，應即終止契約", "future": ""}, {"cat": "care", "id": "C01", "title": "未提供清潔、衛生、安全及適宜兒童發展環境", "law": "管理辦法第4條第1款", "summary": "托育人員應提供清潔、衛生、安全及適宜兒童發展之托育服務環境。", "effect": "可列入輔導改善；若另有兼任其他職務、疏忽照顧、兒童保護事件或其他具體違規，應再依相對應條文判斷。", "penalty": "本項屬托育服務基本義務，現行管理辦法第4條第1款本身未列專屬罰鍰；如另涉其他具體違規，則依該違規條文處理。", "fine": "否／視具體違規", "improve": "是", "per": "視情節", "stop": "否／重大另評估", "transfer": "否／重大另評估", "revoke": "否／視具體違規", "public": "否／本項單純違反管理辦法第4條第1款，非準公共作業要點第3點、第8點明列退場或不得簽約情形；若另涉管理辦法第5條、第7條、第13條第1項或兒少權法第49條等，才另行判斷準公共效果", "future": ""}, {"cat": "care", "id": "C02", "title": "未提供營養、衛生保健、生活照顧或學習遊戲活動", "law": "管理辦法第3條第2款", "summary": "托育人員應提供兒童充分營養、衛生保健、生活照顧與學習、遊戲活動及社會發展相關服務。", "effect": "可列入輔導改善；若達準公共要點條件，影響合作資格。", "penalty": "視情節改善或準公共處理。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "達條件影響準公共", "future": ""}, {"cat": "care", "id": "C03", "title": "未提供育兒諮詢及相關資訊", "law": "管理辦法第3條第3款", "summary": "托育人員應提供育兒諮詢及相關資訊。", "effect": "多屬輔導改善事項。", "penalty": "通常無直接罰鍰，視輔導改善情形。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "一般較低", "future": ""}, {"cat": "care", "id": "C04", "title": "未記錄兒童生活及成長過程", "law": "管理辦法第3條第4款", "summary": "托育人員應記錄兒童生活及成長過程。", "effect": "可列入輔導改善；屢未改善可能影響準公共。", "penalty": "視情節。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "達條件可能影響準公共", "future": ""}, {"cat": "care", "id": "C05", "title": "未協助辦理兒童發展篩檢", "law": "管理辦法第3條第5款", "summary": "托育人員應協助辦理兒童發展之篩檢。", "effect": "可列入輔導改善；若影響兒童權益，可能加重處理。", "penalty": "視情節。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "達條件可能影響準公共", "future": ""}, {"cat": "care", "id": "C06", "title": "未優先考量兒童最佳利益或未專心托育", "law": "管理辦法第4條第1款", "summary": "托育人員應優先考量兒童最佳利益，並專心提供托育服務。", "effect": "違反第4條，若最近二年內經限期改善達二次以上或科處罰鍰，影響準公共；契約期間達條件可終止。", "penalty": "視個案改善或裁處；準公共依要點辦理。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否／重大另評估", "transfer": "否", "revoke": "視情節", "public": "達條件不得簽約／不予續約／終止契約", "future": "第19條明定居家托育人員於托育服務時間應於托育服務處所專心托育，不得兼任其他職務、經營事業、從事影響托育服務之活動，也不得使六歲以下或需要特別看護之收托兒童獨處或由不適當之人代為照顧。<br><strong>罰則：</strong>依第78條，違反第19條規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。"}, {"cat": "care", "id": "C07", "title": "未與家長訂定書面契約", "law": "管理辦法第4條第2款", "summary": "托育人員應與收托兒童父母、監護人或其他實際照顧者訂定書面契約。", "effect": "可列入輔導改善；準公共資料與費用爭議會受影響。", "penalty": "視情節。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "可能影響準公共；若符合準公共作業要點第8點，應即終止契約", "future": "第17條明定居家托育人員提供托育服務，應與送托兒童之法定代理人或實際照顧兒童之人訂定書面契約，並提供契約影本予居家托育服務中心；契約格式及內容由中央主管機關訂定定型化契約範本與應記載、不得記載事項。<br><strong>罰則一：</strong>未依第17條第1項訂定書面契約者，依第78條處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。<br><strong>罰則二：</strong>訂定書面契約內容違反第17條第2項所定定型化契約範本與應記載、不得記載事項者，依第83條第2項，經主管機關令限期改善，屆期未改善者，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰。<br><strong>罰則三：</strong>未交付書面契約影本予居家托育服務中心者，依第84條，令限期改善，屆期未改善者，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰。"}, {"cat": "care", "id": "C08", "title": "洩漏收托兒童或家人個資", "law": "管理辦法第4條第3款", "summary": "托育人員對收托兒童及其家人個人資料應保密；經同意或依法通報、提供者除外。", "effect": "可列入違規改善；另可能涉及個資法責任。", "penalty": "依個案可能涉及其他法律責任；本工具先列托育管理違規。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "否／視情節；本項本身不屬準公共作業要點第8點明列「應即終止契約」情形，若另涉兒少保護重大違規或其他第8點事由，再另行判斷", "future": ""}, {"cat": "care", "id": "C09", "title": "未完成每年18小時在職訓練或BLS時數不足", "law": "管理辦法第4條第4款、第12條", "summary": "每年至少接受18小時在職訓練；每二年在職訓練應包括8小時以上基本救命術。", "effect": "可列入改善；換證時需檢具證明，屆期未申請換發者廢止服務登記。", "penalty": "未訓練本身多為改善；屆期未換證會廢止服務登記。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "換證不符可能廢止", "public": "影響準公共與換證", "future": "第63條規定托育專業人員每年應完成18小時以上托育專業知能研習；另應於提供服務前二年內或提供服務三個月內完成8小時以上兒童基本救命術訓練，並每二年內再完成8小時以上兒童基本救命術訓練、3小時以上事故傷害預防及處理或一次以上緊急救護情境演習。<br><strong>罰則：</strong>依第84條，未完成前述研習或訓練者，令限期改善，屆期未改善者，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰；如不可歸責於托育專業人員，經主管機關查證屬實者，不予處罰。"}, {"cat": "care", "id": "C10", "title": "未每二年至少健康檢查一次", "law": "管理辦法第4條第5款、第12條", "summary": "托育人員每二年至少接受一次健康檢查；換證時需檢具相關證明。", "effect": "可列入改善；換證資料不足可能影響換發，屆期未換發廢止登記。", "penalty": "視情節。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "可能", "public": "影響準公共與換證", "future": ""}, {"cat": "care", "id": "C11", "title": "收托兒童當日前未投保責任保險", "law": "管理辦法第4條第6款", "summary": "收托兒童當日前，應投保責任保險。", "effect": "可列入違規改善；如發生事故風險重大。", "penalty": "視情節。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "可能影響準公共；若符合準公共作業要點第8點，應即終止契約", "future": "第18條明定收托兒童當日前應完成投保專業責任保險。<br><strong>罰則：</strong>依第78條，違反第18條規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。"}, {"cat": "care", "id": "C12", "title": "虐待、疏忽或其他違反兒童保護規定", "law": "管理辦法第5條第1款；兒少權法第49條、第26-1條、第90條；準公共要點第8點", "summary": "托育人員不得有虐待、疏忽或其他違反相關保護兒童規定行為；若有兒少權法第49條行為經查證屬實，可能不得擔任居家托育人員。", "effect": "命停止服務、強制轉介；已完成登記者廢止登記。不依停止服務命令者處6萬～30萬元罰鍰，並得公布姓名。準公共應即終止契約。", "penalty": "6萬～30萬元（不依停止服務命令）；另依具體保護事件可能有其他罰則。", "fine": "是／視行為", "improve": "可能", "per": "視罰則", "stop": "是", "transfer": "是", "revoke": "是", "public": "應即終止契約", "future": "第78條、第86條可能涉及罰鍰、違規記點、暫停新收托或廢止登記。"}, {"cat": "care", "id": "C13", "title": "收托時間兼任或經營足以影響托育服務之職務或事業", "law": "管理辦法第5條第2款；準公共要點第3點、第8點", "summary": "托育人員不得於收托時間兼任或經營足以影響其托育服務之職務或事業。", "effect": "最近二年違反第5條，準公共不得簽約／不予續約；契約期間違反經查證屬實，可能應即終止契約。", "penalty": "現行管理辦法本身非直接罰鍰；準公共影響明確。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "不得簽約／不予續約／應終止契約", "future": "第19條明定居家托育人員於托育服務時間應於托育服務處所專心托育，不得兼任其他職務、經營事業、從事影響托育服務之活動，也不得使六歲以下或需要特別看護之收托兒童獨處或由不適當之人代為照顧。<br><strong>罰則：</strong>依第78條，違反第19條規定者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，得按次處罰；情節重大或經處罰三次後仍未改善者，得公布姓名及廢止登記。"}, {"cat": "care", "id": "C14", "title": "誇大不實宣傳", "law": "管理辦法第5條第3款；準公共要點第3點、第8點", "summary": "托育人員不得對托育服務為誇大不實之宣傳。", "effect": "違反管理辦法第5條，會影響準公共簽約、續約或契約存續。", "penalty": "本辦法無專屬罰鍰；視個案及其他法規處理。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "準公共作業要點第8點：若屬收托比違反法令規定，應即終止契約；並不得簽約／不予續約／可能終止契約", "future": ""}, {"cat": "care", "id": "C15", "title": "有不得擔任居家托育人員情事", "law": "兒少權法第26-1條", "summary": "有性侵害、性騷擾、兒少性剝削、毒品、兒少權法第49條行為經查證屬實、違法或不當且影響收托兒童權益重大等情事，不得擔任居家式托育服務提供者。", "effect": "主管機關應命其停止服務並強制轉介收托兒童；已完成登記者，廢止登記。", "penalty": "不依停止服務命令者依第90條第7項處6萬～30萬元，並得公布姓名。", "fine": "是／不依命令時", "improve": "否", "per": "否／不依命令另罰", "stop": "是", "transfer": "是", "revoke": "是", "public": "準公共重大影響", "future": ""}, {"cat": "care", "id": "C16", "title": "共同居住者有不適任情形仍提供在宅托育", "law": "兒少權法第26-2條", "summary": "共同居住者有第26-1條特定情形或有客觀事實認有傷害兒童之虞者，托育人員以提供到宅托育為限。", "effect": "不得繼續提供在宅托育；需調整服務型態或依主管機關認定辦理。", "penalty": "視主管機關後續處理；若違反命令可能衍生裁處。", "fine": "視情節", "improve": "視情節", "per": "視情節", "stop": "可能", "transfer": "可能", "revoke": "視情節", "public": "準公共可能受影響", "future": ""}, {"cat": "fee", "id": "D01", "title": "巧立名目或任意收取規定外費用", "law": "管理辦法第5條第5款；準公共要點第3點、第8點", "summary": "托育人員不得巧立名目或任意收取主管機關訂定收退費項目以外之費用。", "effect": "違反管理辦法第5條，準公共不得簽約／不予續約；契約期間經查證屬實可能應即終止契約。", "penalty": "本項現行管理辦法無專屬罰鍰；準公共契約處理明確。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "視情節", "public": "不得簽約／不予續約／應終止契約", "future": ""}, {"cat": "fee", "id": "D02", "title": "收費超過臺南市公告收費上限", "law": "臺南市準公共化托育服務收費上限表；準公共要點第3點、第8點", "summary": "托育費用不得超過地方政府所定簽約收費上限；不得任意調漲或收取應收、得收項目以外費用。", "effect": "費用超過上限不得提出簽約申請；合作期間擅自調高或額外收費，應即終止契約，並退還違法超收費用。", "penalty": "準公共：終止契約、退還超收費用；是否另裁罰視相關法規與主管機關認定。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "否／視情節", "public": "不得簽約／應終止契約／退還超收", "future": ""}, {"cat": "fee", "id": "D03", "title": "準公共合作期間擅自調高費用或收取額外費用", "law": "準公共要點第8點", "summary": "合作對象擅自調高費用或收取額外費用者，直轄市、縣市政府應即終止契約。", "effect": "應即終止準公共契約；因違法超收者，應退還委託人。", "penalty": "終止契約與退費；罰鍰視是否另涉其他法規。", "fine": "視情節", "improve": "否", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "應即終止契約", "future": ""}, {"cat": "fee", "id": "D04", "title": "擅自改變原收托條件或收托比違反法令", "law": "準公共要點第8點", "summary": "合作對象擅自改變原收托條件或收托比違反法令規定者，應即終止契約。", "effect": "應即終止契約；若同時違反收托人數規定，另依兒少權法第90條處理。", "penalty": "若涉及收托人數，6,000～30,000元並限期改善等。", "fine": "視情節", "improve": "是", "per": "是", "stop": "否", "transfer": "否", "revoke": "可能", "public": "應即終止契約", "future": ""}, {"cat": "fee", "id": "D05", "title": "以詐術、提供不實或失效資料申請準公共", "law": "準公共要點第8點", "summary": "合作對象以詐術、提供不實或失效資料，或其他不正當方式取得簽約資格者，應即終止契約。", "effect": "應即終止契約；已領補助或費用可能依契約及相關規定追回。", "penalty": "視情節可能追回款項或另依法律處理。", "fine": "視情節", "improve": "否", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "應即終止契約", "future": ""}, {"cat": "inspect", "id": "E01", "title": "規避、妨礙或拒絕檢查、訪視、輔導及監督", "law": "兒少權法第26條第4項、第90條；管理辦法第5條第4款；準公共要點第8點", "summary": "居家式托育服務提供者不得規避、妨礙或拒絕主管機關管理、輔導、監督及檢查，並應提供必要協助；管理辦法亦禁止規避、妨礙或拒絕檢查、訪視、輔導及監督。", "effect": "違反者可能依兒少權法第90條裁罰；準公共合作期間發生者應即終止契約。", "penalty": "兒少權法第90條可能為6,000～30,000元並命限期改善；情節重大或屢未改善可能廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "視情節", "transfer": "視情節", "revoke": "可能", "public": "應即終止契約", "future": ""}, {"cat": "inspect", "id": "E02", "title": "檢查時未提供實際收托兒童資料、收托方式、時間、契約", "law": "管理辦法第19條", "summary": "接受檢查輔導時，應提供實際收托兒童姓名、年齡、收托方式、時間、期間、契約等資料。", "effect": "可列入不配合檢查或輔導；若拒絕提供且構成規避、妨礙或拒絕檢查，另依第5條第4款、兒少權法第90條處理。", "penalty": "視是否構成拒檢；可能6,000～30,000元。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "可能", "public": "可能影響準公共；若符合準公共作業要點第8點，應即終止契約", "future": ""}, {"cat": "inspect", "id": "E03", "title": "檢查時未提供共同居住成員或主要照顧人名冊", "law": "管理辦法第19條", "summary": "檢查輔導時應提供實際共同居住成員姓名、與托育人員關係、年齡；共同托育者應提供主要照顧人名冊。", "effect": "可列入不配合檢查或輔導；涉及共同居住者不適任或共同托育責任不明時風險增加。", "penalty": "視是否構成拒檢或其他違規。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "可能", "public": "可能影響準公共；若符合準公共作業要點第8點，應即終止契約", "future": ""}, {"cat": "inspect", "id": "E04", "title": "檢查時未提供健康檢查或在職訓練證明", "law": "管理辦法第19條", "summary": "檢查輔導時應提供托育人員健康檢查證明及在職訓練證明。", "effect": "可列入不配合檢查或未遵守第4條訓練、健康檢查義務；換證亦受影響。", "penalty": "視情節。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "否", "transfer": "否", "revoke": "可能", "public": "可能影響準公共與換證", "future": ""}, {"cat": "inspect", "id": "E05", "title": "經列入應改善事項，屆期未改善", "law": "兒少權法第90條；管理辦法第18-1條（輔導改善概念）", "summary": "輔導或檢查結果列入應改善事項，屆期未改善者，可能進入裁處或加重處理。", "effect": "若屬兒少權法第90條所列登記、收托人數、輔導結果列入應改善而屆期未改善，可能罰鍰、按次處罰、重大或三次仍未改善得廢止登記。", "penalty": "6,000～30,000元；得按次處罰；情節重大或三次仍未改善得廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "視情節", "transfer": "視情節", "revoke": "可能", "public": "可能影響準公共；若符合準公共作業要點第8點，應即終止契約", "future": ""}, {"cat": "inspect", "id": "E06", "title": "主管機關命停止服務後仍繼續服務", "law": "兒少權法第26-1條第4項、第90條第7項", "summary": "有不得擔任居家托育人員情事者，主管機關應命停止服務並強制轉介；不依命令停止服務者另有罰則。", "effect": "處6萬元以上30萬元以下罰鍰，並得公布姓名；已登記者並廢止登記。", "penalty": "60,000～300,000元；得公布姓名。", "fine": "是", "improve": "否", "per": "否", "stop": "是", "transfer": "是", "revoke": "是", "public": "重大影響／終止契約", "future": ""}, {"cat": "inspect", "id": "E07", "title": "拒不配合轉介兒童", "law": "兒少權法第90條", "summary": "未登記或依法命轉介時，拒不配合轉介所收托兒童者，主管機關得強制轉介並裁罰。", "effect": "處6,000元以上3萬元以下罰鍰，主管機關並應強制轉介所收托兒童。", "penalty": "6,000～30,000元。", "fine": "是", "improve": "否", "per": "否", "stop": "可能", "transfer": "是", "revoke": "視情節", "public": "重大影響；若符合準公共作業要點第8點，應即終止契約", "future": ""},
+{"cat": "care", "id": "C17", "title": "托育服務時間使六歲以下或需要特別看護之收托兒童獨處，或由不適當之人代為照顧", "law": "現行：兒少權法第51條；管理辦法第4條第1款、第5條第1款；兒托法補充：第19條、第78條", "summary": "托育服務時間不得使六歲以下或需要特別看護之收托兒童獨處，也不得由不適當之人代為照顧；不適當之人包含無行為能力人、七歲以上未滿十二歲兒童，或依客觀事實足認有影響兒童身心健康或安全之虞者。", "effect": "高風險照顧事件；可能涉及未專心托育、疏忽照顧或兒童保護事件。", "penalty": "依具體情節處理；若涉及兒少保護事件，可能命停止服務、轉介或廢止登記。", "fine": "是／視情節", "improve": "是／視情節", "per": "是／視情節", "stop": "可能", "transfer": "可能", "revoke": "可能", "public": "準公共作業要點第8點：若屬居家管理辦法第5條違規經查證屬實，應即終止契約", "future": "第19條明定居家托育人員於托育服務時間應於托育服務處所專心托育，不得使六歲以下或需要特別看護之收托兒童獨處或由不適當之人代為照顧。<br><strong>罰則：</strong>依第78條，未依第19條規定於收托時間及托育服務處所專心托育者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。"},
+{"cat": "care", "id": "C18", "title": "兒童發生緊急傷病或事故傷害，未依救護原則處理", "law": "兒托法補充：第20條；現行可依兒童安全與照顧義務綜合判斷", "summary": "兒童發生緊急傷病或事故傷害時，居家托育人員應依主管機關訂定之救護原則，執行施救步驟、護送就醫、呼叫緊急救護專線支援等事項，並於家長或實際照顧者到達前採取必要處置。", "effect": "可能涉及照顧安全、事故處理及兒童最佳利益；若造成兒童權益受損，可能併依兒少保護或其他規定處理。", "penalty": "兒托法第20條本身未直接列入第78條居家托育人員立即罰鍰款項；但可能依後續子法、違規記點或個案情節處理。", "fine": "視情節", "improve": "是", "per": "視情節", "stop": "視情節", "transfer": "視情節", "revoke": "視情節", "public": "可能影響準公共及評估", "future": "第20條明定地方主管機關應訂定居家托育服務緊急傷病或事故傷害救護原則；兒童發生緊急傷病或事故傷害時，居家托育人員應依該原則執行施救、護送就醫、呼叫緊急救護專線等事項，並於家長或實際照顧者未到達前採取必要處置。<br><strong>罰則提醒：</strong>第20條未直接列入第78條居家托育人員立即罰鍰款項；實際裁處仍須依施行後子法、違規記點辦法及個案情節判斷。"},
+{"cat": "care", "id": "C19", "title": "未交付書面契約影本予居家托育服務中心", "law": "兒托法補充：第17條、第84條", "summary": "居家托育人員除應與家長或實際照顧者訂定書面契約外，也應提供契約影本予居家托育服務中心。", "effect": "影響居托中心掌握收托資料、契約內容與後續爭議處理。", "penalty": "兒托法施行後，依第84條可令限期改善；屆期未改善者處6,000元以上3萬元以下罰鍰，並按次處罰。", "fine": "是", "improve": "是", "per": "是", "stop": "否／視情節", "transfer": "否", "revoke": "視情節", "public": "可能影響準公共管理", "future": "第17條第1項後段明定，居家托育人員應提供書面契約影本予居家托育服務中心。<br><strong>罰則：</strong>依第84條，未交付書面契約影本予居家托育服務中心者，令限期改善，屆期未改善者，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰。"},
+{"cat": "care", "id": "C20", "title": "家長對托育服務方式或內容有意見，未提出說明或協議調整", "law": "兒托法補充：第21條", "summary": "家長或實際照顧者對居家托育人員提供之托育服務方式及內容有意見時，得請求托育人員提出說明，並得經雙方協議視需要修正或調整。", "effect": "可能衍生照顧爭議；建議作為輔導提醒與溝通紀錄項目。", "penalty": "第21條偏向托育說明與溝通機制，未直接列入第78條罰鍰款項。", "fine": "否／視情節", "improve": "是", "per": "否", "stop": "否", "transfer": "否", "revoke": "否／視情節", "public": "可能影響服務評估", "future": "第21條明定，兒童之法定代理人或實際照顧兒童之人對托育服務方式及內容有意見時，得請求居家托育人員提出說明，並得經雙方協議視需要修正或調整。<br><strong>罰則提醒：</strong>第21條未直接列入第78條居家托育人員立即罰鍰款項，較適合作為照顧爭議、輔導及溝通紀錄項目。"},
+{"cat": "care", "id": "C21", "title": "知悉違法或不當對待事件，未於24小時內通報主管機關", "law": "現行：兒少權法第53條；兒托法補充：第59條、第78條", "summary": "執行業務時知悉兒童有違法或不當對待事件，應向直轄市、縣（市）主管機關通報，至遲不得超過24小時。", "effect": "影響兒童保護及主管機關即時介入；若同時涉及不當對待事件，應立即補行通報並配合調查。", "penalty": "兒托法施行後，居家托育人員未依第59條第1項通報者，依第78條處1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善按次處罰；情節重大或三次仍未改善者，得公布姓名及廢止登記。", "fine": "是", "improve": "是", "per": "是", "stop": "視情節", "transfer": "視情節", "revoke": "可能", "public": "重大影響；若符合準公共作業要點第8點，應即終止契約", "future": "第59條明定托育相關人員或居家托育服務中心工作人員於執行業務時，知悉涉有違法事件，應通報直轄市、縣（市）主管機關，至遲不得超過24小時。<br><strong>罰則：</strong>居家托育人員未依第59條第1項通報者，依第78條處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。"},
+{"cat": "inspect", "id": "E08", "title": "檢查時藉故藏匿兒童", "law": "現行：管理辦法第5條第4款、第19條；兒托法補充：第13條、第78條、第79條", "summary": "主管機關或居家托育服務中心進行監督及檢查時，不得規避、妨礙或拒絕；檢查時不得藉故藏匿兒童。", "effect": "屬重大檢查配合義務違反，可能影響收托人數查核與兒童安全。", "penalty": "兒托法施行後，居家托育人員違反者依第78條；居家托育人員以外之任何人違反者依第79條，均可能處1萬元以上5萬元以下罰鍰。", "fine": "是", "improve": "是／視情節", "per": "是／視情節", "stop": "視情節", "transfer": "視情節", "revoke": "可能", "public": "重大影響；若符合準公共作業要點第8點，應即終止契約", "future": "第13條第4項明定任何人不得規避、妨礙或拒絕主管機關及居家托育服務中心對居家托育人員之監督及檢查；檢查時不得藉故藏匿兒童。<br><strong>罰則一：</strong>居家托育人員違反者，依第78條處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。<br><strong>罰則二：</strong>居家托育人員以外之任何人違反者，依第79條處新臺幣1萬元以上5萬元以下罰鍰。"}
+,
+{"cat": "register", "id": "A11", "title": "限期辦理登記或改善期間增加收托", "law": "現行：兒少權法第90條；兒托法補充：第75條", "summary": "居家托育人員於主管機關限期辦理登記或改善期間，不得增加收托兒童。", "effect": "屬未登記或登記管理違規的加重情形，主管機關可命停止收托、轉介兒童或強制轉介。", "penalty": "現行兒少權法第90條：限期改善期間增加收托兒童者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰。", "fine": "是", "improve": "是", "per": "是", "stop": "可能", "transfer": "可能", "revoke": "未登記者不屬廢止登記；已登記者視情節", "public": "不得簽約或可能終止契約", "future": "第75條針對居家托育人員未登記提供托育服務及限期辦理登記期間增加收托設有處罰。<br><strong>罰則提醒：</strong>限期辦理登記期間增加收托，兒托法罰鍰較現行兒少權法提高，可能處新臺幣2萬元以上10萬元以下罰鍰，並得命停止收托及轉介兒童。"},
+{"cat": "register", "id": "A12", "title": "租借、轉讓或借用托育服務證書", "law": "現行：管理辦法第13條；兒托法補充：第62條、第74條", "summary": "托育人員不得將托育服務證書或資格證明文件租借、轉讓或提供他人使用，也不得借用他人證書辦理或提供服務。", "effect": "影響托育資格真實性與管理秩序，可能涉及資格不實、未登記或違法收托。", "penalty": "現行可依管理辦法及主管機關管理處分處理；若因此造成無照或未登記收托，另依兒少權法第90條處理。", "fine": "是／視情節", "improve": "是／視情節", "per": "視情節", "stop": "可能", "transfer": "可能", "revoke": "可能", "public": "不得簽約或可能終止契約", "future": "第62條明定不得租借托育服務證書或資格證明文件予他人使用。<br><strong>罰則：</strong>依第74條，個人租借證書或資格證明文件予他人使用者，處新臺幣3萬元以上15萬元以下罰鍰；涉及機構租借他人證書者，依機構相關罰則處理。"},
+{"cat": "care", "id": "C25", "title": "不當對待、體罰、霸凌、性騷擾或其他損害兒童身心行為", "law": "現行：兒少權法第49條、第97條；兒托法補充：第47條、第69條、第76條、第87條", "summary": "對兒童有身心虐待、情節重大之體罰、霸凌、性騷擾或其他違法、不當對待行為。", "effect": "重大兒童保護事件；可能命停止服務、強制轉介、廢止登記，並影響或終止準公共合作。", "penalty": "現行依兒少權法及兒童保護程序處理；若經認定有不得擔任托育人員情事，主管機關可命停止服務、強制轉介，已登記者廢止登記。", "fine": "是", "improve": "視情節", "per": "視情節", "stop": "是／可能", "transfer": "是／可能", "revoke": "可能", "public": "重大違規，可能立即終止契約", "future": "兒托法強化不當對待處理機制，對嚴重違法或不當對待行為提高處罰強度。<br><strong>罰則提醒：</strong>情節重大者可能處新臺幣6萬元以上60萬元以下罰鍰，並公布行為人姓名；涉及不得擔任托育人員情事者，並可能不得擔任托育人員。實際仍依主管機關調查及審議結果認定。"},
+{"cat": "care", "id": "C26", "title": "使兒童獨處或由不適當之人照顧（含兒少權法罰鍰）", "law": "現行：兒少權法第51條、第99條；兒托法補充：第19條、第78條", "summary": "不得使六歲以下或需要特別看護之兒童獨處，或由不適當之人代為照顧。", "effect": "屬高風險照顧事件，可能涉及疏忽照顧、兒童安全及兒童保護程序。", "penalty": "現行兒少權法第99條可處新臺幣3,000元以上1萬5,000元以下罰鍰。若同時涉及托育人員照顧義務違反，得併依相關規定處理。", "fine": "是", "improve": "是／視情節", "per": "視情節", "stop": "可能", "transfer": "可能", "revoke": "可能", "public": "準公共作業要點第8點：符合第8點情形者應即終止契約", "future": "第19條第1項第2款明定，居家托育人員於托育服務時間不得使六歲以下或需要特別看護之收托兒童獨處或由不適當之人代為照顧。<br><strong>罰則：</strong>依第78條，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。"},
+{"cat": "care", "id": "C27", "title": "責任通報人員知悉兒童遭違法或不當對待，未於24小時內通報", "law": "現行：兒少權法第53條、第100條；兒托法補充：第59條、第78條、第80條", "summary": "托育相關人員執行業務時，知悉兒童遭受違法或不當對待事件，應於24小時內通報主管機關。", "effect": "影響兒童保護即時介入，可能被認定為責任通報違反。", "penalty": "現行兒少權法第100條：違反通報義務者，處新臺幣6,000元以上6萬元以下罰鍰。", "fine": "是", "improve": "是／視情節", "per": "視情節", "stop": "視情節", "transfer": "視情節", "revoke": "可能", "public": "重大影響；若符合準公共作業要點第8點，應即終止契約", "future": "第59條明定托育相關人員或居家托育服務中心工作人員知悉違法事件，應通報直轄市、縣（市）主管機關，至遲不得超過24小時。<br><strong>罰則一：</strong>居家托育人員未依規定通報者，依第78條處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者，按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。<br><strong>罰則二：</strong>托育機構或居家托育服務中心相關人員未通報者，依第80條處理。"},
+{"cat": "inspect", "id": "E09", "title": "居家托育人員違規記點、暫停新收托或廢止登記", "law": "兒托法補充：第86條", "summary": "居家托育人員違反兒托法相關規定，主管機關除罰鍰外，得依危害程度記違規點數。", "effect": "屬兒托法施行後的重要行政處分機制；可能導致暫停新收托或廢止登記。", "penalty": "二年內違規點數達一定次數者，得命其暫停新收托服務；五年內暫停新收托達二次，再違規被記點者，得廢止登記，且一年內不得重新辦理。", "fine": "非罰鍰，屬行政處分機制", "improve": "視情節", "per": "依記點辦法", "stop": "可能暫停新收托", "transfer": "視情節", "revoke": "可能", "public": "重大影響；若符合準公共作業要點第8點，應即終止契約", "future": "第86條建立居家托育人員違規記點制。主管機關除裁處罰鍰外，得依危害程度記違規點數；二年內違規點數達一定次數者，命其暫停新收托服務；五年內暫停新收托達二次，再違規被記點者，廢止其登記，且一年內不得重新辦理。"}
+,
+{"cat": "fee", "id": "D09", "title": "準公共作業要點第八點：應即終止契約情形", "law": "準公共作業要點第8點", "summary": "合作對象有第八點所列情形之一者，直轄市、縣（市）政府應即終止契約。包含：一、擅自調高費用或收取額外費用；二、擅自改變原收托條件或收托比違反法令規定；三、規避、妨礙或拒絕管理、輔導、監督及檢查；四、以詐術、提供不實或失效資料，經查證屬實；五、居家托育人員停托或服務登記證書效期屆滿且未申請換發；六、居家托育人員違反兒少權法第49條或居家管理辦法第5條、第7條、第13條第1項規定之一，經查證屬實。", "effect": "準公共合作契約應即終止；相關托育補助與獎助可能停止、追繳，且可能影響後續再簽約資格。", "penalty": "屬準公共契約效果，不是單純罰鍰。若同時違反兒少權法、居家管理辦法或兒童托育服務法，仍依各該法規另行裁罰。", "fine": "非罰鍰，屬契約終止效果", "improve": "多數屬應即終止，非僅限期改善", "per": "否", "stop": "準公共契約終止", "transfer": "視個案", "revoke": "視個案違規情節", "public": "應即終止契約；部分情形二年內不得再簽約或申請獎補助", "future": "準公共作業要點第8點為現行準公共退場重點。判斷違規時應優先檢核是否命中第8點；若命中，結果應清楚標示「準公共：應即終止契約」，並再依違規本身判斷是否另有罰鍰、停止服務、轉介或廢止登記。"}
+,
+{"cat": "fee", "id": "D10", "title": "未依規定期限提出退出準公共合作（例如未提前60日）", "law": "準公共作業要點；準公共合作契約", "summary": "準公共合作對象如欲退出或終止準公共合作，應依作業要點及契約約定，於期限前提出申請或通知。", "effect": "可能影響退出生效日、契約終止程序、補助核發、費用結算及後續合作資格；不等同當然退準公第8點或罰鍰。", "penalty": "通常非直接罰鍰，屬準公共契約管理效果；須依準公共作業要點、契約約定及地方政府認定辦理。", "fine": "否／視契約及個案", "improve": "視情節", "per": "否", "stop": "否", "transfer": "否", "revoke": "否", "public": "可能影響退出生效日、契約終止、補助核發、費用結算及後續準公共合作資格", "future": ""}
+];
+function qs(s){return document.querySelector(s)} function qsa(s){return Array.from(document.querySelectorAll(s))}
+function setStep(n){
+ ["p1","p2","p3"].forEach((id,i)=>qs("#"+id).classList.toggle("active",i===n-1));
+ ["s1","s2","s3"].forEach((id,i)=>{
+  let e=qs("#"+id);
+  e.className="step";
+  if(i===n-1)e.classList.add("active");
+  else if(i<n-1)e.classList.add("done");
+ });
+ setTimeout(()=>{
+  const target=document.querySelector(".container") || document.body;
+  target.scrollIntoView({behavior:"smooth", block:"start"});
+  window.scrollTo({top:0, behavior:"smooth"});
+ },80);
+}
+function renderCats(){let a=qs("#cats");a.innerHTML="";categories.forEach(c=>{let l=document.createElement("label");l.className="card";l.innerHTML=`<input type="checkbox" class="cat" value="${c.id}" onchange="this.closest('.card').classList.toggle('selected',this.checked)"><div><div class="ct">${c.title}</div><div class="cs">${c.sub}</div></div>`;a.appendChild(l)})}
+function selectedCats(){return qsa(".cat:checked").map(i=>i.value)} function go1(){setStep(1)} function go2(){if(!selectedCats().length){alert("請至少選擇一項問題類型。");return}renderDetails();setStep(2)} function go3(){let r=getSelected(); if(!r.length){alert("請勾選至少一項細項，或在收托人數表填入超過規定的人數。");return}setStep(3);generate()}
+
+function itemPriority(it){
+ const text = ((it.title||"")+" "+(it.law||"")+" "+(it.summary||"")+" "+(it.effect||"")+" "+(it.penalty||"")+" "+(it.public||"")+" "+(it.revoke||"")+" "+(it.stop||"")+" "+(it.transfer||""));
+ let score = 0;
+ if(/應即終止契約|終止契約|不得簽約|不予續約|退準公|第8點|第八點/.test(text)) score += 100;
+ if(/廢止登記|廢止其登記/.test(text)) score += 90;
+ if(/停止服務|命其停止|停止收托|暫停新收托/.test(text)) score += 80;
+ if(/強制轉介|轉介/.test(text)) score += 70;
+ if(/罰鍰|[0-9０-９]+萬|6萬|30萬|60萬|6000|6,000|3萬元|5萬元/.test(text)) score += 40;
+ if(/限期改善|按次處罰/.test(text)) score += 20;
+ return score;
+}
+function itemBadges(it){
+ const text = ((it.title||"")+" "+(it.law||"")+" "+(it.summary||"")+" "+(it.effect||"")+" "+(it.penalty||"")+" "+(it.public||"")+" "+(it.revoke||"")+" "+(it.stop||"")+" "+(it.transfer||""));
+ let badges = [];
+ const add = (cls, label) => { if(!badges.some(b=>b.label===label)) badges.push({cls,label}); };
+ if(/應即終止契約|終止契約|不得簽約|不予續約|退準公|第8點|第八點/.test(text)) add("critical","退準公／終止契約");
+ if(/廢止登記|廢止其登記/.test(text)) add("critical","可能廢止登記");
+ if(/停止服務|命其停止|停止收托|暫停新收托/.test(text)) add("critical","可能停止服務");
+ if(/強制轉介|轉介/.test(text)) add("warn","可能轉介");
+ if(/罰鍰|[0-9０-９]+萬|6萬|30萬|60萬|6000|6,000|3萬元|5萬元/.test(text)) add("warn","有罰鍰");
+ if(/限期改善|按次處罰/.test(text)) add("info","限改／按次");
+ return badges;
+}
+function itemBadgeHtml(it){
+ const badges = itemBadges(it);
+ if(!badges.length) return "";
+ return `<div class="item-badges">${badges.map(b=>`<span class="item-badge ${b.cls}">${b.label}</span>`).join("")}</div>`;
+}
+function itemClassByPriority(it){
+ const s = itemPriority(it);
+ if(s >= 90) return "item item-critical";
+ if(s >= 40) return "item item-warn";
+ return "item item-normal";
+}
+
+function renderDetails(){let cats=selectedCats(),kw="",area=qs("#details");area.innerHTML="";cats.forEach(cid=>{let c=categories.find(x=>x.id===cid);let block=document.createElement("div");block.className="block";block.innerHTML=`<h2>${c.title}</h2><div class="helper">${c.sub}</div>`;
+if(cid==="ratio"){block.innerHTML+=`<div class="count-box"><div class="count-title">收托人數填寫</div><div class="count-note">請填同一時段實際照顧人數。半日／日間／延長／臨時托育合計至多4人且未滿2歲至多2人；全日／夜間至多2人；達5人以上會補充兒托法第71條（尚未實施）。</div><table class="count-table"><thead><tr><th></th><th>未滿2歲</th><th>2歲以上</th></tr></thead><tbody>${["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"].map((n,i)=>`<tr><td>${n}</td><td><input type="number" min="0" class="count-input u2" data-row="${i}"></td><td><input type="number" min="0" class="count-input o2" data-row="${i}"></td></tr>`).join("")}</tbody></table></div>`}
+let fs=items.filter(it=>it.cat===cid && (!kw || (it.title+it.law+it.summary).includes(kw)));
+fs.sort((a,b)=>itemPriority(b)-itemPriority(a) || a.title.localeCompare(b.title,"zh-Hant"));
+block.innerHTML+=`<div class="priority-note">已優先排序：退準公／廢止登記／停止服務／罰鍰等高風險項目會排在前面並以顏色標示。</div>`;
+fs.forEach(it=>{let l=document.createElement("label");l.className=itemClassByPriority(it);l.innerHTML=`<input type="checkbox" class="detail" value="${it.id}"><div><div class="ct">${it.title}</div><div class="cs">${it.law}</div>${itemBadgeHtml(it)}</div>`;block.appendChild(l)});if(!fs.length) block.innerHTML+=`<div class="empty">沒有符合的細項。</div>`;area.appendChild(block)})}
+function num(sel,row){let e=qs(`${sel}[data-row="${row}"]`);return e?Number(e.value||0):0}
+function autoCounts(){if(!selectedCats().includes("ratio"))return [];let names=["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"],res=[];for(let i=0;i<6;i++){let u=num(".u2",i),o=num(".o2",i),t=u+o;if(t<=0)continue;let isFour=[0,1,4,5].includes(i),isTwo=[2,3].includes(i);if(isFour&&t>4)res.push(autoItem(names[i]+"合計超過4人",`${names[i]}未滿2歲 ${u} 人、2歲以上 ${o} 人，合計 ${t} 人，超過至多4人規定。`,t));if(isFour&&u>2)res.push(autoItem(names[i]+"未滿2歲超過2人",`${names[i]}未滿2歲 ${u} 人，超過至多2人規定。`,t));if(isTwo&&t>2)res.push(autoItem(names[i]+"合計超過2人",`${names[i]}未滿2歲 ${u} 人、2歲以上 ${o} 人，合計 ${t} 人，超過至多2人規定。`,t));}return res}
+function autoItem(title,summary,total){return {cat:"ratio",id:"auto"+title,title,law:"管理辦法第7條；兒少權法第90條；準公共作業要點第8點",summary:`${summary}<br><br><strong>管理辦法第7條：</strong>居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br><strong>兒少權法第90條：</strong>居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。`,effect:"違反收托人數規定；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。",penalty:"依兒少權法第90條第5項，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。",fine:"是",improve:"是",per:"是",stop:"視情節",transfer:"視情節",revoke:"可能",public:"準公共作業要點第8點：收托比違反法令規定，應即終止契約",future:total>=5?"第71條規定，居家托育人員違反收托人數規定且收托人數五人以上者，處6萬～30萬元罰鍰，並令限期改善；屆期未改善得按次處罰，情節重大或三次仍未改善者，廢止登記。":""}}
+function getSelected(){let ids=qsa(".detail:checked").map(i=>i.value);return items.filter(i=>ids.includes(i.id)).concat(autoCounts())}
+function flag(k,v){return `<div class="flag"><strong>${k}</strong><br>${v||"—"}</div>`}
+
+
+function hasPublicPoint8(it){
+ const law = it.law || "";
+ const title = it.title || "";
+ const pub = it.public || "";
+ const effect = it.effect || "";
+ const text = law + " " + title + " " + pub + " " + effect;
+ return (
+   text.includes("準公共作業要點第8點") ||
+   text.includes("準公共要點第8點") ||
+   text.includes("準公要點第8點") ||
+   text.includes("準公共作業要點第八點") ||
+   text.includes("準公共要點第八點") ||
+   text.includes("準公要點第八點") ||
+   (text.includes("準公共") && (text.includes("第8點") || text.includes("第八點"))) ||
+   (text.includes("準公") && (text.includes("第8點") || text.includes("第八點"))) ||
+   text.includes("應即終止契約")
+ );
+}
+function publicPoint8Summary(it){
+ const law = it.law || "";
+ const title = it.title || "";
+ const pub = it.public || "";
+ const effect = it.effect || "";
+ const text = law + " " + title + " " + pub + " " + effect;
+
+ if(title.includes("收托") || title.includes("收托比") || title.includes("人數") || law.includes("管理辦法第7條") || text.includes("收托比違反")){
+   return "準公共合作對象擅自改變原收托條件或收托比違反法令規定者，地方政府應即終止契約。";
+ }
+ if(title.includes("收費") || title.includes("費用") || title.includes("超收") || text.includes("額外費用") || text.includes("調高費用")){
+   return "準公共合作對象擅自調高費用、收取額外費用，或收取收退費基準以外費用者，地方政府應即終止契約。";
+ }
+ if(title.includes("檢查") || title.includes("拒") || title.includes("藏匿") || text.includes("規避") || text.includes("妨礙")){
+   return "準公共合作對象規避、妨礙或拒絕管理、輔導、監督及檢查者，地方政府應即終止契約。";
+ }
+ if(title.includes("不當") || title.includes("虐待") || title.includes("疏忽") || title.includes("兒童保護") || law.includes("兒少權法第49條") || law.includes("管理辦法第5條")){
+   return "準公共合作對象違反兒少權法第49條，或違反居家管理辦法第5條、第7條、第13條第1項規定之一，經查證屬實者，地方政府應即終止契約。";
+ }
+ if(title.includes("租借") || title.includes("轉讓") || law.includes("管理辦法第13條")){
+   return "準公共合作對象違反居家管理辦法第13條第1項規定，經查證屬實者，地方政府應即終止契約。";
+ }
+ return "合作對象有準公共作業要點第8點所列情形之一者，地方政府應即終止契約。";
+}
+
+
+function hasPublicRule(it){
+ const text = ((it.law||"") + " " + (it.title||"") + " " + (it.summary||"") + " " + (it.effect||"") + " " + (it.penalty||"") + " " + (it.public||""));
+ if(text.includes("非準公共作業要點") || text.includes("非準公共")) return false;
+ return text.includes("準公共") || text.includes("準公") || text.includes("準公共化");
+}
+function publicRuleParts(it){
+ const law = it.law || "";
+ const title = it.title || "";
+ const pub = it.public || "";
+ const effect = it.effect || "";
+ const penalty = it.penalty || "";
+ const summary = it.summary || "";
+ const text = law + " " + title + " " + pub + " " + effect + " " + penalty + " " + summary;
+ let parts = [];
+ const add = (key, text) => { if(!parts.some(p => p.key === key)) parts.push({key, text}); };
+
+ // 第3點：簽約資格、不得簽約、續約資格等
+ if(text.includes("第3點") || text.includes("不得簽約") || text.includes("不予續約") || text.includes("最近二年")){
+   add("準公共作業要點第3點：", "準公共合作對象須符合簽約資格與消極資格限制；若有違反兒少權法、居家管理辦法、收費規定、托育品質或其他作業要點所列不得簽約情形，可能不得申請簽約或不予續約。");
+ }
+
+ // 第8點：應即終止契約
+ if(text.includes("第8點") || text.includes("第八點") || text.includes("應即終止契約") || text.includes("終止契約")){
+   if(title.includes("收托") || title.includes("收托比") || title.includes("人數") || law.includes("管理辦法第7條") || text.includes("收托比違反")){
+     add("準公共作業要點第8點：", "準公共合作對象擅自改變原收托條件或收托比違反法令規定者，地方政府應即終止契約。");
+   } else if(title.includes("收費") || title.includes("費用") || title.includes("超收") || text.includes("額外費用") || text.includes("調高費用")){
+     add("準公共作業要點第8點：", "準公共合作對象擅自調高費用、收取額外費用，或收取收退費基準以外費用者，地方政府應即終止契約。");
+   } else if(title.includes("檢查") || title.includes("拒") || title.includes("藏匿") || text.includes("規避") || text.includes("妨礙")){
+     add("準公共作業要點第8點：", "準公共合作對象規避、妨礙或拒絕管理、輔導、監督及檢查者，地方政府應即終止契約。");
+   } else if(title.includes("不當") || title.includes("虐待") || title.includes("疏忽") || title.includes("兒童保護") || law.includes("兒少權法第49條") || law.includes("管理辦法第5條")){
+     add("準公共作業要點第8點：", "準公共合作對象違反兒少權法第49條，或違反居家管理辦法第5條、第7條、第13條第1項規定之一，經查證屬實者，地方政府應即終止契約。");
+   } else if(title.includes("停托") || title.includes("換發") || title.includes("效期") || title.includes("退出") || title.includes("退準公")){
+     add("準公共作業要點第8點：", "準公共合作對象停托、服務登記證書效期屆滿未申請換發，或有作業要點所列契約終止事由者，地方政府應依規定終止契約。");
+   } else {
+     add("準公共作業要點第8點：", "合作對象有準公共作業要點第8點所列情形之一者，地方政府應即終止契約。");
+   }
+ }
+
+ // 第24點：獎助減列/補助處理
+ if(text.includes("第24點") || text.includes("減列") || text.includes("獎助") || text.includes("營運費") || text.includes("設施設備")){
+   add("準公共作業要點第24點：", "準公共合作對象如違反相關法令或作業要點，經主管機關處罰或命限期改善，設施設備費、營運費或其他獎助得依作業要點於當年度或次年度減列；減列比例、期間及適用對象依地方政府及作業要點認定。");
+ }
+
+ // 退出準公共：60日提前通知/退出程序（若文字有60日、退出、退準公）
+ if(text.includes("60") || text.includes("六十") || title.includes("退出") || title.includes("退準公") || title.includes("終止合作")){
+   add("準公共退出程序：", "準公共合作對象如欲退出或終止準公共合作，應依作業要點及契約約定於期限前提出申請或通知；未依期限提出者，可能影響退出生效日、契約終止程序、補助核發、費用結算及後續合作資格。此類通常屬契約管理效果，非當然罰鍰或廢止登記。");
+ }
+
+ // 泛用提醒：有準公共但未命中特定點
+ if(!parts.length && hasPublicRule(it)){
+   add("準公共作業要點：", "本項涉及準公共合作資格或契約管理，應檢視準公共作業要點及契約約定，判斷是否有不得簽約、不予續約、應即終止契約、獎助減列、補助停止或追繳等處分效果。");
+ }
+ return parts;
+}
+function publicImpactText(it){
+ const parts = publicRuleParts(it);
+ if(!parts.length) return it.public || "視個案";
+ const important = parts.map(p => p.key + p.text).join("；");
+ return important;
+}
+
+function articleSummary(it){
+ const law=it.law||"", title=it.title||"";
+ let parts=[];
+ const add=(key,text)=>{ if(!parts.some(p=>p.key===key)) parts.push({key,text}); };
+
+ if(law.includes("管理辦法第4條") || law.includes("居管辦法第4條")){
+   if(law.includes("第4條第1款") || title.includes("最佳利益") || title.includes("未專心托育")){
+     add("管理辦法第4條第1款：", "托育人員應優先考量兒童之最佳利益，並專心提供托育服務。");
+   } else if(law.includes("第4條第2款") || title.includes("書面契約")){
+     add("管理辦法第4條第2款：", "托育人員應與收托兒童之父母、監護人或其他實際照顧之人訂定書面契約。");
+   } else if(law.includes("第4條第3款") || title.includes("洩漏") || title.includes("個資") || title.includes("保密")){
+     add("管理辦法第4條第3款：", "托育人員對收托兒童及其家人之個人資料應予保密；但經當事人同意或依法應予通報或提供者，不在此限。");
+   } else if(law.includes("第4條第4款") || title.includes("在職訓練") || title.includes("研習") || title.includes("基本救命術") || title.includes("CPR")){
+     add("管理辦法第4條第4款：", "托育人員每年至少應接受十八小時之在職訓練；每二年所接受之在職訓練，應包括八小時以上之基本救命術。");
+   } else if(law.includes("第4條第5款") || title.includes("健康檢查")){
+     add("管理辦法第4條第5款：", "托育人員每二年至少應接受一次健康檢查。");
+   } else if(law.includes("第4條第6款") || title.includes("責任保險") || title.includes("投保")){
+     add("管理辦法第4條第6款：", "托育人員應於收托兒童當日前，投保責任保險。");
+   } else {
+     add("管理辦法第4條：", "托育人員應遵守下列事項：優先考量兒童最佳利益並專心托育、與家長或實際照顧者訂定書面契約、保密收托兒童及其家人個人資料、每年完成在職訓練、每二年接受健康檢查，並於收托兒童當日前投保責任保險。");
+   }
+ }
+ if(law.includes("管理辦法第5條")||law.includes("居管辦法第5條")){
+  if(law.includes("第5條第1款")) add("管理辦法第5條第1款：","居家托育人員不得虐待、疏忽或有其他違反保護兒童規定之行為。");
+  else add("管理辦法第5條：","居家托育人員不得虐待、疏忽或有其他違反保護兒童規定行為；不得於收托時間兼任或經營足以影響托育服務之職務或事業；不得規避、妨礙或拒絕檢查、訪視、輔導及監督。");
+ }
+ if(law.includes("管理辦法第7條")||law.includes("居管辦法第7條")) add("管理辦法第7條：","居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。");
+ if(law.includes("管理辦法第11條")||title.includes("證書懸掛")) add("管理辦法第11條：","提供在宅托育服務者，應將居家托育服務登記證書懸掛於服務登記處所足資辨識之明顯處。");
+ if(law.includes("管理辦法第13條")||title.includes("租借")||title.includes("轉讓")){
+  if(law.includes("第13條第1項")) add("管理辦法第13條第1項：","居家托育人員不得將服務登記證書租借、轉讓或提供他人使用。");
+  else add("管理辦法第13條：","居家托育人員不得將服務登記證書租借、轉讓或提供他人使用；證書登載事項變更、遺失、毀損或滅失時，應依規定申請變更或補發。");
+ }
+ if(law.includes("管理辦法第14條")||law.includes("居管辦法第14條")) add("管理辦法第14條：","居家托育服務登記證書登載事項有變更、遺失、毀損或滅失等情形時，應依規定期限申請變更、換發或補發。");
+ if(law.includes("管理辦法第16條")||title.includes("7日")||title.includes("異動")) add("管理辦法第16條：","居家托育人員開始收托、結束收托，或收托方式、時間、期間等收托資料異動時，應於規定期限內向主管機關或居家托育服務中心報備。");
+ if(law.includes("管理辦法第18-1條")||title.includes("環境安全")) add("管理辦法第18-1條：","提供在宅托育服務之環境，應符合托育服務環境安全相關規定，並接受主管機關或居家托育服務中心辦理之環境安全檢查。");
+ if(law.includes("管理辦法第19條")||title.includes("未提供資料")) add("管理辦法第19條：","主管機關或居家托育服務中心辦理檢查、訪視、輔導及監督時，居家托育人員應提供收托兒童姓名、年齡、收托方式、時間、期間、契約、共同居住成員、主要照顧人、健康檢查或在職訓練證明等必要資料。");
+
+ if(law.includes("兒少權法第26條")||law.includes("第26條")) add("兒少權法第26條：","居家式托育服務提供者應辦理登記，並接受主管機關管理、輔導、監督及檢查；未完成登記者，不得提供居家式托育服務。");
+ if(law.includes("兒少權法第26-1條")||law.includes("第26-1條")) add("兒少權法第26-1條：","居家式托育服務提供者如有兒少權法第49條各款行為經查證屬實，或有違法、不當行為且影響收托兒童權益重大等情形，主管機關得命其停止服務、強制轉介收托兒童；已完成登記者，廢止其登記。");
+ if(law.includes("兒少權法第26-2條")||law.includes("第26-2條")) add("兒少權法第26-2條：","與居家托育人員共同居住之人如有特定不適任情形，或有客觀事實足認有傷害兒童之虞者，該托育人員以提供到宅托育為限。");
+ if(law.includes("兒少權法第49條")||law.includes("第49條")) add("兒少權法第49條：","任何人對兒童及少年不得有遺棄、身心虐待、疏忽、利用兒少從事有害身心之行為，或其他對兒少身心有不當影響之行為。");
+ if(law.includes("兒少權法第51條")||law.includes("第51條")) add("兒少權法第51條：","父母、監護人或其他實際照顧兒童及少年之人，不得使6歲以下兒童或需要特別看護之兒童及少年獨處，或由不適當之人代為照顧。");
+ if(law.includes("兒少權法第53條")||law.includes("第53條")) add("兒少權法第53條：","醫事、社政、教育、保育、警政、司法等執行兒童及少年福利業務人員，知悉兒童及少年有保護事件或受違法、不當對待情形時，應立即通報主管機關，至遲不得超過24小時。");
+ if(law.includes("兒少權法第90條")||law.includes("第90條")) add("兒少權法第90條：","居家式托育服務提供者未辦理登記、違反收托人數、規避或妨礙主管機關管理檢查等規定者，依情形處新臺幣6,000元以上3萬元以下罰鍰、命限期改善、得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。未登記者經命轉介而拒不配合，或不依停止服務命令者，另有加重處罰及強制轉介處理。");
+ if(law.includes("兒少權法第97條")||law.includes("第97條")) add("兒少權法第97條：","違反兒少權法第49條對兒童及少年有不當對待、虐待、疏忽等行為者，依情節裁處罰鍰，並可能公布姓名或名稱。");
+ if(law.includes("兒少權法第99條")||law.includes("第99條")) add("兒少權法第99條：","違反兒少權法第51條，使6歲以下或需要特別看護之兒童及少年獨處，或由不適當之人代為照顧者，處新臺幣3,000元以上1萬5,000元以下罰鍰。");
+ if(law.includes("兒少權法第100條")||law.includes("第100條")) add("兒少權法第100條：","責任通報人員違反兒少權法第53條通報義務者，處新臺幣6,000元以上6萬元以下罰鍰。");
+
+ if(hasPublicPoint8(it)){
+  add("準公共作業要點第8點：", publicPoint8Summary(it));
+  if(title.includes("收托")||title.includes("收托比")||law.includes("管理辦法第7條")) add("準公共作業要點第8點：","準公共合作對象擅自改變原收托條件或收托比違反法令規定者，地方政府應即終止契約。");
+  else if(title.includes("收費")||title.includes("費用")||title.includes("超收")) add("準公共作業要點第8點：","準公共合作對象擅自調高費用、收取額外費用，或收取收退費基準以外費用者，地方政府應即終止契約。");
+  else if(title.includes("檢查")||title.includes("拒")||title.includes("藏匿")) add("準公共作業要點第8點：","準公共合作對象規避、妨礙或拒絕管理、輔導、監督及檢查者，地方政府應即終止契約。");
+  else if(title.includes("不當")||title.includes("虐待")||title.includes("疏忽")||law.includes("兒少權法第49條")||law.includes("管理辦法第5條")) add("準公共作業要點第8點：","準公共合作對象違反兒少權法第49條，或違反居家管理辦法第5條、第7條、第13條第1項規定之一，經查證屬實者，地方政府應即終止契約。");
+  else add("準公共作業要點第8點：","合作對象有準公共作業要點第8點所列情形之一者，地方政府應即終止契約。");
+ }
+ const publicParts = publicRuleParts(it);
+ publicParts.forEach(p => add(p.key, p.text));
+
+ if(!parts.length) return it.summary || "";
+ return `<div class="article-summary">`+parts.map(p=>`<div class="article-row"><strong>${p.key}</strong><span>${p.text}</span></div>`).join("")+`</div>`;
+}
+
+
+function futureText(it){
+ const law=it.law||"", title=it.title||"", oldFuture=it.future||"";
+ let parts=[];
+ const add=(key,text)=>{ if(!parts.some(p=>p.key===key)) parts.push({key,text}); };
+ if(title.includes("虐待")||title.includes("疏忽")||title.includes("不當對待")||title.includes("體罰")||title.includes("霸凌")||title.includes("性騷擾")||law.includes("兒少權法第49條")){
+  add("兒托法第47條：","托育相關人員或居家托育服務中心工作人員不得對受托兒童有身心虐待、體罰、霸凌、性騷擾、不當管教及其他對兒童之身心暴力或不當對待行為。");
+  add("兒托法第69條：","違反第47條第1項，對兒童有身心虐待，或情節重大之體罰、霸凌、性騷擾、不當管教、其他身心暴力或不當對待行為者，處行為人新臺幣6萬元以上60萬元以下罰鍰，並公布行為人姓名及其所屬托育機構名稱。");
+  add("兒托法第76條：","違反第47條第1項之行為，情節尚非重大者，處新臺幣6,000元以上6萬元以下罰鍰，並以公布行為人姓名及機構名稱為原則。");
+  add("兒托法第86條：","居家托育人員違反兒托法規定，除依規定處罰、要求限期改善或為其他必要處置外，得依危害程度記違規點數；2年內違規點數達一定次數者，主管機關應命其暫停一定期間新收托服務；5年內暫停新收托達2次，再違規且遭記點者，廢止登記。");
+ }
+ if(it.cat==="ratio"||title.includes("收托人數")||title.includes("未滿2歲")||title.includes("超過2人")||title.includes("超收")){
+  add("兒托法第13條：","居家托育人員應辦理登記並取得居家托育服務證書後始得提供服務；第13條並授權中央主管機關訂定居家托育人員登記、收托人數、輔導、管理、檢查、廢止登記及其他應遵行事項。");
+  add("兒托法第71條：","居家托育人員違反收托人數規定且收托人數5人以上者，處新臺幣6萬元以上30萬元以下罰鍰，並令限期改善；屆期未改善者得按次處罰；情節重大或經處罰三次仍未改善者，得令其停止收托兒童。");
+  add("兒托法第78條：","居家托育人員違反第13條第5項所定辦法中有關收托人數規定，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+  add("兒托法第86條：","居家托育人員違反兒托法規定，除依規定處罰、要求限期改善或為其他必要處置外，得依危害程度記違規點數；2年內違規點數達一定次數者，主管機關應命其暫停一定期間新收托服務；5年內暫停新收托達2次，再違規且遭記點者，廢止登記。");
+ }
+ if(title.includes("未辦理登記")||title.includes("無照")||title.includes("限期辦理登記")){
+  add("兒托法第13條：","符合托育專業人員資格者，應向地方主管機關辦理登記，取得居家托育服務證書後，始得提供居家托育服務。");
+  add("兒托法第75條：","居家托育人員未完成登記即提供托育服務，或限期辦理登記期間增加收托者，依第75條裁處罰鍰，並得令停止收托及轉介兒童。");
+ }
+ if(title.includes("收費")||title.includes("費用")||it.cat==="fee"){
+  add("兒托法第16條：","居家托育人員不得收取直轄市、縣（市）主管機關公告之收費與退費項目及其金額基準以外之費用。");
+  add("兒托法第78條：","居家托育人員違反第16條規定，收取公告收費、退費項目或金額基準以外費用者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+ }
+ if(title.includes("書面契約")||title.includes("契約")){
+  add("兒托法第17條：","居家托育人員提供托育服務，應與送托兒童之法定代理人或實際照顧兒童之人訂定書面契約，並提供契約影本予居家托育服務中心。");
+  add("兒托法第78條：","未依第17條第1項規定訂定書面契約者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+  add("兒托法第83條：","書面契約內容違反定型化契約範本與應記載、不得記載事項者，居家托育人員經命限期改善屆期未改善，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰。");
+  add("兒托法第84條：","未提供書面契約影本予居家托育服務中心者，經令限期改善屆期未改善，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰。");
+ }
+ if(title.includes("責任保險")||title.includes("保險")){
+  add("兒托法第18條：","居家托育人員應於收托兒童當日前，完成投保專業責任保險；保險事故發生時，居家托育服務中心應主動協助辦理理賠事宜。");
+  add("兒托法第78條：","未依第18條第1項規定於收托兒童當日前完成投保專業責任保險者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+ }
+ if(title.includes("專心")||title.includes("兼職")||title.includes("兼任")||title.includes("獨處")||title.includes("不適當之人")){
+  add("兒托法第19條：","居家托育人員於托育服務時間，應於托育服務處所專心托育，不得兼任其他職務、經營事業或從事影響托育服務之活動；不得使6歲以下或需要特別看護之收托兒童獨處或由不適當之人代為照顧；不得有其他足以影響托育服務致損及收托兒童安全之行為。");
+  add("兒托法第78條：","未依第19條規定於收托時間及托育服務處所專心托育者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+ }
+ if(title.includes("通報")||title.includes("24小時")){
+  add("兒托法第59條：","托育相關人員或居家托育服務中心工作人員於執行業務時，知悉涉有違法事件，應通報直轄市、縣（市）主管機關，至遲不得超過24小時；通報人身分資料應予保密，不得因通報予以不利處分。");
+  add("兒托法第78條：","居家托育人員未依第59條第1項規定通報者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+  add("兒托法第80條：","托育機構或居家托育服務中心所屬人員未依第59條第1項規定通報者，依第80條處理，並可能命限期改善、按次處罰或為停止招收、停辦、廢止許可等處分。");
+ }
+ if(title.includes("檢查")||title.includes("拒")||title.includes("藏匿")||it.cat==="inspect"){
+  add("兒托法第13條：","主管機關及居家托育服務中心對居家托育人員得辦理監督及檢查，檢查得不經事先通知；任何人不得規避、妨礙或拒絕，檢查時不得藉故藏匿兒童。");
+  add("兒托法第78條：","居家托育人員違反第13條第4項規定，規避、妨礙或拒絕監督檢查，或檢查時藏匿兒童者，處新臺幣1萬元以上5萬元以下罰鍰，並令限期改善；屆期未改善者按次處罰；情節重大或經處罰三次仍未改善者，得公布姓名及廢止登記。");
+  add("兒托法第79條：","居家托育人員以外之任何人違反第13條第4項規定，規避、妨礙或拒絕檢查，或於檢查時藉故藏匿兒童者，處新臺幣1萬元以上5萬元以下罰鍰。");
+ }
+ if(title.includes("訓練")||title.includes("研習")||title.includes("CPR")){
+  add("兒托法第63條：","托育專業人員每年應完成18小時以上托育專業知能研習；另應於規定期限內完成兒童基本救命術訓練、事故傷害預防及處理或緊急救護情境演習等訓練。");
+  add("兒托法第84條：","未完成第63條規定之研習或訓練者，經令限期改善屆期未改善，處新臺幣6,000元以上3萬元以下罰鍰，並按次處罰；不可歸責者不罰。");
+ }
+ if(title.includes("租借")||title.includes("轉讓")||title.includes("證書")){
+  add("兒托法第62條：","托育相關人員不得租借托育服務證書或資格證明文件予他人使用。");
+  add("兒托法第74條：","個人租借證書或資格證明文件予他人使用者，處新臺幣3萬元以上15萬元以下罰鍰；涉及機構租借他人證書者，依機構相關罰則處理。");
+ }
+ if(!parts.length && oldFuture) return oldFuture;
+ if(!parts.length) return "兒童托育服務法已有更完整之居家托育服務規範；本項對應條號與罰則仍待正式施行條文及子法規確認。";
+ return `<div class="article-summary">`+parts.map(p=>`<div class="article-row"><strong>${p.key}</strong><span>${p.text}</span></div>`).join("")+`</div>`;
+}
+
+function penaltyFocus(it){
+ const fineText = (it.fine && it.fine.includes("是")) ? (it.penalty || "有罰鍰，金額依個案") : (it.fine || "視個案");
+ const revokeText = it.revoke || "視個案";
+ const publicText = publicImpactText(it);
+ const fineCritical = (it.fine && it.fine.includes("是")) || (it.penalty && /罰鍰|元|萬/.test(it.penalty));
+ const revokeCritical = /廢止|可能|是/.test(revokeText);
+ const publicCritical = /終止|第8點|第八點|不得簽約|不予續約|減列|停止|追繳|退出|退準公|補助/.test(publicText);
+ return `<div class="focus-box">
+   <div class="focus-title">⚠️ 重點檢視：罰鍰／廢止／退準公</div>
+   <div class="focus-grid">
+    <div class="focus-item ${fineCritical ? "focus-critical" : ""}"><strong>是否罰鍰／金額</strong>${highlightPenaltyText(fineText)}</div>
+    <div class="focus-item ${revokeCritical ? "focus-critical" : ""}"><strong>是否廢止登記</strong>${highlightPenaltyText(revokeText)}</div>
+    <div class="focus-item ${publicCritical ? "focus-critical" : ""}"><strong>準公共影響</strong>${highlightPenaltyText(publicText)}</div>
+   </div>
+  </div>`;
+}
+
+
+
+function highlightPenaltyText(text){
+ if(text === undefined || text === null) return "";
+ let s = String(text);
+ const patterns = [
+  "廢止登記",
+  "廢止其登記",
+  "廢止設立許可",
+  "停止服務",
+  "停止收托",
+  "暫停新收托",
+  "命其停止",
+  "令其停止",
+  "應即終止契約",
+  "終止契約",
+  "不得簽約",
+  "不予續約",
+  "強制轉介",
+  "轉介收托兒童",
+  "罰鍰",
+  "罰鍰金額",
+  "處新臺幣",
+  "處臺幣",
+  "處6萬",
+  "處 6萬",
+  "處1萬",
+  "處 1萬",
+  "處6,000",
+  "處 6,000",
+  "按次處罰",
+  "限期改善",
+  "公布姓名",
+  "公布行為人姓名",
+  "記違規點數"
+ ];
+ patterns.forEach(p=>{
+   const esc = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+   s = s.replace(new RegExp(esc, "g"), `<span class="penalty-key">${p}</span>`);
+ });
+ // 金額區間也標紅
+ s = s.replace(/(新臺幣)?([0-9,]+元以上[0-9,]+萬元?以下|[0-9]+萬元以上[0-9]+萬元以下|[0-9,]+元以上[0-9,]+元以下)/g, '<span class="penalty-key">$&</span>');
+ return s;
+}
+function highlightArticleHtml(html){
+ if(!html) return "";
+ return String(html).replace(/<span>(.*?)<\/span>/g, (m, inner)=>`<span>${highlightPenaltyText(inner)}</span>`);
+}
+
+function generate(){
+ let arr=getSelected(),r=qs("#result");
+ r.style.display="block";
+ if(!arr.length){r.innerHTML='<h2>尚未選擇</h2><div class="empty">請回前一步勾選細項或填入超收人數。</div>';return}
+ let html=`<h2>✅ 已產生 ${arr.length} 項法規對照</h2>`;
+ arr.forEach((it,idx)=>{
+  let c=categories.find(x=>x.id===it.cat)||{title:"系統判斷"};
+  let ftxt=futureText(it);
+  html+=`<div class="rcard">
+   <span class="tag">${c.title}</span>
+   <h3>${idx+1}. ${it.title}</h3>
+   <div class="lawbox">
+    <div class="lawbox-title">一、現行法規依據</div>
+    <div class="line"><strong>法規名稱／條號：</strong>${it.law}</div>
+    <div class="line">${highlightArticleHtml(articleSummary(it))}</div>
+    <div class="line"><strong>可能處理／效果：</strong>${highlightPenaltyText(it.effect||"")}</div>
+    <div class="line"><strong>罰則：</strong>${highlightPenaltyText(it.penalty)}</div>
+   </div>
+   ${penaltyFocus(it)}
+   <div class="flags">${flag("限期改善",it.improve)+flag("按次處罰",it.per)+flag("命停止服務",it.stop)+flag("強制轉介",it.transfer)}</div>
+   <div class="lawbox futurelaw">
+    <div class="lawbox-title">二、兒童托育服務法補充</div>
+    <div class="line">${highlightArticleHtml(ftxt)}</div>
+    <div class="line"><strong>可能處理／效果：</strong>${highlightPenaltyText(it.effect||"")}</div>
+    <div class="line"><strong>罰則：</strong>${highlightPenaltyText(it.penalty||"")}</div>
+    <div class="line"><strong>備註：</strong>兒童托育服務法尚未實施，條文補充供預先參考；現行裁處仍以現行法規及主管機關認定為準。</div>
+   </div>
+  </div>`
+ });
+ html+=`<div class="future"><strong>提醒：</strong>本工具為法規對照與輔助判斷，實際裁處仍以主管機關認定、正式法規版本與行政程序為準。</div>`;
+ r.innerHTML=html
+}
+function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=false;else i.value=""});qsa(".card").forEach(c=>c.classList.remove("selected"));qs("#details").innerHTML="";qs("#result").style.display="none";setStep(1)} renderCats();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/service-worker.js");
+  });
+}
+</script>
+</body></html>
