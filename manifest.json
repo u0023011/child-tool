@@ -1,1 +1,1 @@
-{"name":"托育工具","short_name":"托育工具","start_url":"/","display":"standalone","background_color":"#f6f1e8","theme_color":"#8B6B3F","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]}
+{"name":"托育工具箱","short_name":"托育","start_url":".","display":"standalone","background_color":"#f5ecdf","theme_color":"#9a7b4f","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]}
