@@ -1,29 +1,247 @@
-<!doctype html><html lang="zh-Hant"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>托育工具箱</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="favicon.ico">
-<style>
-body{font-family:"Microsoft JhengHei",sans-serif;background:#f5ecdf;margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}
-.card{background:#fff;border-radius:20px;padding:28px;max-width:430px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,.12)}
-h1{text-align:center;color:#8b6a3f}.logo{text-align:center;font-size:56px}
-input,button{display:block;width:100%;max-width:100%;padding:14px;border-radius:12px;font-size:18px;margin-top:12px;box-sizing:border-box}
-button{background:#9a7b4f;color:#fff;border:none;cursor:pointer}
-.item{display:none;background:#faf7f2;padding:14px;border-radius:12px;margin-top:12px;text-decoration:none;color:#333}
-</style></head><body><div class='card'>
-<div class='logo'>🌱</div><h1>托育工具箱</h1>
-<div id='login'>
-<input id='pw' type='password' placeholder='請輸入密碼'>
-<button onclick='go()'>進入工具</button></div>
-<div id='menu'>
-<a class='item' href='childcare-law/'>📖 托育法規工具</a>
-<a class='item' href='age-tool/'>👶 幼兒年齡檢核工具</a>
-</div>
-<script>
-function show(){login.style.display='none';document.querySelectorAll('.item').forEach(x=>x.style.display='block')}
-if(localStorage.getItem('toolLoginUntil')>Date.now())show();
-pw.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
-function go(){if(pw.value==='3728'){localStorage.setItem('toolLoginUntil',Date.now()+30*24*60*60*1000);show();}else alert('密碼錯誤');}
-</script><script>
-if(localStorage.getItem('toolLoginUntil')>Date.now()){sessionStorage.setItem('portalAuth','ok');}
-</script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>托育工具箱</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico">
+  <meta name="theme-color" content="#9a7b4f">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      background: #f5ecdf;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      color: #3f3328;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 30px 26px;
+      max-width: 430px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(80, 55, 30, .16);
+    }
+
+    .logo {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 12px;
+      border-radius: 24px;
+      background: #f5ecdf;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 44px;
+      box-shadow: inset 0 0 0 1px rgba(154,123,79,.18);
+    }
+
+    h1 {
+      text-align: center;
+      color: #8b6a3f;
+      font-size: 28px;
+      margin: 0 0 8px;
+      letter-spacing: .04em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #7a6b5b;
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    .field {
+      margin-top: 12px;
+    }
+
+    input,
+    button {
+      display: block;
+      width: 100%;
+      height: 52px;
+      border-radius: 14px;
+      font-size: 18px;
+      font-family: inherit;
+    }
+
+    input {
+      border: 1.5px solid #d8c7ae;
+      padding: 0 16px;
+      outline: none;
+      background: #fffdf9;
+      color: #3f3328;
+      text-align: center;
+      letter-spacing: .08em;
+    }
+
+    input:focus {
+      border-color: #9a7b4f;
+      box-shadow: 0 0 0 4px rgba(154, 123, 79, .12);
+    }
+
+    button {
+      margin-top: 14px;
+      background: #9a7b4f;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .error {
+      display: none;
+      margin-top: 10px;
+      color: #b13b2e;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .shake {
+      animation: shake .26s linear;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    #menu {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .item {
+      display: block;
+      background: #faf7f2;
+      padding: 18px;
+      border-radius: 16px;
+      margin-top: 14px;
+      text-decoration: none;
+      color: #3f3328;
+      border: 1px solid #eee0cf;
+      transition: .18s;
+    }
+
+    .item:active {
+      transform: scale(.99);
+    }
+
+    .item-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #7b5b32;
+      margin-bottom: 6px;
+    }
+
+    .item-desc {
+      font-size: 14px;
+      color: #7a6b5b;
+      line-height: 1.45;
+    }
+
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+      color: #9b8b7b;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="logo">🌱</div>
+    <h1>托育工具箱</h1>
+    <div class="subtitle" id="subtitle">請輸入密碼後使用工具</div>
+
+    <section id="login">
+      <div class="field">
+        <input id="pw" type="password" inputmode="numeric" placeholder="請輸入密碼" autocomplete="off">
+      </div>
+      <button type="button" onclick="login()">進入工具</button>
+      <div class="error" id="errorMsg">密碼錯誤，請重新輸入</div>
+    </section>
+
+    <section id="menu">
+      <a class="item" href="childcare-law/">
+        <div class="item-title">📖 托育法規工具</div>
+        <div class="item-desc">查詢托育法規、違規及罰則</div>
+      </a>
+
+      <a class="item" href="age-tool/">
+        <div class="item-title">👶 幼兒年齡檢核工具</div>
+        <div class="item-desc">快速查詢幼兒年齡、月齡與發展階段</div>
+      </a>
+
+      <div class="footer">登入狀態僅保留於目前瀏覽器分頁</div>
+    </section>
+  </main>
+
+  <script>
+    const PASSWORD = "3728";
+    const loginBox = document.getElementById("login");
+    const menuBox = document.getElementById("menu");
+    const pwInput = document.getElementById("pw");
+    const errorMsg = document.getElementById("errorMsg");
+    const subtitle = document.getElementById("subtitle");
+
+    function showMenu() {
+      loginBox.style.display = "none";
+      menuBox.style.display = "block";
+      subtitle.textContent = "請選擇要使用的工具";
+    }
+
+    function login() {
+      const value = pwInput.value.trim();
+
+      if (value === PASSWORD) {
+        sessionStorage.setItem("toolLogin", "ok");
+        showMenu();
+        return;
+      }
+
+      sessionStorage.removeItem("toolLogin");
+      errorMsg.style.display = "block";
+      pwInput.value = "";
+      pwInput.focus();
+
+      loginBox.classList.remove("shake");
+      void loginBox.offsetWidth;
+      loginBox.classList.add("shake");
+    }
+
+    pwInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        login();
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", function () {
+      sessionStorage.removeItem("toolLogin");
+      pwInput.focus();
+    });
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
