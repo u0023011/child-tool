@@ -2,42 +2,62 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>托育工具箱</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="favicon.ico">
   <meta name="theme-color" content="#9a7b4f">
 
   <style>
-    * {
-      box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      background: #f5ecdf;
+      color: #3f3328;
+      overflow-x: hidden;
     }
 
     body {
-      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
-      background: #f5ecdf;
-      margin: 0;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 24px;
-      color: #3f3328;
     }
 
-    .card {
+    .page {
+      width: 100%;
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .login-wrap {
+      min-height: calc(100vh - 36px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 430px;
       background: #fff;
       border-radius: 24px;
       padding: 30px 26px;
-      max-width: 430px;
-      width: 100%;
       box-shadow: 0 10px 30px rgba(80, 55, 30, .16);
+      border: 1px solid rgba(154, 123, 79, .18);
     }
 
     .logo {
       width: 76px;
       height: 76px;
-      margin: 0 auto 12px;
+      margin: 0 auto 14px;
       border-radius: 24px;
       background: #f5ecdf;
       display: flex;
@@ -59,15 +79,11 @@
       text-align: center;
       color: #7a6b5b;
       font-size: 15px;
-      margin-bottom: 24px;
+      line-height: 1.7;
+      margin-bottom: 22px;
     }
 
-    .field {
-      margin-top: 12px;
-    }
-
-    input,
-    button {
+    input, button {
       display: block;
       width: 100%;
       height: 52px;
@@ -101,7 +117,7 @@
       letter-spacing: .04em;
     }
 
-    button:active {
+    button:active, .tool-card:active, .back-btn:active {
       transform: translateY(1px);
     }
 
@@ -111,6 +127,7 @@
       color: #b13b2e;
       text-align: center;
       font-size: 14px;
+      font-weight: 700;
     }
 
     .shake {
@@ -123,120 +140,310 @@
       75% { transform: translateX(6px); }
     }
 
-    #menu {
+    #appView {
       display: none;
-      margin-top: 20px;
     }
 
-    .item {
-      display: block;
-      background: #faf7f2;
-      padding: 18px;
-      border-radius: 16px;
-      margin-top: 14px;
-      text-decoration: none;
-      color: #3f3328;
-      border: 1px solid #eee0cf;
-      transition: .18s;
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(245, 236, 223, .96);
+      backdrop-filter: blur(10px);
+      padding: 10px 0 14px;
     }
 
-    .item:active {
-      transform: scale(.99);
+    .topbar-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .item-title {
-      font-size: 20px;
-      font-weight: 700;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
       color: #7b5b32;
-      margin-bottom: 6px;
+      font-size: 22px;
+      white-space: nowrap;
     }
 
-    .item-desc {
-      font-size: 14px;
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 12px rgba(80, 55, 30, .10);
+    }
+
+    .back-btn {
+      display: none;
+      width: auto;
+      min-width: 120px;
+      height: 42px;
+      padding: 0 14px;
+      margin: 0;
+      font-size: 15px;
+      border-radius: 12px;
+      background: #8b6a3f;
+    }
+
+    .menu-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 8px 22px rgba(80, 55, 30, .12);
+      border: 1px solid rgba(154, 123, 79, .16);
+    }
+
+    .menu-title {
+      color: #7b5b32;
+      font-size: 24px;
+      font-weight: 900;
+      margin: 0 0 8px;
+    }
+
+    .menu-note {
       color: #7a6b5b;
-      line-height: 1.45;
+      margin: 0 0 18px;
+      line-height: 1.7;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .tool-card {
+      text-align: left;
+      min-height: 118px;
+      border: 1px solid #eadcc6;
+      background: #fffdf8;
+      color: #3f3328;
+      margin: 0;
+      padding: 18px;
+      height: auto;
+      border-radius: 18px;
+      box-shadow: 0 4px 12px rgba(80, 55, 30, .06);
+    }
+
+    .tool-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #7b5b32;
+      margin-bottom: 8px;
+    }
+
+    .tool-desc {
+      font-size: 15px;
+      color: #7a6b5b;
+      line-height: 1.55;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    #toolArea {
+      display: none;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 22px rgba(80, 55, 30, .12);
+      overflow: hidden;
+      border: 1px solid rgba(154, 123, 79, .16);
+    }
+
+    #toolFrame {
+      width: 100%;
+      height: calc(100vh - 94px);
+      min-height: 720px;
+      border: 0;
+      display: block;
+      background: #fff;
     }
 
     .footer {
-      margin-top: 22px;
       text-align: center;
       color: #9b8b7b;
       font-size: 13px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 12px;
+      }
+
+      .login-wrap {
+        min-height: calc(100vh - 24px);
+      }
+
+      .login-card {
+        padding: 26px 20px;
+        border-radius: 22px;
+      }
+
+      .topbar-inner {
+        gap: 8px;
+      }
+
+      .brand {
+        font-size: 19px;
+      }
+
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+      }
+
+      .back-btn {
+        min-width: 96px;
+        height: 40px;
+        font-size: 14px;
+        padding: 0 10px;
+      }
+
+      .tool-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .menu-card {
+        padding: 18px;
+      }
+
+      #toolFrame {
+        height: calc(100vh - 74px);
+        min-height: 650px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <main class="card">
-    <div class="logo">🌱</div>
-    <h1>托育工具箱</h1>
-    <div class="subtitle" id="subtitle">請輸入密碼後使用工具</div>
+  <div class="page">
+    <section id="loginView" class="login-wrap">
+      <div class="login-card" id="loginCard">
+        <div class="logo">🌱</div>
+        <h1>托育工具箱</h1>
+        <div class="subtitle">請輸入密碼後使用工具</div>
 
-    <section id="login">
-      <div class="field">
-        <input id="pw" type="password" inputmode="numeric" placeholder="請輸入密碼" autocomplete="off">
+        <input id="passwordInput" type="password" inputmode="numeric" placeholder="請輸入密碼" autocomplete="off">
+        <button type="button" onclick="login()">進入工具</button>
+        <div class="error" id="errorMsg">密碼錯誤，請重新輸入</div>
       </div>
-      <button type="button" onclick="login()">進入工具</button>
-      <div class="error" id="errorMsg">密碼錯誤，請重新輸入</div>
     </section>
 
-    <section id="menu">
-      <a class="item" href="childcare-law/">
-        <div class="item-title">📖 托育法規工具</div>
-        <div class="item-desc">查詢托育法規、違規及罰則</div>
-      </a>
+    <section id="appView">
+      <div class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <div class="brand-icon">🌱</div>
+            <div>托育工具箱</div>
+          </div>
+          <button type="button" class="back-btn" id="backBtn" onclick="backToMenu()">返回首頁</button>
+        </div>
+      </div>
 
-      <a class="item" href="age-tool/">
-        <div class="item-title">👶 幼兒年齡檢核工具</div>
-        <div class="item-desc">快速查詢幼兒年齡、月齡與發展階段</div>
-      </a>
+      <div class="shell">
+        <div id="menuArea" class="menu-card">
+          <div class="menu-title">請選擇工具</div>
+          <p class="menu-note">登入後可在同一個網址內切換工具，不會跳到其他網址。</p>
 
-      <div class="footer">登入狀態僅保留於目前瀏覽器分頁</div>
+          <div class="tool-grid">
+            <button type="button" class="tool-card" onclick="openTool('childcare-law/')">
+              <div class="tool-title">📖 托育法規工具</div>
+              <div class="tool-desc">查詢托育法規、違規及罰則。</div>
+            </button>
+
+            <button type="button" class="tool-card" onclick="openTool('age-tool/')">
+              <div class="tool-title">👶 幼兒年齡檢核工具</div>
+              <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
+            </button>
+          </div>
+
+          <div class="footer">登入狀態僅保留於目前瀏覽器分頁；重新開啟後需重新輸入密碼。</div>
+        </div>
+
+        <div id="toolArea">
+          <iframe id="toolFrame" title="托育工具"></iframe>
+        </div>
+      </div>
     </section>
-  </main>
+  </div>
 
   <script>
     const PASSWORD = "3728";
-    const loginBox = document.getElementById("login");
-    const menuBox = document.getElementById("menu");
-    const pwInput = document.getElementById("pw");
+    const loginView = document.getElementById("loginView");
+    const appView = document.getElementById("appView");
+    const passwordInput = document.getElementById("passwordInput");
     const errorMsg = document.getElementById("errorMsg");
-    const subtitle = document.getElementById("subtitle");
+    const loginCard = document.getElementById("loginCard");
+    const menuArea = document.getElementById("menuArea");
+    const toolArea = document.getElementById("toolArea");
+    const toolFrame = document.getElementById("toolFrame");
+    const backBtn = document.getElementById("backBtn");
 
-    function showMenu() {
-      loginBox.style.display = "none";
-      menuBox.style.display = "block";
-      subtitle.textContent = "請選擇要使用的工具";
+    function showApp() {
+      loginView.style.display = "none";
+      appView.style.display = "block";
+      menuArea.style.display = "block";
+      toolArea.style.display = "none";
+      backBtn.style.display = "none";
+      toolFrame.removeAttribute("src");
     }
 
     function login() {
-      const value = pwInput.value.trim();
+      const value = passwordInput.value.trim();
 
       if (value === PASSWORD) {
         sessionStorage.setItem("toolLogin", "ok");
-        showMenu();
+        showApp();
         return;
       }
 
       sessionStorage.removeItem("toolLogin");
       errorMsg.style.display = "block";
-      pwInput.value = "";
-      pwInput.focus();
+      passwordInput.value = "";
+      passwordInput.focus();
 
-      loginBox.classList.remove("shake");
-      void loginBox.offsetWidth;
-      loginBox.classList.add("shake");
+      loginCard.classList.remove("shake");
+      void loginCard.offsetWidth;
+      loginCard.classList.add("shake");
     }
 
-    pwInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        login();
+    function openTool(path) {
+      if (sessionStorage.getItem("toolLogin") !== "ok") {
+        location.reload();
+        return;
       }
+
+      menuArea.style.display = "none";
+      toolArea.style.display = "block";
+      backBtn.style.display = "block";
+      toolFrame.src = path;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function backToMenu() {
+      toolFrame.removeAttribute("src");
+      toolArea.style.display = "none";
+      menuArea.style.display = "block";
+      backBtn.style.display = "none";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    passwordInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") login();
     });
 
     window.addEventListener("DOMContentLoaded", function () {
       sessionStorage.removeItem("toolLogin");
-      pwInput.focus();
+      passwordInput.focus();
     });
 
     if ("serviceWorker" in navigator) {
