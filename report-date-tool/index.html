@@ -135,12 +135,53 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 .notice-red { color: #b42318; font-weight: 950; }
 </style>
 
+
+<style>
+/* v10：民國日期輸入旁保留日期選擇器 */
+.date-wrap {
+  display: grid;
+  grid-template-columns: 1fr 46px;
+  gap: 8px;
+  align-items: center;
+}
+.date-wrap input[type="text"] {
+  min-width: 0;
+}
+.date-picker-btn {
+  width: 46px;
+  height: 52px;
+  border: 1px solid #cfc7bd;
+  border-radius: 12px;
+  background: #fff;
+  color: #4e321b;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+}
+.date-picker-btn:hover {
+  background: #fff8ee;
+}
+.hidden-native-date {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+@media (max-width: 760px) {
+  .date-wrap {
+    grid-template-columns: 1fr 44px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
     <h1>日期計算工具</h1>
-    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（日期採民國年輸入）</div>
+    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（日期採民國年輸入，也可點日曆選擇）</div>
   </div>
 
   <div class="tabs">
@@ -175,7 +216,11 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     <div class="grid" style="margin-top:16px">
       <div>
         <label id="eventDateLabel" for="eventDate">新收托日</label>
-        <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09">
+        <div class="date-wrap">
+          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09">
+          <button type="button" class="date-picker-btn" onclick="openDatePicker('eventDateNative')" aria-label="選擇日期">📅</button>
+          <input type="date" id="eventDateNative" class="hidden-native-date" onchange="syncNativeToRoc('eventDateNative','eventDate')">
+        </div>
         <div class="hint" id="eventHint">依民法第120條，始日不算入，隔天為第1日。</div>
       </div>
       <div>
@@ -210,8 +255,12 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 
     <div>
       <label for="applyDate">提出退出申請日</label>
-      <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09">
-      <div class="hint">請輸入民國日期；工具會自動算出 60 日後日期，方便確認停止日要押哪一天。</div>
+      <div class="date-wrap">
+        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09">
+        <button type="button" class="date-picker-btn" onclick="openDatePicker('applyDateNative')" aria-label="選擇日期">📅</button>
+        <input type="date" id="applyDateNative" class="hidden-native-date" onchange="syncNativeToRoc('applyDateNative','applyDate')">
+      </div>
+      <div class="hint">請輸入民國日期，或點右側日曆選擇日期；工具會自動算出 60 日後日期。</div>
     </div>
 
     <div class="buttons">
@@ -249,6 +298,23 @@ function parseISO(v){
 }
 function iso(d){const off=d.getTimezoneOffset();return new Date(d.getTime()-off*60000).toISOString().slice(0,10)}
 function roc(d){return `${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()}`}
+
+function pad2(n){return String(n).padStart(2,"0")}
+function rocInput(d){return `${d.getFullYear()-1911}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`}
+function westernISO(d){return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`}
+function openDatePicker(nativeId){
+  const el = qs(nativeId);
+  const textId = nativeId.replace("Native","");
+  const dt = parseISO(qs(textId).value);
+  if(dt) el.value = westernISO(dt);
+  if(el.showPicker) el.showPicker();
+  else el.click();
+}
+function syncNativeToRoc(nativeId, textId){
+  const d = parseISO(qs(nativeId).value);
+  if(d) qs(textId).value = rocInput(d);
+}
+
 function addDays(d,days){const x=new Date(d);x.setDate(x.getDate()+days);return x}
 function addYears(d,years){const x=new Date(d);x.setFullYear(x.getFullYear()+years);return x}
 function isWeekend(d){return d.getDay()===0||d.getDay()===6}
@@ -400,7 +466,7 @@ function calcDeadline(){
   setTimeout(()=>qs("deadlineResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
 }
 
-function clearDeadline(){qs("eventDate").value="";qs("deadlineResult").style.display="none"}
+function clearDeadline(){qs("eventDate").value=""; if(qs("eventDateNative")) qs("eventDateNative").value=""; qs("deadlineResult").style.display="none"}
 
 function calcPublic(){
   const applyDate=parseISO(qs("applyDate").value);
@@ -425,7 +491,7 @@ function calcPublic(){
   setTimeout(()=>qs("publicResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
 }
 
-function clearPublic(){qs("applyDate").value="";qs("publicResult").style.display="none"}
+function clearPublic(){qs("applyDate").value=""; if(qs("applyDateNative")) qs("applyDateNative").value=""; qs("publicResult").style.display="none"}
 async function copyText(id){const text=qs(id).textContent;if(!text.trim())return;try{await navigator.clipboard.writeText(text);alert("已複製結果。")}catch(e){alert("手機瀏覽器不支援自動複製，請長按文字手動複製。")}}
 changeCaseType();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js"))}
