@@ -176,12 +176,113 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 }
 </style>
 
+
+<style>
+/* v11：自製民國日期選擇器 */
+.roc-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.roc-picker {
+  width: min(360px, 100%);
+  background: #fffdf8;
+  border: 1px solid #d8c6a8;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.22);
+  padding: 14px;
+}
+.roc-picker-head {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.roc-nav {
+  border: 0;
+  border-radius: 12px;
+  background: #efe6d7;
+  color: #4e321b;
+  font-size: 22px;
+  font-weight: 900;
+  padding: 8px 0;
+}
+.roc-title {
+  text-align: center;
+  color: #4e321b;
+  font-weight: 950;
+  font-size: 20px;
+}
+.roc-week,
+.roc-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.roc-week span {
+  text-align: center;
+  color: #7a6042;
+  font-weight: 900;
+  padding: 4px 0;
+}
+.roc-day {
+  border: 1px solid #eadcc6;
+  border-radius: 10px;
+  background: #fff;
+  color: #2d2923;
+  font-size: 16px;
+  padding: 8px 0;
+  min-height: 38px;
+}
+.roc-day.muted {
+  color: #b2a99e;
+  background: #fbf7ef;
+}
+.roc-day.today {
+  border-color: #8b6f47;
+  box-shadow: inset 0 0 0 2px rgba(139,111,71,.18);
+}
+.roc-day.selected {
+  background: #8b6f47;
+  color: #fff;
+  border-color: #8b6f47;
+  font-weight: 950;
+}
+.roc-picker-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.roc-action {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 8px;
+  font-size: 16px;
+  font-weight: 900;
+}
+.roc-action.light { background: #efe6d7; color: #4e321b; }
+.roc-action.main { background: #8b6f47; color: #fff; }
+.roc-format-hint {
+  margin-top: 8px;
+  color: #776f66;
+  font-size: 14px;
+  text-align: center;
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
     <h1>日期計算工具</h1>
-    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（日期採民國年輸入，也可點日曆選擇）</div>
+    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（日期採民國年輸入，旁邊有民國日期選擇器）</div>
   </div>
 
   <div class="tabs">
@@ -217,9 +318,8 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
       <div>
         <label id="eventDateLabel" for="eventDate">新收托日</label>
         <div class="date-wrap">
-          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09">
-          <button type="button" class="date-picker-btn" onclick="openDatePicker('eventDateNative')" aria-label="選擇日期">📅</button>
-          <input type="date" id="eventDateNative" class="hidden-native-date" onchange="syncNativeToRoc('eventDateNative','eventDate')">
+          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09 或 1150709">
+          <button type="button" class="date-picker-btn" onclick="openRocPicker('eventDate')" aria-label="選擇日期">📅</button>
         </div>
         <div class="hint" id="eventHint">依民法第120條，始日不算入，隔天為第1日。</div>
       </div>
@@ -256,9 +356,8 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     <div>
       <label for="applyDate">提出退出申請日</label>
       <div class="date-wrap">
-        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09">
-        <button type="button" class="date-picker-btn" onclick="openDatePicker('applyDateNative')" aria-label="選擇日期">📅</button>
-        <input type="date" id="applyDateNative" class="hidden-native-date" onchange="syncNativeToRoc('applyDateNative','applyDate')">
+        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09 或 1150709">
+        <button type="button" class="date-picker-btn" onclick="openRocPicker('applyDate')" aria-label="選擇日期">📅</button>
       </div>
       <div class="hint">請輸入民國日期，或點右側日曆選擇日期；工具會自動算出 60 日後日期。</div>
     </div>
@@ -285,12 +384,17 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 function qs(id){return document.getElementById(id)}
 function parseISO(v){
   if(!v) return null;
-  const s = String(v).trim().replace(/[.\-]/g, "/");
+  let s = String(v).trim();
+  // 支援民國連續數字：1150705、115705、115/07/05、115-07-05
+  if(/^\d{7}$/.test(s)){
+    s = s.slice(0,3) + "/" + s.slice(3,5) + "/" + s.slice(5,7);
+  }else if(/^\d{6}$/.test(s)){
+    s = s.slice(0,3) + "/" + s.slice(3,4) + "/" + s.slice(4,6);
+  }
+  s = s.replace(/[.\-]/g, "/");
   const parts = s.split("/").map(x => Number(x));
   if(parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
   let [y,m,d] = parts;
-  // 採民國年輸入；若輸入 115/07/09 會轉為西元 2026/07/09。
-  // 若誤輸入西元 2026/07/09，也會直接支援。
   if(y > 0 && y < 1911) y += 1911;
   const dt = new Date(y, m-1, d);
   if(dt.getFullYear() !== y || dt.getMonth() !== m-1 || dt.getDate() !== d) return null;
@@ -301,19 +405,65 @@ function roc(d){return `${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()}
 
 function pad2(n){return String(n).padStart(2,"0")}
 function rocInput(d){return `${d.getFullYear()-1911}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`}
-function westernISO(d){return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`}
-function openDatePicker(nativeId){
-  const el = qs(nativeId);
-  const textId = nativeId.replace("Native","");
-  const dt = parseISO(qs(textId).value);
-  if(dt) el.value = westernISO(dt);
-  if(el.showPicker) el.showPicker();
-  else el.click();
+let rocPickerTarget = null;
+let rocPickerView = new Date();
+
+function openRocPicker(targetId){
+  rocPickerTarget = targetId;
+  const current = parseISO(qs(targetId).value);
+  rocPickerView = current ? new Date(current.getFullYear(), current.getMonth(), 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  renderRocPicker(current);
+  qs("rocPickerBackdrop").style.display = "flex";
 }
-function syncNativeToRoc(nativeId, textId){
-  const d = parseISO(qs(nativeId).value);
-  if(d) qs(textId).value = rocInput(d);
+function closeRocPicker(e){
+  if(e && e.target && e.target.id !== "rocPickerBackdrop") return;
+  qs("rocPickerBackdrop").style.display = "none";
 }
+function moveRocMonth(delta){
+  rocPickerView.setMonth(rocPickerView.getMonth()+delta);
+  const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
+  renderRocPicker(current);
+}
+function sameDay(a,b){
+  return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+function renderRocPicker(selectedDate){
+  const y = rocPickerView.getFullYear();
+  const m = rocPickerView.getMonth();
+  qs("rocPickerTitle").textContent = `民國${y-1911}年${m+1}月`;
+  const grid = qs("rocPickerGrid");
+  grid.innerHTML = "";
+  const first = new Date(y,m,1);
+  const start = new Date(y,m,1-first.getDay());
+  const today = new Date();
+  for(let i=0;i<42;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "roc-day";
+    if(d.getMonth() !== m) btn.classList.add("muted");
+    if(sameDay(d,today)) btn.classList.add("today");
+    if(sameDay(d,selectedDate)) btn.classList.add("selected");
+    btn.textContent = d.getDate();
+    btn.onclick = function(){
+      if(rocPickerTarget) qs(rocPickerTarget).value = rocInput(d);
+      closeRocPicker();
+    };
+    grid.appendChild(btn);
+  }
+}
+function pickToday(){
+  const d = new Date();
+  if(rocPickerTarget) qs(rocPickerTarget).value = rocInput(d);
+  closeRocPicker();
+}
+function clearRocPickerTarget(){
+  if(rocPickerTarget) qs(rocPickerTarget).value = "";
+  closeRocPicker();
+}
+
+
 
 function addDays(d,days){const x=new Date(d);x.setDate(x.getDate()+days);return x}
 function addYears(d,years){const x=new Date(d);x.setFullYear(x.getFullYear()+years);return x}
@@ -466,7 +616,7 @@ function calcDeadline(){
   setTimeout(()=>qs("deadlineResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
 }
 
-function clearDeadline(){qs("eventDate").value=""; if(qs("eventDateNative")) qs("eventDateNative").value=""; qs("deadlineResult").style.display="none"}
+function clearDeadline(){qs("eventDate").value=""; qs("deadlineResult").style.display="none"}
 
 function calcPublic(){
   const applyDate=parseISO(qs("applyDate").value);
@@ -491,10 +641,31 @@ function calcPublic(){
   setTimeout(()=>qs("publicResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
 }
 
-function clearPublic(){qs("applyDate").value=""; if(qs("applyDateNative")) qs("applyDateNative").value=""; qs("publicResult").style.display="none"}
+function clearPublic(){qs("applyDate").value=""; qs("publicResult").style.display="none"}
 async function copyText(id){const text=qs(id).textContent;if(!text.trim())return;try{await navigator.clipboard.writeText(text);alert("已複製結果。")}catch(e){alert("手機瀏覽器不支援自動複製，請長按文字手動複製。")}}
 changeCaseType();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js"))}
 </script>
+
+<div class="roc-picker-backdrop" id="rocPickerBackdrop" onclick="closeRocPicker(event)">
+  <div class="roc-picker" onclick="event.stopPropagation()">
+    <div class="roc-picker-head">
+      <button type="button" class="roc-nav" onclick="moveRocMonth(-1)">‹</button>
+      <div class="roc-title" id="rocPickerTitle">民國115年7月</div>
+      <button type="button" class="roc-nav" onclick="moveRocMonth(1)">›</button>
+    </div>
+    <div class="roc-week">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div class="roc-grid" id="rocPickerGrid"></div>
+    <div class="roc-picker-actions">
+      <button type="button" class="roc-action light" onclick="pickToday()">今天</button>
+      <button type="button" class="roc-action light" onclick="clearRocPickerTarget()">清除</button>
+      <button type="button" class="roc-action main" onclick="closeRocPicker()">關閉</button>
+    </div>
+    <div class="roc-format-hint">可手動輸入：115/07/09 或 1150709</div>
+  </div>
+</div>
+
 </body>
 </html>
