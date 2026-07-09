@@ -217,7 +217,7 @@
 
     .tool-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 14px;
     }
 
@@ -321,6 +321,41 @@
         min-height: 650px;
       }
     }
+  
+    /* 手機 iframe 全寬修正 */
+    @media (max-width: 760px) {
+      .page {
+        padding: 0 !important;
+      }
+
+      .shell {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .topbar {
+        padding: 8px 10px 10px !important;
+      }
+
+      .topbar-inner {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      #toolArea {
+        width: 100% !important;
+        border-radius: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+
+      #toolFrame {
+        width: 100vw !important;
+        height: calc(100vh - 64px) !important;
+        min-height: calc(100vh - 64px) !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -364,6 +399,12 @@
               <div class="tool-title">👶 幼兒年齡檢核工具</div>
               <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
             </button>
+
+            <button type="button" class="tool-card" onclick="openTool('report-date-tool/')">
+              <div class="tool-title">📅 回報日期計算工具</div>
+              <div class="tool-desc">計算新收托、結束收托、補助申請與準公共退出日期。</div>
+            </button>
+
           </div>
 
           <div class="footer">登入狀態僅保留於目前瀏覽器分頁；重新開啟後需重新輸入密碼。</div>

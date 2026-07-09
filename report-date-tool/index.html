@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日期計算工具</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7b5c35">
+<style>
+:root{
+  --bg:#f7f3ec;--card:#fffaf3;--main:#7b5c35;--line:#e6d4ba;--text:#2d2923;
+  --muted:#776f66;--green:#16794f;--red:#b42318;--orange:#9a5b00;--blue:#2b5c85;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.75}
+.wrap{max-width:980px;margin:0 auto;padding:22px 14px 60px}
+.hero{background:#fff;border-radius:22px;padding:28px 20px;text-align:center;margin-bottom:18px;border:1px solid #eee2d1;box-shadow:0 2px 10px rgba(80,50,20,.04)}
+h1{margin:0;color:#4e321b;font-size:34px;letter-spacing:.04em}.sub{margin-top:8px;color:var(--muted);font-size:17px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tab{border:1px solid var(--line);background:#efe6d7;color:#4e321b;border-radius:16px;padding:14px 12px;font-weight:900;font-size:18px;cursor:pointer}
+.tab.active{background:var(--main);color:#fff;border-color:var(--main)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:18px}
+.title{font-weight:900;font-size:23px;color:#4e321b;border-left:6px solid #d5a657;padding-left:12px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+label{font-weight:800;color:#4e321b;display:block;margin-bottom:6px}
+input,select{width:100%;border:1px solid #cfc7bd;border-radius:12px;padding:13px 14px;font-size:18px;background:#fff}
+.hint{color:var(--muted);font-size:14px;margin-top:4px}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+button{border:0;border-radius:14px;padding:14px 18px;font-size:18px;font-weight:900;cursor:pointer}
+.primary{background:var(--main);color:white}.ghost{background:#efe6d7;color:#4e321b}
+.result{display:none;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px}
+.status{font-size:26px;font-weight:950;margin-bottom:10px;color:#4e321b}.status.ok{color:var(--green)}.status.bad{color:var(--red)}.status.neutral{color:var(--blue)}
+.box{background:#fff8ee;border:1px solid #efd3a7;border-radius:14px;padding:14px 16px;margin-top:12px}.box strong{color:#4e321b}
+.row{margin:7px 0}.red{color:var(--red);font-weight:950}.green{color:var(--green);font-weight:950}.orange{color:var(--orange);font-weight:950}
+.copyarea{width:100%;min-height:120px;margin-top:12px;border:1px solid #d8c9b3;border-radius:14px;padding:12px;font-size:16px;white-space:pre-wrap;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.chip{display:inline-flex;padding:5px 11px;border-radius:999px;background:#efe6d7;color:#4e321b;font-weight:900;border:1px solid #dec8a9;font-size:15px}
+.chip.green{background:#e8f6ef;color:#166349;border-color:#b9dfcc}.chip.red{background:#fff0ed;color:#9b2c1f;border-color:#efb5a7}.chip.blue{background:#eef4ff;color:#29527a;border-color:#b9cbe3}
+.note{color:#675c50;background:#fff;border:1px dashed #d9c5a7;border-radius:14px;padding:12px 14px;margin-top:12px}
+.hidden{display:none}
+@media (max-width:760px){.tabs,.grid,.buttons{grid-template-columns:1fr}h1{font-size:30px}.wrap{padding:12px 10px 40px}.panel{padding:18px 14px}}
+</style>
+
+<script>
+if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") {
+  window.location.href = "../";
+}
+</script>
+
+
+<style>
+/* 入口 iframe 手機寬度修正 */
+@media (max-width: 760px) {
+  body {
+    padding: 0 !important;
+  }
+
+  .wrap {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 10px 8px 36px !important;
+  }
+
+  .hero {
+    border-radius: 18px !important;
+    padding: 22px 14px !important;
+  }
+
+  .panel {
+    border-radius: 16px !important;
+    padding: 16px 12px !important;
+  }
+
+  input,
+  select,
+  button {
+    max-width: 100% !important;
+  }
+
+  .result,
+  .box,
+  .note {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>日期計算工具</h1>
+    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabDeadline" onclick="switchTab('deadline')">功能一：送件期限</button>
+    <button class="tab" id="tabPublic" onclick="switchTab('public')">功能二：準公退出</button>
+  </div>
+
+  <section class="panel" id="panelDeadline">
+    <div class="title">收托、停托與補助送件期限計算</div>
+
+    <div class="grid">
+      <div>
+        <label for="caseType">案件類型</label>
+        <select id="caseType" onchange="changeCaseType()">
+          <option value="new">新收托回報（7日內）</option>
+          <option value="stop">結束收托回報（7日內）</option>
+          <option value="subsidy">托育補助申請（15日內）</option>
+        </select>
+      </div>
+
+      <div id="noticeBox">
+        <label for="noticeType">通訊情境</label>
+        <select id="noticeType" onchange="changeCaseType()"></select>
+        <div class="hint" id="noticeHint"></div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:16px">
+      <div>
+        <label id="eventDateLabel" for="eventDate">新收托日</label>
+        <input type="date" id="eventDate">
+        <div class="hint" id="eventHint">依民法第120條，始日不算入，隔天為第1日。</div>
+      </div>
+      <div>
+        <label for="holidayMode">放假日順延</label>
+        <select id="holidayMode">
+          <option value="weekend">自動順延週六、週日</option>
+          <option value="none">不自動順延</option>
+        </select>
+        <div class="hint">正式版可再加入行政院人事行政總處公告放假日與補班日。</div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="ghost" onclick="clearDeadline()">清除</button>
+      <button class="primary" onclick="calcDeadline()">計算期限</button>
+    </div>
+
+    <div class="result" id="deadlineResult">
+      <div class="status neutral" id="deadlineStatus"></div>
+      <div class="chips" id="deadlineChips"></div>
+      <div class="box" id="deadlineDetail"></div>
+      
+    </div>
+
+    <div class="note">
+      ✅ 規則：以日定期間者，始日不算入。最後一日若為放假日，順延至下一工作日。
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panelPublic">
+    <div class="title">準公共退出申請日／重新加入日期計算</div>
+
+    <div>
+      <label for="applyDate">提出退出申請日</label>
+      <input type="date" id="applyDate">
+      <div class="hint">工具會自動算出 60 日後日期，方便確認停止日要押哪一天。</div>
+    </div>
+
+    <div class="buttons">
+      <button class="ghost" onclick="clearPublic()">清除</button>
+      <button class="primary" onclick="calcPublic()">計算準公日期</button>
+    </div>
+
+    <div class="result" id="publicResult">
+      <div class="status" id="publicStatus"></div>
+      <div class="chips" id="publicChips"></div>
+      <div class="box" id="publicDetail"></div>
+      
+    </div>
+
+    <div class="note">
+      ✅ 規則：有提前 60 日提出退出申請，停止日起滿 1 年後可重新加入；未提前 60 日，停止日起滿 2 年後可重新加入。
+    </div>
+  </section>
+</div>
+
+<script>
+function qs(id){return document.getElementById(id)}
+function parseISO(v){if(!v)return null;const [y,m,d]=v.split("-").map(Number);return new Date(y,m-1,d)}
+function iso(d){const off=d.getTimezoneOffset();return new Date(d.getTime()-off*60000).toISOString().slice(0,10)}
+function roc(d){return `${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()}`}
+function addDays(d,days){const x=new Date(d);x.setDate(x.getDate()+days);return x}
+function addYears(d,years){const x=new Date(d);x.setFullYear(x.getFullYear()+years);return x}
+function isWeekend(d){return d.getDay()===0||d.getDay()===6}
+function shiftIfHoliday(d){let x=new Date(d);if(qs("holidayMode").value!=="weekend")return x;while(isWeekend(x))x=addDays(x,1);return x}
+function switchTab(t){
+  qs("tabDeadline").classList.toggle("active",t==="deadline");
+  qs("tabPublic").classList.toggle("active",t==="public");
+  qs("panelDeadline").classList.toggle("hidden",t!=="deadline");
+  qs("panelPublic").classList.toggle("hidden",t!=="public");
+}
+
+const noticeOptions = {
+  new:[
+    ["none","未先通訊告知，依新收托日計算"],
+    ["same","收托當日即行通訊告知"],
+    ["early","收托日前提前通訊告知"],
+    ["during","收托期間始行通訊告知"]
+  ],
+  stop:[
+    ["none","未先通訊告知，依結束收托日計算"],
+    ["same","結束收托當日即行通訊告知"],
+    ["early","結束收托日前提前通訊告知"],
+    ["during","結束收托期間始行通訊告知"]
+  ]
+};
+
+function setNoticeOptions(type){
+  const select=qs("noticeType");
+  const old=select.value;
+  select.innerHTML="";
+  (noticeOptions[type]||[]).forEach(([v,t])=>{
+    const opt=document.createElement("option");
+    opt.value=v; opt.textContent=t;
+    select.appendChild(opt);
+  });
+  if([...select.options].some(o=>o.value===old)) select.value=old;
+}
+
+function changeCaseType(){
+  const t=qs("caseType").value;
+  const noticeBox=qs("noticeBox");
+
+  if(t==="subsidy"){
+    noticeBox.classList.add("hidden");
+    qs("eventDateLabel").textContent="新收托日";
+    qs("eventHint").textContent="新收托日不算入，隔天算第1日，計算托育補助15日內申請期限。";
+    return;
+  }
+
+  noticeBox.classList.remove("hidden");
+  setNoticeOptions(t);
+  const nt=qs("noticeType").value;
+  const isNew=t==="new";
+  const action=isNew?"收托":"結束收托";
+  const eventName=isNew?"新收托日":"結束收托日";
+
+  if(nt==="none"){
+    qs("noticeHint").textContent=`未選通訊告知時，直接以「${eventName}」計算7日內回報期限。`;
+    qs("eventDateLabel").textContent=eventName;
+    qs("eventHint").textContent=`${eventName}不算入，隔天算第1日，計算${action}日起7日內回報期限。`;
+  }else if(nt==="same"){
+    qs("noticeHint").textContent=`${action}當日即行通訊告知時，相關紙本文件自通訊通知之日起7日內補齊送交。`;
+    qs("eventDateLabel").textContent="通訊通知日／知悉日";
+    qs("eventHint").textContent="請輸入通訊通知日或承辦知悉日；該日不算入，隔天算第1日，計算7日內補齊紙本期限。";
+  }else if(nt==="early"){
+    qs("noticeHint").textContent=`${action}日前提前通訊告知時，相關紙本文件自通知${action}之日起7日內補齊送交。`;
+    qs("eventDateLabel").textContent=eventName;
+    qs("eventHint").textContent=`請輸入${eventName}；${eventName}不算入，隔天算第1日，計算7日內補齊紙本期限。`;
+  }else{
+    qs("noticeHint").textContent=`${action}期間始行通訊告知時，相關紙本文件自通知之日起7日內補齊送交。`;
+    qs("eventDateLabel").textContent="通訊通知日／知悉日";
+    qs("eventHint").textContent="請輸入通訊通知日或承辦知悉日；該日不算入，隔天算第1日，計算7日內補齊紙本期限。";
+  }
+}
+
+function caseInfo(){
+  const t=qs("caseType").value;
+  if(t==="subsidy"){
+    return {name:"托育補助申請",days:15,rule:"家長應自托育事實發生日起15日內備齊文件提出申請。",dateName:"新收托日"};
+  }
+
+  const nt=qs("noticeType").value;
+  const isNew=t==="new";
+  const baseName=isNew?"新收托回報":"結束收托回報";
+  const eventName=isNew?"新收托日":"結束收托日";
+  const action=isNew?"收托":"結束收托";
+
+  if(nt==="none"){
+    return {name:baseName,days:7,rule:`托育人員${action}兒童之日起7日內回報。`,dateName:eventName};
+  }
+  if(nt==="same"){
+    return {name:`${baseName}－${action}當日通訊告知`,days:7,rule:`托育人員若於當日${action}時即行通訊告知，相關紙本文件應自通訊通知之日起7日內補齊送交，以完成程序。`,dateName:"通訊通知日／知悉日"};
+  }
+  if(nt==="early"){
+    return {name:`${baseName}－${action}日前提前通訊告知`,days:7,rule:`托育人員若於${action}日前提前通訊告知，相關紙本文件應自通知${action}之日起7日內補齊送交，以完成程序。`,dateName:eventName};
+  }
+  return {name:`${baseName}－${action}期間始行通訊告知`,days:7,rule:`托育人員若於${action}期間始行通訊告知，相關紙本文件應自通知之日起7日內補齊送交，以完成程序。`,dateName:"通訊通知日／知悉日"};
+}
+
+function calcDeadline(){
+  const eventDate=parseISO(qs("eventDate").value);
+  if(!eventDate){alert("請輸入日期。");return}
+  const info=caseInfo();
+  const start=addDays(eventDate,1);
+  const rawDeadline=addDays(eventDate,info.days);
+  const finalDeadline=shiftIfHoliday(rawDeadline);
+  const holidayNote=iso(rawDeadline)===iso(finalDeadline)?"否":`是，順延至 ${roc(finalDeadline)}`;
+
+  qs("deadlineResult").style.display="block";
+  qs("deadlineStatus").className="status neutral";
+  qs("deadlineStatus").textContent=`最後期限：${roc(finalDeadline)}`;
+  qs("deadlineChips").innerHTML=[
+    `<span class="chip blue">${info.days}日內</span>`,
+    `<span class="chip">${info.name}</span>`,
+    `<span class="chip green">已計算期限</span>`
+  ].join("");
+
+  qs("deadlineDetail").innerHTML=`
+    <div class="row"><strong>案件類型：</strong>${info.name}</div>
+    <div class="row"><strong>${info.dateName}：</strong>${roc(eventDate)}</div>
+    <div class="row"><strong>規定：</strong>${info.rule}</div>
+    <div class="row"><strong>起算方式：</strong>依民法第120條，始日不算入。</div>
+    <div class="row"><strong>起算日：</strong>${roc(start)}</div>
+    <div class="row"><strong>原最後期限：</strong>${roc(rawDeadline)}</div>
+    <div class="row"><strong>是否遇放假日順延：</strong>${holidayNote}</div>
+    <div class="row"><strong>實際最後期限：</strong><span class="orange">${roc(finalDeadline)}</span></div>
+  `;
+  setTimeout(()=>qs("deadlineResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
+}
+
+function clearDeadline(){qs("eventDate").value="";qs("deadlineResult").style.display="none"}
+
+function calcPublic(){
+  const applyDate=parseISO(qs("applyDate").value);
+  if(!applyDate){alert("請輸入提出退出申請日。");return}
+
+  const sixtyDate=addDays(applyDate,60);
+  qs("publicResult").style.display="block";
+  qs("publicStatus").className="status neutral";
+  qs("publicStatus").textContent=`60日後日期：${roc(sixtyDate)}`;
+
+  qs("publicChips").innerHTML=[
+    `<span class="chip blue">60日後</span>`,
+    `<span class="chip">停止日建議不得早於 ${roc(sixtyDate)}</span>`
+  ].join("");
+
+  qs("publicDetail").innerHTML=`
+    <div class="row"><strong>提出退出申請日：</strong>${roc(applyDate)}</div>
+    <div class="row"><strong>提出日起60日後日期：</strong><span class="orange">${roc(sixtyDate)}</span></div>
+    <div class="row"><strong>提醒：</strong>若要符合提前60日提出申請，停止日建議不得早於 <span class="orange">${roc(sixtyDate)}</span>。</div>
+    <div class="row"><strong>重新加入提醒：</strong>若符合提前60日提出申請，停止日起滿1年後可重新加入；未符合提前60日，停止日起滿2年後可重新加入。</div>
+  `;
+  setTimeout(()=>qs("publicResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
+}
+
+function clearPublic(){qs("applyDate").value="";qs("publicResult").style.display="none"}
+async function copyText(id){const text=qs(id).textContent;if(!text.trim())return;try{await navigator.clipboard.writeText(text);alert("已複製結果。")}catch(e){alert("手機瀏覽器不支援自動複製，請長按文字手動複製。")}}
+changeCaseType();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js"))}
+</script>
+</body>
+</html>
