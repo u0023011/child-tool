@@ -317,6 +317,138 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 }
 </script>
 
+
+<style>
+/* v2：日期欄位加入自製民國日期選擇器 */
+.date-wrap {
+  display: grid;
+  grid-template-columns: 1fr 46px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+.date-wrap input[type="text"] {
+  margin-top: 0;
+  min-width: 0;
+}
+.date-picker-btn {
+  width: 46px;
+  height: 46px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  color: #4b3b2a;
+  font-size: 21px;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+}
+.date-picker-btn:hover {
+  background: #fff8ec;
+}
+.roc-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.roc-picker {
+  width: min(360px, 100%);
+  background: #fffdf8;
+  border: 1px solid #d8c6a8;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.22);
+  padding: 14px;
+}
+.roc-picker-head {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.roc-nav {
+  border: 0;
+  border-radius: 12px;
+  background: #efe6d7;
+  color: #4e321b;
+  font-size: 22px;
+  font-weight: 900;
+  padding: 8px 0;
+}
+.roc-title {
+  text-align: center;
+  color: #4e321b;
+  font-weight: 950;
+  font-size: 20px;
+}
+.roc-week,
+.roc-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.roc-week span {
+  text-align: center;
+  color: #7a6042;
+  font-weight: 900;
+  padding: 4px 0;
+}
+.roc-day {
+  border: 1px solid #eadcc6;
+  border-radius: 10px;
+  background: #fff;
+  color: #2d2923;
+  font-size: 16px;
+  padding: 8px 0;
+  min-height: 38px;
+}
+.roc-day.muted {
+  color: #b2a99e;
+  background: #fbf7ef;
+}
+.roc-day.today {
+  border-color: #8b6f47;
+  box-shadow: inset 0 0 0 2px rgba(139,111,71,.18);
+}
+.roc-day.selected {
+  background: #8b6f47;
+  color: #fff;
+  border-color: #8b6f47;
+  font-weight: 950;
+}
+.roc-picker-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.roc-action {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 8px;
+  font-size: 16px;
+  font-weight: 900;
+}
+.roc-action.light { background: #efe6d7; color: #4e321b; }
+.roc-action.main { background: #8b6f47; color: #fff; }
+.roc-format-hint {
+  margin-top: 8px;
+  color: #776f66;
+  font-size: 14px;
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .date-wrap {
+    grid-template-columns: 1fr 44px;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -338,10 +470,16 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
         <h2>功能一：年齡與檢核表判斷</h2>
 
         <label for="birthDate">幼兒出生日期</label>
-        <input type="text" id="birthDate">
+        <div class="date-wrap">
+          <input type="text" id="birthDate" inputmode="numeric" placeholder="例：115/07/09 或 2026/07/09">
+          <button type="button" class="date-picker-btn" onclick="openRocPicker('birthDate')" aria-label="選擇日期">📅</button>
+        </div>
 
         <label for="checkDate">檢核日期</label>
-        <input type="text" id="checkDate">
+        <div class="date-wrap">
+          <input type="text" id="checkDate" inputmode="numeric" placeholder="例：115/07/09 或 2026/07/09">
+          <button type="button" class="date-picker-btn" onclick="openRocPicker('checkDate')" aria-label="選擇日期">📅</button>
+        </div>
 
         <div class="checkbox-row">
           <input type="checkbox" id="isPreterm" onchange="togglePreterm()">
@@ -365,7 +503,10 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 
           <div id="dueDateBox">
             <label for="dueDate">預產期</label>
-            <input type="text" id="dueDate">
+            <div class="date-wrap">
+          <input type="text" id="dueDate" inputmode="numeric" placeholder="例：115/07/09 或 2026/07/09">
+          <button type="button" class="date-picker-btn" onclick="openRocPicker('dueDate')" aria-label="選擇日期">📅</button>
+        </div>
           </div>
 
           <div id="gestationBox" class="hidden">
@@ -391,7 +532,10 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
         <h2>功能二：回推檢核日期</h2>
 
         <label for="reverseBirthDate">幼兒出生日期</label>
-        <input type="text" id="reverseBirthDate">
+        <div class="date-wrap">
+          <input type="text" id="reverseBirthDate" inputmode="numeric" placeholder="例：115/07/09 或 2026/07/09">
+          <button type="button" class="date-picker-btn" onclick="openRocPicker('reverseBirthDate')" aria-label="選擇日期">📅</button>
+        </div>
 
         <label>檢核年齡</label>
         <div class="age-row">
@@ -412,7 +556,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     </div>
 
     <div class="small">
-      ※ 本工具為輔助計算用途，實際檢核表版本與使用階段，仍建議依中心或主管機關公告版本辦理。
+      ※ 日期可輸入民國或西元，亦可使用旁邊日期選擇器。本工具為輔助計算用途，實際檢核表版本與使用階段，仍建議依中心或主管機關公告版本辦理。
     </div>
   </div>
 
@@ -453,12 +597,13 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 
     function detectCalendarType(value) {
       if (!value) return null;
-      const clean = value.trim();
+      let clean = String(value).trim();
 
       if (/^\d{7}$/.test(clean)) return "roc";
       if (/^\d{8}$/.test(clean)) return "western";
+      if (/^\d{6}$/.test(clean)) return "roc";
 
-      const parts = clean.split(/[\/\-\.]/);
+      const parts = clean.replace(/[.\-]/g, "/").split("/");
       if (parts.length === 3) {
         const year = Number(parts[0]);
         if (year < 1911) return "roc";
@@ -471,7 +616,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     function parseDateInfo(value) {
       if (!value) return null;
 
-      value = value.trim();
+      value = String(value).trim();
 
       let year, month, day;
       const calendar = detectCalendarType(value);
@@ -480,12 +625,16 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
         year = Number(value.substring(0, 3)) + 1911;
         month = Number(value.substring(3, 5));
         day = Number(value.substring(5, 7));
+      } else if (/^\d{6}$/.test(value)) {
+        year = Number(value.substring(0, 3)) + 1911;
+        month = Number(value.substring(3, 4));
+        day = Number(value.substring(4, 6));
       } else if (/^\d{8}$/.test(value)) {
         year = Number(value.substring(0, 4));
         month = Number(value.substring(4, 6));
         day = Number(value.substring(6, 8));
       } else {
-        const parts = value.split(/[\/\-\.]/);
+        const parts = value.replace(/[.\-]/g, "/").split("/");
 
         if (parts.length !== 3) return null;
 
@@ -865,11 +1014,123 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
       `;
     }
 
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function rocInput(date) {
+      return `${date.getFullYear() - 1911}/${pad2(date.getMonth() + 1)}/${pad2(date.getDate())}`;
+    }
+
+    let rocPickerTarget = null;
+    let rocPickerView = new Date();
+
+    function openRocPicker(targetId) {
+      rocPickerTarget = targetId;
+      const currentInfo = parseDateInfo(document.getElementById(targetId).value);
+      const current = currentInfo ? currentInfo.date : new Date();
+      rocPickerView = new Date(current.getFullYear(), current.getMonth(), 1);
+      renderRocPicker(currentInfo ? currentInfo.date : null);
+      document.getElementById("rocPickerBackdrop").style.display = "flex";
+    }
+
+    function closeRocPicker(event) {
+      if (event && event.target && event.target.id !== "rocPickerBackdrop") return;
+      document.getElementById("rocPickerBackdrop").style.display = "none";
+    }
+
+    function moveRocMonth(delta) {
+      rocPickerView.setMonth(rocPickerView.getMonth() + delta);
+      const currentInfo = rocPickerTarget ? parseDateInfo(document.getElementById(rocPickerTarget).value) : null;
+      renderRocPicker(currentInfo ? currentInfo.date : null);
+    }
+
+    function sameDay(a, b) {
+      return a && b &&
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+    }
+
+    function renderRocPicker(selectedDate) {
+      const year = rocPickerView.getFullYear();
+      const month = rocPickerView.getMonth();
+
+      document.getElementById("rocPickerTitle").textContent = `民國${year - 1911}年${month + 1}月`;
+
+      const grid = document.getElementById("rocPickerGrid");
+      grid.innerHTML = "";
+
+      const first = new Date(year, month, 1);
+      const start = new Date(year, month, 1 - first.getDay());
+      const today = new Date();
+
+      for (let i = 0; i < 42; i++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "roc-day";
+        if (day.getMonth() !== month) button.classList.add("muted");
+        if (sameDay(day, today)) button.classList.add("today");
+        if (sameDay(day, selectedDate)) button.classList.add("selected");
+
+        button.textContent = day.getDate();
+        button.onclick = function () {
+          if (rocPickerTarget) {
+            document.getElementById(rocPickerTarget).value = rocInput(day);
+          }
+          closeRocPicker();
+        };
+
+        grid.appendChild(button);
+      }
+    }
+
+    function pickToday() {
+      const today = new Date();
+      if (rocPickerTarget) {
+        document.getElementById(rocPickerTarget).value = rocInput(today);
+      }
+      closeRocPicker();
+    }
+
+    function clearRocPickerTarget() {
+      if (rocPickerTarget) {
+        document.getElementById(rocPickerTarget).value = "";
+      }
+      closeRocPicker();
+    }
+
+
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {
         navigator.serviceWorker.register("/service-worker.js");
       });
     }
   </script>
+
+<div class="roc-picker-backdrop" id="rocPickerBackdrop" onclick="closeRocPicker(event)">
+  <div class="roc-picker" onclick="event.stopPropagation()">
+    <div class="roc-picker-head">
+      <button type="button" class="roc-nav" onclick="moveRocMonth(-1)">‹</button>
+      <div class="roc-title" id="rocPickerTitle">民國115年7月</div>
+      <button type="button" class="roc-nav" onclick="moveRocMonth(1)">›</button>
+    </div>
+    <div class="roc-week">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div class="roc-grid" id="rocPickerGrid"></div>
+    <div class="roc-picker-actions">
+      <button type="button" class="roc-action light" onclick="pickToday()">今天</button>
+      <button type="button" class="roc-action light" onclick="clearRocPickerTarget()">清除</button>
+      <button type="button" class="roc-action main" onclick="closeRocPicker()">關閉</button>
+    </div>
+    <div class="roc-format-hint">可輸入民國或西元：1150705、115/07/05、20260705、2026/07/05</div>
+  </div>
+</div>
+
 </body>
 </html>
