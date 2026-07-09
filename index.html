@@ -83,6 +83,34 @@
       margin-bottom: 22px;
     }
 
+    .visitor-counter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 0 auto 18px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #fff8ef;
+      border: 1px solid rgba(154, 123, 79, .22);
+      box-shadow: 0 6px 18px rgba(80, 55, 30, .08);
+      color: #5f5242;
+      font-size: 14px;
+      line-height: 1.4;
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .visitor-counter strong {
+      font-size: 15px;
+      color: #3f3529;
+      font-weight: 800;
+    }
+
+    .visitor-icon {
+      font-size: 16px;
+    }
+
     input, button {
       display: block;
       width: 100%;
@@ -274,6 +302,19 @@
       margin-top: 18px;
     }
 
+
+    @media (max-width: 600px) {
+      .visitor-counter {
+        font-size: 13px;
+        padding: 7px 12px;
+        margin-bottom: 16px;
+      }
+
+      .visitor-counter strong {
+        font-size: 14px;
+      }
+    }
+
     @media (max-width: 760px) {
       .page {
         padding: 12px;
@@ -367,6 +408,12 @@
         <h1>托育工具箱</h1>
         <div class="subtitle">請輸入密碼後使用工具</div>
 
+        <div class="visitor-counter" aria-label="累積瀏覽人次">
+          <span class="visitor-icon">👀</span>
+          <span>累積瀏覽人次：</span>
+          <strong id="visitorCount">讀取中...</strong>
+        </div>
+
         <input id="passwordInput" type="password" inputmode="numeric" placeholder="請輸入密碼" autocomplete="off">
         <button type="button" onclick="login()">進入工具</button>
         <div class="error" id="errorMsg">密碼錯誤，請重新輸入</div>
@@ -429,6 +476,35 @@
     const toolFrame = document.getElementById("toolFrame");
     const backBtn = document.getElementById("backBtn");
 
+
+    async function updateVisitorCount() {
+      const countEl = document.getElementById("visitorCount");
+      if (!countEl) return;
+
+      try {
+        const hasCounted = sessionStorage.getItem("home_view_counted");
+
+        const response = await fetch("/api/view-counter", {
+          method: hasCounted ? "GET" : "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        if (data && data.ok) {
+          countEl.textContent = Number(data.count).toLocaleString("zh-TW") + " 人次";
+          sessionStorage.setItem("home_view_counted", "1");
+        } else {
+          countEl.textContent = "暫時無法讀取";
+        }
+      } catch (error) {
+        countEl.textContent = "暫時無法讀取";
+      }
+    }
+
     function showApp() {
       loginView.style.display = "none";
       appView.style.display = "block";
@@ -485,6 +561,7 @@
     window.addEventListener("DOMContentLoaded", function () {
       sessionStorage.removeItem("toolLogin");
       passwordInput.focus();
+      updateVisitorCount();
     });
 
     if ("serviceWorker" in navigator) {
