@@ -651,7 +651,7 @@ function highlightPenaltyText(text){
   "不予續約",
   "強制轉介",
   "轉介收托兒童",
-  "罰鍰",
+  "罰則","罰鍰",
   "罰鍰金額",
   "處新臺幣",
   "處臺幣",
@@ -673,6 +673,11 @@ function highlightPenaltyText(text){
  });
  // 金額區間也標紅
  s = s.replace(/(新臺幣)?([0-9,]+元以上[0-9,]+萬元?以下|[0-9]+萬元以上[0-9]+萬元以下|[0-9,]+元以上[0-9,]+元以下)/g, '<span class="penalty-key">$&</span>');
+
+ // v38補強：標示簡寫罰鍰金額，例如「6,000～30,000」「6,000~30,000」「6,000元～30,000元」
+ s = s.replace(/([0-9,]+(?:元)?\s*[～~－-]\s*[0-9,]+(?:元)?)/g, '<span class="penalty-key">$&</span>');
+ // v38補強：標示單一罰鍰金額，例如「3萬元」「30,000元」「6,000元」「6萬～30萬元」
+ s = s.replace(/([0-9,]+(?:元|萬元|萬))/g, '<span class="penalty-key">$&</span>');
  return s;
 }
 function highlightArticleHtml(html){
