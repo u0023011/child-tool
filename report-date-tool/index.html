@@ -282,7 +282,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 <div class="wrap">
   <div class="hero">
     <h1>日期計算工具</h1>
-    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（日期採民國年輸入，旁邊有民國日期選擇器）</div>
+    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（可輸入民國或西元，旁邊有民國日期選擇器）</div>
   </div>
 
   <div class="tabs">
@@ -318,7 +318,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
       <div>
         <label id="eventDateLabel" for="eventDate">新收托日</label>
         <div class="date-wrap">
-          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09 或 1150709">
+          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09、1150709 或 2026/07/09">
           <button type="button" class="date-picker-btn" onclick="openRocPicker('eventDate')" aria-label="選擇日期">📅</button>
         </div>
         <div class="hint" id="eventHint">依民法第120條，始日不算入，隔天為第1日。</div>
@@ -356,10 +356,10 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     <div>
       <label for="applyDate">提出退出申請日</label>
       <div class="date-wrap">
-        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09 或 1150709">
+        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09、1150709 或 2026/07/09">
         <button type="button" class="date-picker-btn" onclick="openRocPicker('applyDate')" aria-label="選擇日期">📅</button>
       </div>
-      <div class="hint">請輸入民國日期，或點右側日曆選擇日期；工具會自動算出 60 日後日期。</div>
+      <div class="hint">可輸入民國或西元日期，或點右側日曆選擇日期；工具會自動算出 60 日後日期。</div>
     </div>
 
     <div class="buttons">
@@ -385,17 +385,25 @@ function qs(id){return document.getElementById(id)}
 function parseISO(v){
   if(!v) return null;
   let s = String(v).trim();
-  // 支援民國連續數字：1150705、115705、115/07/05、115-07-05
-  if(/^\d{7}$/.test(s)){
+
+  // 支援：
+  // 民國：1150705、115705、115/07/05、115-07-05
+  // 西元：20260705、2026/07/05、2026-07-05
+  if(/^\d{8}$/.test(s)){
+    s = s.slice(0,4) + "/" + s.slice(4,6) + "/" + s.slice(6,8);
+  }else if(/^\d{7}$/.test(s)){
     s = s.slice(0,3) + "/" + s.slice(3,5) + "/" + s.slice(5,7);
   }else if(/^\d{6}$/.test(s)){
     s = s.slice(0,3) + "/" + s.slice(3,4) + "/" + s.slice(4,6);
   }
+
   s = s.replace(/[.\-]/g, "/");
   const parts = s.split("/").map(x => Number(x));
   if(parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
+
   let [y,m,d] = parts;
   if(y > 0 && y < 1911) y += 1911;
+
   const dt = new Date(y, m-1, d);
   if(dt.getFullYear() !== y || dt.getMonth() !== m-1 || dt.getDate() !== d) return null;
   return dt;
@@ -587,7 +595,7 @@ function caseInfo(){
 
 function calcDeadline(){
   const eventDate=parseISO(qs("eventDate").value);
-  if(!eventDate){alert("請輸入民國日期，例如 115/07/09。");return}
+  if(!eventDate){alert("請輸入日期，例如 115/07/09 或 2026/07/09。");return}
   const info=caseInfo();
   const start=addDays(eventDate,1);
   const rawDeadline=addDays(eventDate,info.days);
@@ -620,7 +628,7 @@ function clearDeadline(){qs("eventDate").value=""; qs("deadlineResult").style.di
 
 function calcPublic(){
   const applyDate=parseISO(qs("applyDate").value);
-  if(!applyDate){alert("請輸入提出退出申請日，例如 115/07/09。");return}
+  if(!applyDate){alert("請輸入提出退出申請日，例如 115/07/09 或 2026/07/09。");return}
 
   const sixtyDate=addDays(applyDate,60);
   qs("publicResult").style.display="block";
@@ -663,7 +671,7 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
       <button type="button" class="roc-action light" onclick="clearRocPickerTarget()">清除</button>
       <button type="button" class="roc-action main" onclick="closeRocPicker()">關閉</button>
     </div>
-    <div class="roc-format-hint">可手動輸入：115/07/09 或 1150709</div>
+    <div class="roc-format-hint">可輸入：115/07/09、1150709、2026/07/09、20260709</div>
   </div>
 </div>
 
