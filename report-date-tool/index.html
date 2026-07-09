@@ -86,12 +86,61 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 }
 </style>
 
+
+<style>
+/* v7：通訊情境自訂下拉選單，支援局部紅字粗體 */
+.custom-select { position: relative; width: 100%; }
+.custom-select-button {
+  width: 100%;
+  border: 1px solid #cfc7bd;
+  border-radius: 12px;
+  padding: 13px 42px 13px 14px;
+  font-size: 18px;
+  background: #fff;
+  color: #2d2923;
+  text-align: left;
+  line-height: 1.6;
+  position: relative;
+}
+.custom-select-button::after {
+  content: "⌄";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4e321b;
+  font-weight: 900;
+}
+.custom-menu {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  width: 100%;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #8b6f47;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+}
+.custom-menu.open { display: block; }
+.custom-option {
+  padding: 12px 14px;
+  font-size: 18px;
+  line-height: 1.6;
+  cursor: pointer;
+  background: #fff;
+}
+.custom-option:hover, .custom-option.active { background: #efe6d7; }
+.notice-red { color: #b42318; font-weight: 950; }
+</style>
+
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
     <h1>日期計算工具</h1>
-    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。</div>
+    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（日期採民國年輸入）</div>
   </div>
 
   <div class="tabs">
@@ -114,7 +163,11 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 
       <div id="noticeBox">
         <label for="noticeType">通訊情境</label>
-        <select id="noticeType" onchange="changeCaseType()"></select>
+        <input type="hidden" id="noticeType" value="none">
+        <div class="custom-select" id="noticeDropdown">
+          <button type="button" class="custom-select-button" id="noticeButton" onclick="toggleNoticeMenu()">依新收托日計算</button>
+          <div class="custom-menu" id="noticeMenu"></div>
+        </div>
         <div class="hint" id="noticeHint"></div>
       </div>
     </div>
@@ -122,7 +175,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     <div class="grid" style="margin-top:16px">
       <div>
         <label id="eventDateLabel" for="eventDate">新收托日</label>
-        <input type="date" id="eventDate">
+        <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09">
         <div class="hint" id="eventHint">依民法第120條，始日不算入，隔天為第1日。</div>
       </div>
       <div>
@@ -157,8 +210,8 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 
     <div>
       <label for="applyDate">提出退出申請日</label>
-      <input type="date" id="applyDate">
-      <div class="hint">工具會自動算出 60 日後日期，方便確認停止日要押哪一天。</div>
+      <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09">
+      <div class="hint">請輸入民國日期；工具會自動算出 60 日後日期，方便確認停止日要押哪一天。</div>
     </div>
 
     <div class="buttons">
@@ -181,7 +234,19 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 
 <script>
 function qs(id){return document.getElementById(id)}
-function parseISO(v){if(!v)return null;const [y,m,d]=v.split("-").map(Number);return new Date(y,m-1,d)}
+function parseISO(v){
+  if(!v) return null;
+  const s = String(v).trim().replace(/[.\-]/g, "/");
+  const parts = s.split("/").map(x => Number(x));
+  if(parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
+  let [y,m,d] = parts;
+  // 採民國年輸入；若輸入 115/07/09 會轉為西元 2026/07/09。
+  // 若誤輸入西元 2026/07/09，也會直接支援。
+  if(y > 0 && y < 1911) y += 1911;
+  const dt = new Date(y, m-1, d);
+  if(dt.getFullYear() !== y || dt.getMonth() !== m-1 || dt.getDate() !== d) return null;
+  return dt;
+}
 function iso(d){const off=d.getTimezoneOffset();return new Date(d.getTime()-off*60000).toISOString().slice(0,10)}
 function roc(d){return `${d.getFullYear()-1911}/${d.getMonth()+1}/${d.getDate()}`}
 function addDays(d,days){const x=new Date(d);x.setDate(x.getDate()+days);return x}
@@ -197,28 +262,50 @@ function switchTab(t){
 
 const noticeOptions = {
   new:[
-    ["none","未先通訊告知，依新收托日計算"],
-    ["same","收托當日即行通訊告知"],
-    ["early","收托日前提前通訊告知"],
-    ["during","收托期間始行通訊告知"]
+    ["none","依新收托日計算","依新收托日計算"],
+    ["same","當日即行通訊告知",'<span class="notice-red">當日</span>即行通訊告知'],
+    ["early","日前提前通訊告知",'日前<span class="notice-red">提前</span>通訊告知'],
+    ["during","期間始行通訊告知",'<span class="notice-red">期間</span>始行通訊告知']
   ],
   stop:[
-    ["none","未先通訊告知，依結束收托日計算"],
-    ["same","結束收托當日即行通訊告知"],
-    ["early","結束收托日前提前通訊告知"]
+    ["none","依結束收托日計算","依結束收托日計算"],
+    ["same","當日即行通訊告知",'<span class="notice-red">當日</span>即行通訊告知'],
+    ["early","日前提前通訊告知",'日前<span class="notice-red">提前</span>通訊告知']
   ]
 };
 
+function toggleNoticeMenu(){
+  qs("noticeMenu").classList.toggle("open");
+}
+
+document.addEventListener("click", function(e){
+  const box = qs("noticeDropdown");
+  if(box && !box.contains(e.target)){
+    qs("noticeMenu").classList.remove("open");
+  }
+});
+
 function setNoticeOptions(type){
-  const select=qs("noticeType");
-  const old=select.value;
-  select.innerHTML="";
-  (noticeOptions[type]||[]).forEach(([v,t])=>{
-    const opt=document.createElement("option");
-    opt.value=v; opt.textContent=t;
-    select.appendChild(opt);
+  const current=qs("noticeType").value || "none";
+  const opts=noticeOptions[type]||[];
+  let value = opts.some(o=>o[0]===current) ? current : "none";
+  qs("noticeType").value = value;
+  const menu=qs("noticeMenu");
+  menu.innerHTML="";
+  opts.forEach(([v,plain,html])=>{
+    const item=document.createElement("div");
+    item.className="custom-option" + (v===value ? " active" : "");
+    item.dataset.value=v;
+    item.innerHTML=html;
+    item.onclick=function(){
+      qs("noticeType").value=v;
+      qs("noticeButton").innerHTML=html;
+      qs("noticeMenu").classList.remove("open");
+      changeCaseType();
+    };
+    menu.appendChild(item);
+    if(v===value) qs("noticeButton").innerHTML=html;
   });
-  if([...select.options].some(o=>o.value===old)) select.value=old;
 }
 
 function changeCaseType(){
@@ -284,7 +371,7 @@ function caseInfo(){
 
 function calcDeadline(){
   const eventDate=parseISO(qs("eventDate").value);
-  if(!eventDate){alert("請輸入日期。");return}
+  if(!eventDate){alert("請輸入民國日期，例如 115/07/09。");return}
   const info=caseInfo();
   const start=addDays(eventDate,1);
   const rawDeadline=addDays(eventDate,info.days);
@@ -317,7 +404,7 @@ function clearDeadline(){qs("eventDate").value="";qs("deadlineResult").style.dis
 
 function calcPublic(){
   const applyDate=parseISO(qs("applyDate").value);
-  if(!applyDate){alert("請輸入提出退出申請日。");return}
+  if(!applyDate){alert("請輸入提出退出申請日，例如 115/07/09。");return}
 
   const sixtyDate=addDays(applyDate,60);
   qs("publicResult").style.display="block";
