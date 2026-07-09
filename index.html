@@ -84,31 +84,27 @@
     }
 
     .visitor-counter {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin: 0 auto 18px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: #fff8ef;
-      border: 1px solid rgba(154, 123, 79, .22);
-      box-shadow: 0 6px 18px rgba(80, 55, 30, .08);
-      color: #5f5242;
+      margin-top: 18px;
+      text-align: center;
+      color: #8c7a64;
       font-size: 14px;
-      line-height: 1.4;
-      width: fit-content;
-      max-width: 100%;
+      line-height: 1.6;
+    }
+
+    .footer-counter {
+      padding-top: 10px;
+      border-top: 1px solid #eee3d2;
     }
 
     .visitor-counter strong {
-      font-size: 15px;
-      color: #3f3529;
+      font-size: 16px;
+      color: #7b5b32;
       font-weight: 800;
+      margin: 0 4px;
     }
 
-    .visitor-icon {
-      font-size: 16px;
+    .visitor-text {
+      color: #8c7a64;
     }
 
     input, button {
@@ -306,12 +302,11 @@
     @media (max-width: 600px) {
       .visitor-counter {
         font-size: 13px;
-        padding: 7px 12px;
-        margin-bottom: 16px;
+        margin-top: 16px;
       }
 
       .visitor-counter strong {
-        font-size: 14px;
+        font-size: 15px;
       }
     }
 
@@ -408,15 +403,15 @@
         <h1>托育工具箱</h1>
         <div class="subtitle">請輸入密碼後使用工具</div>
 
-        <div class="visitor-counter" aria-label="累積瀏覽人次">
-          <span class="visitor-icon">👀</span>
-          <span>累積瀏覽人次：</span>
-          <strong id="visitorCount">讀取中...</strong>
-        </div>
-
         <input id="passwordInput" type="password" inputmode="numeric" placeholder="請輸入密碼" autocomplete="off">
         <button type="button" onclick="login()">進入工具</button>
         <div class="error" id="errorMsg">密碼錯誤，請重新輸入</div>
+
+        <div class="visitor-counter footer-counter" aria-label="累積瀏覽人次">
+          <span class="visitor-text">已有</span>
+          <strong id="visitorCount">讀取中...</strong>
+          <span class="visitor-text">人次使用此工具</span>
+        </div>
       </div>
     </section>
 
@@ -495,7 +490,7 @@
         const data = await response.json();
 
         if (data && data.ok) {
-          countEl.textContent = Number(data.count).toLocaleString("zh-TW") + " 人次";
+          countEl.textContent = Number(data.count).toLocaleString("zh-TW");
           sessionStorage.setItem("home_view_counted", "1");
         } else {
           countEl.textContent = "暫時無法讀取";
