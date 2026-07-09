@@ -273,6 +273,37 @@
       letter-spacing: 0;
     }
 
+    .tool-usage-counter {
+      display: none;
+      text-align: center;
+      color: #8c7a64;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 12px 14px 14px;
+      border-top: 1px solid #eee3d2;
+      background: #fffdf8;
+    }
+
+    .tool-usage-counter strong {
+      font-size: 16px;
+      color: #7b5b32;
+      font-weight: 800;
+      margin: 0 4px;
+    }
+
+    .tool-usage-name {
+      color: #7b5b32;
+      font-weight: 800;
+      margin-right: 8px;
+    }
+
+    .tool-count strong {
+      color: #7b5b32;
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0 2px;
+    }
+
     #toolArea {
       display: none;
       background: #fff;
@@ -284,8 +315,8 @@
 
     #toolFrame {
       width: 100%;
-      height: calc(100vh - 94px);
-      min-height: 720px;
+      height: calc(100vh - 142px);
+      min-height: 660px;
       border: 0;
       display: block;
       background: #fff;
@@ -353,8 +384,8 @@
       }
 
       #toolFrame {
-        height: calc(100vh - 74px);
-        min-height: 650px;
+        height: calc(100vh - 122px);
+        min-height: 590px;
       }
     }
   
@@ -387,8 +418,17 @@
 
       #toolFrame {
         width: 100vw !important;
-        height: calc(100vh - 64px) !important;
-        min-height: calc(100vh - 64px) !important;
+        height: calc(100vh - 112px) !important;
+        min-height: calc(100vh - 112px) !important;
+      }
+
+      .tool-usage-counter {
+        font-size: 13px;
+        padding: 10px 12px 12px;
+      }
+
+      .tool-usage-counter strong {
+        font-size: 15px;
       }
     }
 
@@ -432,17 +472,17 @@
           
 
           <div class="tool-grid">
-            <button type="button" class="tool-card" onclick="openTool('childcare-law/')">
+            <button type="button" class="tool-card" onclick="openTool('childcare-law/', 'childcare_law')">
               <div class="tool-title">📖 托育法規工具</div>
               <div class="tool-desc">查詢托育法規、違規及罰則。</div>
             </button>
 
-            <button type="button" class="tool-card" onclick="openTool('age-tool/')">
+            <button type="button" class="tool-card" onclick="openTool('age-tool/', 'age_tool')">
               <div class="tool-title">👶 幼兒年齡檢核工具</div>
               <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
             </button>
 
-            <button type="button" class="tool-card" onclick="openTool('report-date-tool/')">
+            <button type="button" class="tool-card" onclick="openTool('report-date-tool/', 'report_date_tool')">
               <div class="tool-title">📅 回報日期計算工具</div>
               <div class="tool-desc">計算新收托、結束收托、補助申請與準公共退出日期。</div>
             </button>
@@ -454,6 +494,11 @@
 
         <div id="toolArea">
           <iframe id="toolFrame" title="托育工具"></iframe>
+          <div class="tool-usage-counter" id="toolUsageCounter" aria-label="工具使用人次">
+            <span class="tool-usage-name" id="toolUsageName">此工具</span>已有
+            <strong id="toolUsageCount">讀取中</strong>
+            <span>人次使用</span>
+          </div>
         </div>
       </div>
     </section>
@@ -470,6 +515,9 @@
     const toolArea = document.getElementById("toolArea");
     const toolFrame = document.getElementById("toolFrame");
     const backBtn = document.getElementById("backBtn");
+    const toolUsageCounter = document.getElementById("toolUsageCounter");
+    const toolUsageName = document.getElementById("toolUsageName");
+    const toolUsageCount = document.getElementById("toolUsageCount");
 
 
     async function updateVisitorCount() {
@@ -500,6 +548,66 @@
       }
     }
 
+    const TOOL_COUNTERS = [
+      { key: "childcare_law", label: "托育法規工具" },
+      { key: "age_tool", label: "幼兒年齡檢核工具" },
+      { key: "report_date_tool", label: "回報日期計算工具" }
+    ];
+
+    function getToolInfo(counterKey) {
+      return TOOL_COUNTERS.find(function (item) {
+        return item.key === counterKey;
+      });
+    }
+
+    async function fetchCounter(counterKey, method) {
+      const options = {
+        method: method,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        cache: "no-store"
+      };
+
+      if (method === "POST") {
+        options.body = JSON.stringify({ counter: counterKey });
+      }
+
+      const url = method === "GET"
+        ? "/api/view-counter?counter=" + encodeURIComponent(counterKey)
+        : "/api/view-counter";
+
+      const response = await fetch(url, options);
+      return await response.json();
+    }
+
+    async function countToolOpen(counterKey) {
+      if (!counterKey) return;
+
+      const toolInfo = getToolInfo(counterKey);
+      if (toolUsageName) toolUsageName.textContent = toolInfo ? toolInfo.label : "此工具";
+      if (toolUsageCount) toolUsageCount.textContent = "讀取中";
+      if (toolUsageCounter) toolUsageCounter.style.display = "block";
+
+      const countedKey = "tool_open_counted_" + counterKey;
+      const method = sessionStorage.getItem(countedKey) ? "GET" : "POST";
+
+      try {
+        const data = await fetchCounter(counterKey, method);
+
+        if (data && data.ok) {
+          sessionStorage.setItem(countedKey, "1");
+          if (toolUsageCount) {
+            toolUsageCount.textContent = Number(data.count).toLocaleString("zh-TW");
+          }
+        } else if (toolUsageCount) {
+          toolUsageCount.textContent = "暫時無法讀取";
+        }
+      } catch (error) {
+        if (toolUsageCount) toolUsageCount.textContent = "暫時無法讀取";
+      }
+    }
+
     function showApp() {
       loginView.style.display = "none";
       appView.style.display = "block";
@@ -507,6 +615,7 @@
       toolArea.style.display = "none";
       backBtn.style.display = "none";
       toolFrame.removeAttribute("src");
+      if (toolUsageCounter) toolUsageCounter.style.display = "none";
     }
 
     function login() {
@@ -528,7 +637,7 @@
       loginCard.classList.add("shake");
     }
 
-    function openTool(path) {
+    function openTool(path, counterKey) {
       if (sessionStorage.getItem("toolLogin") !== "ok") {
         location.reload();
         return;
@@ -538,6 +647,7 @@
       toolArea.style.display = "block";
       backBtn.style.display = "block";
       toolFrame.src = path;
+      countToolOpen(counterKey);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -546,6 +656,7 @@
       toolArea.style.display = "none";
       menuArea.style.display = "block";
       backBtn.style.display = "none";
+      if (toolUsageCounter) toolUsageCounter.style.display = "none";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
