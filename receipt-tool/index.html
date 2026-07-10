@@ -706,6 +706,7 @@
     <header class="hero">
       <div>
         <h1>今日收件紀錄</h1>
+        <p class="subtitle">點一下選取，再點一下取消；黃色欄位請輸入收到的份數。</p>
       </div>
       <div class="today" id="today"></div>
     </header>
@@ -715,7 +716,7 @@
       <div class="top-grid">
         <div>
           <label class="field-label" for="caregiver">托育人員姓名</label>
-          <input id="caregiver" type="text" placeholder="例如：王小明">
+          <input id="caregiver" type="text">
         </div>
         <div>
           <label class="field-label" for="opening">訊息開頭</label>
@@ -833,7 +834,7 @@
         <div class="child-head">
           <div class="field">
             <label class="field-label">托兒姓名</label>
-            <input type="text" class="child-name" placeholder="例如：陳小華">
+            <input type="text" class="child-name">
           </div>
           <div></div>
           <button type="button" class="remove">刪除</button>
@@ -897,7 +898,6 @@
       bindToggle(box);
     }
 
-    addChild();
     addChild();
 
     document.getElementById("addChild").addEventListener("click", addChild);
@@ -977,7 +977,6 @@
       document.querySelectorAll(".toggle.active").forEach(btn=>btn.classList.remove("active"));
       document.getElementById("result").value = "";
       childList.innerHTML = "";
-      addChild();
       addChild();
     });
   </script>
