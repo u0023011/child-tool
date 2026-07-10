@@ -722,9 +722,10 @@
         });
 
         const ageButtons = [...card.querySelectorAll(".age-toggle.active")];
-        ageButtons.forEach(ageBtn=>{
-          childItems.push(`${ageBtn.dataset.age}發展檢核表紀錄`);
-        });
+        if(ageButtons.length){
+          const ageText = ageButtons.map(ageBtn => ageBtn.textContent.trim()).join("、");
+          childItems.push(`發展檢核表${ageText}`);
+        }
 
         if(childItems.length){
           const prefix = name ? `托兒${name}的` : "托兒的";
