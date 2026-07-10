@@ -318,7 +318,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
       <div>
         <label id="eventDateLabel" for="eventDate">新收托日</label>
         <div class="date-wrap">
-          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：115/07/09、1150709 或 2026/07/09">
+          <input type="text" id="eventDate" inputmode="numeric" placeholder="例：1150709">
           <button type="button" class="date-picker-btn" onclick="openRocPicker('eventDate')" aria-label="選擇日期">📅</button>
         </div>
         <div class="hint" id="eventHint">依民法第120條，始日不算入，隔天為第1日。</div>
@@ -356,7 +356,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     <div>
       <label for="applyDate">提出退出申請日</label>
       <div class="date-wrap">
-        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：115/07/09、1150709 或 2026/07/09">
+        <input type="text" id="applyDate" inputmode="numeric" placeholder="例：1150709">
         <button type="button" class="date-picker-btn" onclick="openRocPicker('applyDate')" aria-label="選擇日期">📅</button>
       </div>
       <div class="hint">可輸入民國或西元日期，或點右側日曆選擇日期；工具會自動算出 60 日後日期。</div>
