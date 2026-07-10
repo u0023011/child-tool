@@ -461,6 +461,40 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 .roc-month-view.hidden-view{display:none}
 </style>
 
+
+<style>
+/* v4：年份 hover、選年份後先選月份，再選日期 */
+.roc-year-btn:hover,
+.roc-month-btn:hover {
+  background: #efe6d7;
+  border-color: #8b6f47;
+  color: #4e321b;
+}
+.roc-month-grid {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.roc-month-grid.open {
+  display: grid;
+}
+.roc-month-btn {
+  border: 1px solid #eadcc6;
+  border-radius: 12px;
+  background: #fff;
+  color: #4e321b;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 12px 4px;
+}
+.roc-month-btn.selected {
+  background: #8b6f47;
+  color: #fff;
+  border-color: #8b6f47;
+}
+</style>
+
 </head>
 
 <body>
@@ -1039,6 +1073,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
     let rocPickerView = new Date();
     let rocPickerMode = "month";
     let rocYearPageStart = null;
+    let rocSelectedYearForMonth = null;
 
     function openRocPicker(targetId) {
       rocPickerTarget = targetId;
@@ -1061,6 +1096,15 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
         moveRocYearPage(delta);
         return;
       }
+
+      if (rocPickerMode === "monthSelect") {
+        rocPickerView.setFullYear(rocPickerView.getFullYear() + delta);
+        rocSelectedYearForMonth = rocPickerView.getFullYear();
+        const currentInfo = rocPickerTarget ? parseDateInfo(document.getElementById(rocPickerTarget).value) : null;
+        renderRocPicker(currentInfo ? currentInfo.date : null);
+        return;
+      }
+
       rocPickerView.setMonth(rocPickerView.getMonth() + delta);
       const currentInfo = rocPickerTarget ? parseDateInfo(document.getElementById(rocPickerTarget).value) : null;
       renderRocPicker(currentInfo ? currentInfo.date : null);
@@ -1096,15 +1140,27 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
         a.getDate() === b.getDate();
     }
 
+    function hideAllRocPickerViews() {
+      const monthView = document.getElementById("rocMonthView");
+      const yearGrid = document.getElementById("rocYearGrid");
+      const monthGrid = document.getElementById("rocMonthGrid");
+
+      if (monthView) monthView.classList.add("hidden-view");
+      if (yearGrid) yearGrid.classList.remove("open");
+      if (monthGrid) monthGrid.classList.remove("open");
+    }
+
     function renderRocPicker(selectedDate) {
       const year = rocPickerView.getFullYear();
       const month = rocPickerView.getMonth();
       const rocYear = year - 1911;
+
       const monthView = document.getElementById("rocMonthView");
       const yearGrid = document.getElementById("rocYearGrid");
+      const monthGrid = document.getElementById("rocMonthGrid");
 
       if (rocPickerMode === "year") {
-        monthView.classList.add("hidden-view");
+        hideAllRocPickerViews();
         yearGrid.classList.add("open");
 
         if (rocYearPageStart === null) {
@@ -1121,19 +1177,52 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
           button.className = "roc-year-btn";
           if (y === rocYear) button.classList.add("selected");
           button.textContent = `民國${y}年`;
+
+          // 點年份後，不直接跳日期；先進入 1～12 月選擇
           button.onclick = function () {
             rocPickerView.setFullYear(y + 1911);
-            rocPickerMode = "month";
+            rocSelectedYearForMonth = y + 1911;
+            rocPickerMode = "monthSelect";
             const currentInfo = rocPickerTarget ? parseDateInfo(document.getElementById(rocPickerTarget).value) : null;
             renderRocPicker(currentInfo ? currentInfo.date : null);
           };
+
           yearGrid.appendChild(button);
         }
         return;
       }
 
+      if (rocPickerMode === "monthSelect") {
+        hideAllRocPickerViews();
+        monthGrid.classList.add("open");
+
+        const displayYear = rocPickerView.getFullYear();
+        const displayRocYear = displayYear - 1911;
+        document.getElementById("rocPickerTitle").textContent = `民國${displayRocYear}年：選擇月份`;
+        monthGrid.innerHTML = "";
+
+        for (let m = 0; m < 12; m++) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "roc-month-btn";
+          if (m === rocPickerView.getMonth()) button.classList.add("selected");
+          button.textContent = `${m + 1}月`;
+
+          // 點月份後，才進入日期選擇
+          button.onclick = function () {
+            rocPickerView = new Date(displayYear, m, 1);
+            rocPickerMode = "month";
+            const currentInfo = rocPickerTarget ? parseDateInfo(document.getElementById(rocPickerTarget).value) : null;
+            renderRocPicker(currentInfo ? currentInfo.date : null);
+          };
+
+          monthGrid.appendChild(button);
+        }
+        return;
+      }
+
+      hideAllRocPickerViews();
       monthView.classList.remove("hidden-view");
-      yearGrid.classList.remove("open");
       document.getElementById("rocPickerTitle").textContent = `民國${rocYear}年${month + 1}月`;
 
       const grid = document.getElementById("rocPickerGrid");
@@ -1200,12 +1289,13 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
       <div class="roc-grid" id="rocPickerGrid"></div>
     </div>
     <div class="roc-year-grid" id="rocYearGrid"></div>
+    <div class="roc-month-grid" id="rocMonthGrid"></div>
     <div class="roc-picker-actions">
       <button type="button" class="roc-action light" onclick="pickToday()">今天</button>
       <button type="button" class="roc-action light" onclick="clearRocPickerTarget()">清除</button>
       <button type="button" class="roc-action main" onclick="closeRocPicker()">關閉</button>
     </div>
-    <div class="roc-format-hint">可輸入民國或西元；點上方民國年可切換年份</div>
+    <div class="roc-format-hint">可輸入民國或西元；點上方民國年可選年份，再選月份與日期</div>
   </div>
 </div>
 
