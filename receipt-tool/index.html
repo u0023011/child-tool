@@ -706,7 +706,6 @@
     <header class="hero">
       <div>
         <h1>今日收件紀錄</h1>
-        <p class="subtitle">點一下選取，再點一下取消；黃色欄位請輸入收到的份數。</p>
       </div>
       <div class="today" id="today"></div>
     </header>
@@ -770,7 +769,7 @@
 
     <section class="card">
       <h2 class="card-title"><span class="badge">4</span>產出訊息</h2>
-      <textarea id="result" placeholder="按下「產生訊息」後，文字會出現在這裡。"></textarea>
+      <textarea id="result"></textarea>
       <div class="actions">
         <button class="action primary wide" id="generate" type="button">產生訊息</button>
         <button class="action secondary" id="copy" type="button">複製文字</button>
@@ -843,15 +842,15 @@
         <div class="child-qty-grid">
           <label class="child-qty-box">
             <span>異動申請書</span>
-            <input type="number" min="0" inputmode="numeric" data-child-qty="異動申請書" placeholder="0">
+            <input type="number" min="0" inputmode="numeric" data-child-qty="異動申請書">
           </label>
           <label class="child-qty-box">
             <span>契約書</span>
-            <input type="number" min="0" inputmode="numeric" data-child-qty="契約書" placeholder="0">
+            <input type="number" min="0" inputmode="numeric" data-child-qty="契約書">
           </label>
           <label class="child-qty-box">
             <span>臨托契約書</span>
-            <input type="number" min="0" inputmode="numeric" data-child-qty="臨托契約書" placeholder="0">
+            <input type="number" min="0" inputmode="numeric" data-child-qty="臨托契約書">
           </label>
         </div>
 
@@ -911,10 +910,11 @@
     function generateMessage(){
       const caregiver = document.getElementById("caregiver").value.trim();
       const opening = document.getElementById("opening").value.trim() || "您好，今日已收到";
-      const parts = [];
+      const generalParts = [];
+      const childLines = [];
 
       document.querySelectorAll('[data-group="general"] .toggle.active').forEach(btn=>{
-        parts.push(btn.dataset.label);
+        generalParts.push(btn.dataset.label);
       });
 
       document.querySelectorAll(".child-card").forEach(card=>{
@@ -939,19 +939,29 @@
         }
 
         if(childItems.length){
-          const prefix = name ? `托兒${name}的` : "托兒的";
-          parts.push(prefix + joinChinese(childItems));
+          const prefix = name ? `${name}的` : "";
+          childLines.push(prefix + joinChinese(childItems));
         }
       });
 
-      let text = caregiver ? `${caregiver}${opening}` : opening;
-      if(parts.length){
-        text += joinChinese(parts) + "，以上資料已收件，謝謝。";
+      const header = caregiver ? `${caregiver}${opening}` : opening;
+      const lines = [];
+
+      if(generalParts.length){
+        lines.push(`${header}${joinChinese(generalParts)}。`);
+      }else if(childLines.length){
+        lines.push(header);
       }else{
-        text += "資料。";
+        lines.push(`${header}資料。`);
       }
 
-      document.getElementById("result").value = text;
+      lines.push(...childLines);
+
+      if(generalParts.length || childLines.length){
+        lines.push("以上資料已收件，謝謝。");
+      }
+
+      document.getElementById("result").value = lines.join("\n");
     }
 
     document.getElementById("generate").addEventListener("click", generateMessage);
