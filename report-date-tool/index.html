@@ -16,7 +16,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .wrap{max-width:980px;margin:0 auto;padding:22px 14px 60px}
 .hero{background:#fff;border-radius:22px;padding:28px 20px;text-align:center;margin-bottom:18px;border:1px solid #eee2d1;box-shadow:0 2px 10px rgba(80,50,20,.04)}
 h1{margin:0;color:#4e321b;font-size:34px;letter-spacing:.04em}.sub{margin-top:8px;color:var(--muted);font-size:17px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .tab{border:1px solid var(--line);background:#efe6d7;color:#4e321b;border-radius:16px;padding:14px 12px;font-weight:900;font-size:18px;cursor:pointer}
 .tab.active{background:var(--main);color:#fff;border-color:var(--main)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;margin-bottom:18px}
@@ -378,6 +378,84 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 }
 </style>
 
+
+<style>
+/* 腸病毒停托功能 */
+.case-card{
+  background:#fff;
+  border:1px solid #eadcc6;
+  border-radius:16px;
+  padding:16px;
+  margin-top:14px;
+}
+.case-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.case-title{
+  font-size:19px;
+  font-weight:950;
+  color:#4e321b;
+}
+.case-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:34px;
+  height:34px;
+  border-radius:999px;
+  background:#efe6d7;
+  color:#4e321b;
+  font-weight:950;
+}
+.message-area{
+  width:100%;
+  min-height:180px;
+  margin-top:12px;
+  border:1px solid #d8c9b3;
+  border-radius:14px;
+  padding:14px;
+  font-size:16px;
+  line-height:1.8;
+  resize:vertical;
+  background:#fff;
+}
+.alert-box{
+  margin-top:14px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:#fff0ed;
+  border:1px solid #efb5a7;
+  color:#8e2b1e;
+  font-weight:800;
+}
+.safe-box{
+  margin-top:14px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:#e8f6ef;
+  border:1px solid #b9dfcc;
+  color:#166349;
+  font-weight:800;
+}
+.inline-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:12px;
+}
+.inline-actions button{
+  flex:1 1 180px;
+}
+@media (max-width:760px){
+  .case-head{align-items:flex-start}
+  .tabs{grid-template-columns:1fr}
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -389,6 +467,7 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
   <div class="tabs">
     <button class="tab active" id="tabDeadline" onclick="switchTab('deadline')">送件期限</button>
     <button class="tab" id="tabPublic" onclick="switchTab('public')">準公退出</button>
+    <button class="tab" id="tabEnterovirus" onclick="switchTab('enterovirus')">腸病毒停托</button>
   </div>
 
   <section class="panel" id="panelDeadline">
@@ -479,6 +558,82 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
       ✅ 規則：有提前 60 日提出退出申請，停止日起滿 1 年後可重新加入；未提前 60 日，停止日起滿 2 年後可重新加入。
     </div>
   </section>
+
+  <section class="panel hidden" id="panelEnterovirus">
+    <div class="title">腸病毒停托七日計算</div>
+
+    <div class="note">
+      ✅ 個案經醫師臨床診斷證實或疑似腸病毒者，自個案停托日起算停托七日，包含國定例假日；第八日才可恢復收托。
+    </div>
+
+    <div class="case-card">
+      <div class="case-head">
+        <div class="case-title">第一名托兒</div>
+        <span class="case-badge">1</span>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="virusChild1Name">托兒姓名（選填）</label>
+          <input type="text" id="virusChild1Name" placeholder="例：王小美">
+        </div>
+        <div>
+          <label for="virusDate1">請假／停托起始日</label>
+          <div class="date-wrap">
+            <input type="text" id="virusDate1" inputmode="numeric" placeholder="例：1150709">
+            <button type="button" class="date-picker-btn" onclick="openRocPicker('virusDate1')" aria-label="選擇日期">📅</button>
+          </div>
+          <div class="hint">起始日算第1日，第8日才可恢復收托。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-head">
+        <div class="case-title">第二名托兒（七日內出現時填寫）</div>
+        <span class="case-badge">2</span>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="virusChild2Name">托兒姓名（選填）</label>
+          <input type="text" id="virusChild2Name" placeholder="例：李小華">
+        </div>
+        <div>
+          <label for="virusDate2">請假／停托起始日</label>
+          <div class="date-wrap">
+            <input type="text" id="virusDate2" inputmode="numeric" placeholder="未出現第二名可留白">
+            <button type="button" class="date-picker-btn" onclick="openRocPicker('virusDate2')" aria-label="選擇日期">📅</button>
+          </div>
+          <div class="hint">若在第一名托兒停托七日內出現，將另外計算全托育地停托七日；第一名托兒原日期不變。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="ghost" onclick="clearEnterovirus()">清除</button>
+      <button class="primary" onclick="calcEnterovirus()">計算停托日期</button>
+    </div>
+
+    <div class="result" id="enterovirusResult">
+      <div class="status neutral" id="enterovirusStatus"></div>
+      <div class="chips" id="enterovirusChips"></div>
+      <div class="box" id="enterovirusDetail"></div>
+
+      <label for="enterovirusMessage" style="margin-top:16px">通知訊息</label>
+      <textarea class="message-area" id="enterovirusMessage"></textarea>
+
+      <div class="inline-actions">
+        <button class="ghost" onclick="clearEnterovirusMessage()">清除訊息</button>
+        <button class="primary" onclick="copyEnterovirusMessage()">複製訊息</button>
+      </div>
+    </div>
+
+    <div class="note">
+      📌 提醒：如需實施全托育地停托，仍應依當年度高風險區公告、家長同意條件及主管機關規定辦理。
+    </div>
+  </section>
+
 </div>
 
 <script>
@@ -705,8 +860,10 @@ function shiftIfHoliday(d){let x=new Date(d);if(qs("holidayMode").value!=="weeke
 function switchTab(t){
   qs("tabDeadline").classList.toggle("active",t==="deadline");
   qs("tabPublic").classList.toggle("active",t==="public");
+  qs("tabEnterovirus").classList.toggle("active",t==="enterovirus");
   qs("panelDeadline").classList.toggle("hidden",t!=="deadline");
   qs("panelPublic").classList.toggle("hidden",t!=="public");
+  qs("panelEnterovirus").classList.toggle("hidden",t!=="enterovirus");
 }
 
 const noticeOptions = {
@@ -875,6 +1032,132 @@ function calcPublic(){
 }
 
 function clearPublic(){qs("applyDate").value=""; qs("publicResult").style.display="none"}
+
+function formatVirusName(name, fallback){
+  const v = String(name || "").trim();
+  return v ? `托兒${v}` : fallback;
+}
+
+function calcEnterovirus(){
+  const date1 = parseISO(qs("virusDate1").value);
+  const date2Text = qs("virusDate2").value.trim();
+  const date2 = date2Text ? parseISO(date2Text) : null;
+
+  if(!date1){
+    alert("請輸入第一名托兒的請假／停托起始日。");
+    return;
+  }
+  if(date2Text && !date2){
+    alert("第二名托兒日期格式不正確。");
+    return;
+  }
+
+  const child1 = formatVirusName(qs("virusChild1Name").value, "第一名托兒");
+  const child2 = formatVirusName(qs("virusChild2Name").value, "第二名托兒");
+
+  const child1End = addDays(date1, 6);
+  const child1Resume = addDays(date1, 7);
+
+  let secondWithinWindow = false;
+  let siteEnd = null;
+  let siteResume = null;
+
+  if(date2){
+    secondWithinWindow = date2 >= date1 && date2 <= child1End;
+    if(secondWithinWindow){
+      siteEnd = addDays(date2, 6);
+      siteResume = addDays(date2, 7);
+    }
+  }
+
+  qs("enterovirusResult").style.display = "block";
+  qs("enterovirusStatus").className = "status neutral";
+  qs("enterovirusStatus").textContent = `${child1}可於 ${roc(child1Resume)} 恢復收托`;
+
+  const chips = [
+    `<span class="chip red">停托7日</span>`,
+    `<span class="chip">${child1}</span>`,
+    `<span class="chip green">第8日復托</span>`
+  ];
+  if(secondWithinWindow){
+    chips.push(`<span class="chip red">全托育地停托7日</span>`);
+  }
+  qs("enterovirusChips").innerHTML = chips.join("");
+
+  let detail = `
+    <div class="row"><strong>${child1}停托起始日：</strong>${roc(date1)}</div>
+    <div class="row"><strong>${child1}停托期間：</strong>${roc(date1)}～${roc(child1End)}</div>
+    <div class="row"><strong>${child1}可恢復收托日：</strong><span class="green">${roc(child1Resume)}</span></div>
+  `;
+
+  let message = `${child1}自${roc(date1)}起停托7日，停托期間為${roc(date1)}至${roc(child1End)}，可於${roc(child1Resume)}恢復收托。`;
+
+  if(date2){
+    detail += `<div class="row"><strong>${child2}停托起始日：</strong>${roc(date2)}</div>`;
+
+    if(secondWithinWindow){
+      const child2End = addDays(date2, 6);
+      const child2Resume = addDays(date2, 7);
+
+      detail += `
+        <div class="row"><strong>${child2}是否在第一名托兒七日內出現：</strong><span class="red">是</span></div>
+        <div class="row"><strong>${child2}個案停托期間：</strong>${roc(date2)}～${roc(child2End)}</div>
+        <div class="row"><strong>${child2}個案可恢復收托日：</strong><span class="green">${roc(child2Resume)}</span></div>
+        <div class="row"><strong>全托育地停托期間：</strong><span class="red">${roc(date2)}～${roc(siteEnd)}</span></div>
+        <div class="row"><strong>全托育地可恢復收托日：</strong><span class="orange">${roc(siteResume)}</span></div>
+        <div class="alert-box">第一名托兒原本的個案停托日期不變；全托育地停托另自第二名托兒實際停托日起算7日。</div>
+      `;
+
+      message += `\n\n${child2}於${roc(date2)}出現腸病毒情形，因在第一名托兒停托7日內，托育地全體托兒自${roc(date2)}起停托7日，停托期間為${roc(date2)}至${roc(siteEnd)}，可於${roc(siteResume)}恢復收托；第一名托兒原停托日期不受影響。`;
+    }else{
+      const child2End = addDays(date2, 6);
+      const child2Resume = addDays(date2, 7);
+
+      detail += `
+        <div class="row"><strong>${child2}是否在第一名托兒七日內出現：</strong><span class="green">否</span></div>
+        <div class="row"><strong>${child2}停托期間：</strong>${roc(date2)}～${roc(child2End)}</div>
+        <div class="row"><strong>${child2}可恢復收托日：</strong><span class="green">${roc(child2Resume)}</span></div>
+        <div class="safe-box">第二名托兒日期不在第一名托兒停托七日範圍內，系統僅分別計算兩名托兒個案停托日期。</div>
+      `;
+
+      message += `${child2}自${roc(date2)}起停托7日，停托期間為${roc(date2)}至${roc(child2End)}，可於${roc(child2Resume)}恢復收托。`;
+    }
+  }
+
+  message += `\n\n請托育人員立即進行托育環境清消，並完成消毒紀錄表。\n\n也請提醒所有托兒家長，近期多留意托兒是否出現發燒、手足口症、疱疹性咽峽炎或其他身體狀況變化，如有異常請儘速就醫並回報。`;
+
+  qs("enterovirusDetail").innerHTML = detail;
+  qs("enterovirusMessage").value = message;
+
+  setTimeout(()=>qs("enterovirusResult").scrollIntoView({behavior:"smooth",block:"start"}),60);
+}
+
+function clearEnterovirus(){
+  qs("virusChild1Name").value = "";
+  qs("virusDate1").value = "";
+  qs("virusChild2Name").value = "";
+  qs("virusDate2").value = "";
+  qs("enterovirusMessage").value = "";
+  qs("enterovirusResult").style.display = "none";
+}
+
+function clearEnterovirusMessage(){
+  qs("enterovirusMessage").value = "";
+}
+
+async function copyEnterovirusMessage(){
+  const el = qs("enterovirusMessage");
+  if(!el.value.trim()) return;
+  try{
+    await navigator.clipboard.writeText(el.value);
+    alert("已複製通知訊息。");
+  }catch(e){
+    el.select();
+    document.execCommand("copy");
+    alert("已複製通知訊息。");
+  }
+}
+
 async function copyText(id){const text=qs(id).textContent;if(!text.trim())return;try{await navigator.clipboard.writeText(text);alert("已複製結果。")}catch(e){alert("手機瀏覽器不支援自動複製，請長按文字手動複製。")}}
 changeCaseType();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js"))}
