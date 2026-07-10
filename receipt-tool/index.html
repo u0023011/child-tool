@@ -489,6 +489,149 @@
       .actions .wide{grid-column:1 / -1}
     }
   </style>
+
+  <style>
+    /* 清楚邊界版：保留米色、咖啡色風格，提高卡片與欄位對比 */
+    :root{
+      --bg:#f3e7d5;
+      --card:#fffdf9;
+      --text:#3c2f23;
+      --muted:#745f4b;
+      --line:#cdae83;
+      --primary:#7d5930;
+      --primary-soft:#eadbc5;
+      --ok:#647541;
+      --ok-soft:#edf2e3;
+      --yellow:#fff0a8;
+      --danger:#b6443c;
+      --shadow:0 5px 16px rgba(75,48,24,.14);
+    }
+
+    body{
+      background:#f3e7d5;
+    }
+
+    .hero{
+      padding:18px 4px 6px;
+    }
+
+    .today{
+      background:#fffdf9;
+      border:1.5px solid #cfb188;
+      box-shadow:0 2px 7px rgba(75,48,24,.08);
+    }
+
+    .card{
+      background:#fffdf9;
+      border:1.5px solid #cdae83;
+      box-shadow:0 5px 16px rgba(75,48,24,.13);
+    }
+
+    .badge{
+      background:#eadbc5;
+      color:#79552d;
+      box-shadow:inset 0 0 0 1px #d3b78e;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea{
+      background:#fff;
+      border:1.5px solid #c9ad85;
+    }
+
+    input:focus,
+    textarea:focus{
+      border-color:#7d5930;
+      box-shadow:0 0 0 4px rgba(125,89,48,.15);
+    }
+
+    .toggle,
+    .age-toggle{
+      background:#fff;
+      border:1.5px solid #c9ad85;
+      box-shadow:0 1px 2px rgba(75,48,24,.04);
+    }
+
+    .toggle:hover,
+    .age-toggle:hover{
+      border-color:#8b6439;
+      background:#fff7ea;
+    }
+
+    .toggle.active,
+    .age-toggle.active{
+      border-color:#667842;
+      background:#edf2e3;
+      color:#52632f;
+      box-shadow:inset 0 0 0 1px rgba(82,99,47,.16);
+    }
+
+    .child-card{
+      background:#fffaf2;
+      border:1.5px solid #cdae83;
+    }
+
+    .child-qty-box{
+      background:#fff0a8;
+      border:1.5px solid #d5b844;
+    }
+
+    .child-qty-box input{
+      background:#fffdf4;
+      border-color:#c8aa62;
+    }
+
+    .development-inline{
+      border-top:1.5px dashed #b9986d;
+    }
+
+    .development-inline-toggle{
+      background:#f6ead8;
+      border:1.5px solid #c7a779;
+      color:#4f3823;
+    }
+
+    .development-inline-toggle:hover{
+      background:#eadbc5;
+      border-color:#8b6439;
+    }
+
+    .primary{
+      background:#7d5930;
+      color:#fff;
+      box-shadow:0 3px 8px rgba(75,48,24,.18);
+    }
+
+    .secondary{
+      background:#eadbc5;
+      color:#694720;
+      border:1px solid #cfaf80;
+    }
+
+    .ghost{
+      background:#eee3d3;
+      color:#59442f;
+      border:1px solid #d2b992;
+    }
+
+    .remove{
+      background:#fff0ed;
+      border:1px solid #e4b5ae;
+    }
+
+    @media (max-width:650px){
+      .hero{
+        padding:10px 2px 2px;
+      }
+
+      .card{
+        border-width:1px;
+        box-shadow:0 3px 11px rgba(75,48,24,.11);
+      }
+    }
+  </style>
+
 </head>
 <body>
   <main class="page">
