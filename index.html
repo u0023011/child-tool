@@ -600,25 +600,30 @@
           
           
           
+          
           <div class="tool-grid">
             <button type="button" class="tool-card admin-only" onclick="openTool('childcare-law/')">
               <div class="tool-title">📖 托育法規工具</div>
               <div class="tool-desc">查詢托育法規、違規及罰則。</div>
+              <div class="tool-count">已有 <strong id="count-childcare-law">讀取中</strong> 人次使用</div>
             </button>
 
             <button type="button" class="tool-card basic-allowed admin-allowed" onclick="openTool('age-tool/')">
               <div class="tool-title">👶 幼兒年齡檢核工具</div>
               <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
+              <div class="tool-count">已有 <strong id="count-age-tool">讀取中</strong> 人次使用</div>
             </button>
 
             <button type="button" class="tool-card admin-only" onclick="openTool('report-date-tool/')">
               <div class="tool-title">📅 回報日期計算工具</div>
               <div class="tool-desc">計算新收托、結束收托、補助申請與準公共退出日期。</div>
+              <div class="tool-count">已有 <strong id="count-report-date-tool">讀取中</strong> 人次使用</div>
             </button>
 
             <button type="button" class="tool-card admin-only" onclick="openTool('receipt-tool/')">
               <div class="tool-title">🧾 今日收件紀錄</div>
               <div class="tool-desc">整理今日收到的發展檢核表、收托資料與相關文件。</div>
+              <div class="tool-count">已有 <strong id="count-receipt-tool">讀取中</strong> 人次使用</div>
             </button>
           </div>
 
@@ -648,6 +653,10 @@
     const toolArea = document.getElementById("toolArea");
     const toolFrame = document.getElementById("toolFrame");
     const backBtn = document.getElementById("backBtn");
+    const visitorCount = document.getElementById("visitorCount");
+    const toolUsageCounter = document.getElementById("toolUsageCounter");
+    const toolUsageName = document.getElementById("toolUsageName");
+    const toolUsageCount = document.getElementById("toolUsageCount");
 
     const toolPermissions = {
       "age-tool/": ["basic", "admin"],
@@ -655,6 +664,83 @@
       "report-date-tool/": ["admin"],
       "receipt-tool/": ["admin"]
     };
+
+    const counterMap = {
+      "childcare-law/": {
+        counter: "childcare_law",
+        name: "托育法規工具",
+        cardId: "count-childcare-law"
+      },
+      "age-tool/": {
+        counter: "age_tool",
+        name: "幼兒年齡檢核工具",
+        cardId: "count-age-tool"
+      },
+      "report-date-tool/": {
+        counter: "report_date_tool",
+        name: "回報日期計算工具",
+        cardId: "count-report-date-tool"
+      },
+      "receipt-tool/": {
+        counter: "receipt_tool",
+        name: "今日收件紀錄",
+        cardId: "count-receipt-tool"
+      }
+    };
+
+    async function fetchCounter(counter, increment) {
+      const url = "/api/view-counter?counter=" + encodeURIComponent(counter) + (increment ? "&increment=1" : "");
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("counter error");
+      return await res.json();
+    }
+
+    async function loadHomeCounter() {
+      if (!visitorCount) return;
+      try {
+        const data = await fetchCounter("home", true);
+        visitorCount.textContent = Number(data.count || 0).toLocaleString("zh-TW");
+      } catch (e) {
+        visitorCount.textContent = "讀取失敗";
+      }
+    }
+
+    async function loadVisibleToolCounters() {
+      const role = sessionStorage.getItem("toolRole");
+      Object.keys(counterMap).forEach(async function (path) {
+        const allowedRoles = toolPermissions[path] || [];
+        const cfg = counterMap[path];
+        const el = document.getElementById(cfg.cardId);
+        if (!el || !allowedRoles.includes(role)) return;
+
+        try {
+          const data = await fetchCounter(cfg.counter, false);
+          el.textContent = Number(data.count || 0).toLocaleString("zh-TW");
+        } catch (e) {
+          el.textContent = "讀取失敗";
+        }
+      });
+    }
+
+    async function loadToolUsage(path) {
+      const cfg = counterMap[path];
+      if (!cfg || !toolUsageCounter || !toolUsageName || !toolUsageCount) return;
+
+      toolUsageName.textContent = cfg.name;
+      toolUsageCount.textContent = "讀取中";
+      toolUsageCounter.style.display = "block";
+
+      try {
+        const data = await fetchCounter(cfg.counter, true);
+        const countText = Number(data.count || 0).toLocaleString("zh-TW");
+        toolUsageCount.textContent = countText;
+
+        const cardEl = document.getElementById(cfg.cardId);
+        if (cardEl) cardEl.textContent = countText;
+      } catch (e) {
+        toolUsageCount.textContent = "讀取失敗";
+      }
+    }
 
     function showApp(role) {
       document.body.dataset.role = role;
@@ -664,6 +750,12 @@
       toolArea.style.display = "none";
       backBtn.style.display = "none";
       toolFrame.removeAttribute("src");
+
+      if (toolUsageCounter) {
+        toolUsageCounter.style.display = "none";
+      }
+
+      loadVisibleToolCounters();
     }
 
     async function login() {
@@ -721,6 +813,7 @@
       toolArea.style.display = "block";
       backBtn.style.display = "block";
       toolFrame.src = path;
+      loadToolUsage(path);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -730,7 +823,13 @@
       toolArea.style.display = "none";
       menuArea.style.display = "block";
       backBtn.style.display = "none";
-      if (role) document.body.dataset.role = role;
+      if (toolUsageCounter) {
+        toolUsageCounter.style.display = "none";
+      }
+      if (role) {
+        document.body.dataset.role = role;
+        loadVisibleToolCounters();
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -747,6 +846,7 @@
         await fetch("/api/logout", { method: "POST" });
       } catch (e) {}
 
+      loadHomeCounter();
       passwordInput.focus();
     });
 
