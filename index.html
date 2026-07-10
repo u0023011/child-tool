@@ -247,15 +247,18 @@
 
     .tool-card {
       text-align: left;
-      min-height: 118px;
+      min-height: 220px;
       border: 1px solid #eadcc6;
       background: #fffdf8;
       color: #3f3328;
       margin: 0;
       padding: 18px;
-      height: auto;
+      height: 100%;
       border-radius: 18px;
       box-shadow: 0 4px 12px rgba(80, 55, 30, .06);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
     }
 
     .tool-title {
@@ -271,10 +274,11 @@
       line-height: 1.55;
       font-weight: 500;
       letter-spacing: 0;
+      flex: 1;
     }
 
     .tool-count {
-      margin-top: 14px;
+      margin-top: 18px;
       padding-top: 12px;
       border-top: 1px solid #eadcc6;
       color: #8c7a64;
@@ -395,6 +399,10 @@
 
       .tool-grid {
         grid-template-columns: 1fr;
+      }
+
+      .tool-card {
+        min-height: 0;
       }
 
       .menu-card {
