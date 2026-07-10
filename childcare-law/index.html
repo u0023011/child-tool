@@ -281,9 +281,14 @@ input[placeholder*="搜尋"],
 </style>
 
 
+
 <script>
-if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") {
-    window.location.href = "../";
+const role = sessionStorage.getItem("toolRole");
+if (window.top === window.self && !(role === "admin")) {
+  window.location.href = "../";
+}
+if (window.top !== window.self && !(role === "admin")) {
+  window.top.location.href = "../";
 }
 </script>
 

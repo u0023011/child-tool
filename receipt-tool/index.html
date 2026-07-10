@@ -700,6 +700,17 @@
     }
   </style>
 
+
+<script>
+const role = sessionStorage.getItem("toolRole");
+if (window.top === window.self && !(role === "admin")) {
+  window.location.href = "../";
+}
+if (window.top !== window.self && !(role === "admin")) {
+  window.top.location.href = "../";
+}
+</script>
+
 </head>
 <body>
   <main class="page">

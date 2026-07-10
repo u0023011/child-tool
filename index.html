@@ -476,6 +476,44 @@
       }
     }
 
+  
+    .hidden-by-role {
+      display: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 0 !important;
+      }
+
+      .shell {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .topbar {
+        padding: 8px 10px 10px !important;
+      }
+
+      .topbar-inner {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      #toolArea {
+        width: 100% !important;
+        border-radius: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+
+      #toolFrame {
+        width: 100vw !important;
+        height: calc(100vh - 64px) !important;
+        min-height: calc(100vh - 64px) !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -515,32 +553,29 @@
           <div class="menu-title">請選擇工具</div>
           
 
+          
           <div class="tool-grid">
-            <button type="button" class="tool-card" onclick="openTool('childcare-law/', 'childcare_law')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('childcare-law/')">
               <div class="tool-title">📖 托育法規工具</div>
               <div class="tool-desc">查詢托育法規、違規及罰則。</div>
-              <div class="tool-count">已有 <strong id="count-childcare_law">--</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card" onclick="openTool('age-tool/', 'age_tool')">
+            <button type="button" class="tool-card basic-allowed admin-allowed" onclick="openTool('age-tool/')">
               <div class="tool-title">👶 幼兒年齡檢核工具</div>
               <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
-              <div class="tool-count">已有 <strong id="count-age_tool">--</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card" onclick="openTool('report-date-tool/', 'report_date_tool')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('report-date-tool/')">
               <div class="tool-title">📅 回報日期計算工具</div>
               <div class="tool-desc">計算新收托、結束收托、補助申請與準公共退出日期。</div>
-              <div class="tool-count">已有 <strong id="count-report_date_tool">--</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card" onclick="openTool('receipt-tool/', 'receipt_tool')">
-              <div class="tool-title">📥 今日收件紀錄</div>
-              <div class="tool-desc">登錄收到的托育與托兒資料，並自動整理成通知訊息。</div>
-              <div class="tool-count">已有 <strong id="count-receipt_tool">--</strong> 人次使用</div>
+            <button type="button" class="tool-card admin-only" onclick="openTool('receipt-tool/')">
+              <div class="tool-title">🧾 今日收件紀錄</div>
+              <div class="tool-desc">整理今日收到的發展檢核表、收托資料與相關文件。</div>
             </button>
-
           </div>
+
 
           <div class="footer">登入狀態僅保留於目前瀏覽器分頁；重新開啟後需重新輸入密碼。</div>
         </div>
@@ -558,7 +593,9 @@
   </div>
 
   <script>
-    const PASSWORD = "3728";
+    const BASIC_PASSWORD = "0000";
+    const ADMIN_PASSWORD = "3728";
+
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
     const passwordInput = document.getElementById("passwordInput");
@@ -568,143 +605,61 @@
     const toolArea = document.getElementById("toolArea");
     const toolFrame = document.getElementById("toolFrame");
     const backBtn = document.getElementById("backBtn");
-    const toolUsageCounter = document.getElementById("toolUsageCounter");
-    const toolUsageName = document.getElementById("toolUsageName");
-    const toolUsageCount = document.getElementById("toolUsageCount");
 
+    const toolPermissions = {
+      "age-tool/": ["basic", "admin"],
+      "childcare-law/": ["admin"],
+      "report-date-tool/": ["admin"],
+      "receipt-tool/": ["admin"]
+    };
 
-    async function updateVisitorCount() {
-      const countEl = document.getElementById("visitorCount");
-      if (!countEl) return;
-
-      try {
-        const hasCounted = sessionStorage.getItem("home_view_counted");
-
-        const response = await fetch("/api/view-counter", {
-          method: hasCounted ? "GET" : "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          cache: "no-store"
-        });
-
-        const data = await response.json();
-
-        if (data && data.ok) {
-          countEl.textContent = Number(data.count).toLocaleString("zh-TW");
-          sessionStorage.setItem("home_view_counted", "1");
-        } else {
-          countEl.textContent = "暫時無法讀取";
-        }
-      } catch (error) {
-        countEl.textContent = "暫時無法讀取";
-      }
-    }
-
-    const TOOL_COUNTERS = [
-      { key: "childcare_law", label: "托育法規工具" },
-      { key: "age_tool", label: "幼兒年齡檢核工具" },
-      { key: "report_date_tool", label: "回報日期計算工具" },
-      { key: "receipt_tool", label: "今日收件紀錄" }
-    ];
-
-    function getToolInfo(counterKey) {
-      return TOOL_COUNTERS.find(function (item) {
-        return item.key === counterKey;
+    function applyRoleView(role) {
+      document.querySelectorAll(".tool-card").forEach(function (card) {
+        card.classList.add("hidden-by-role");
       });
-    }
 
-    async function fetchCounter(counterKey, method) {
-      const options = {
-        method: method,
-        headers: {
-          "Content-Type": "application/json"
-        },
-        cache: "no-store"
-      };
-
-      if (method === "POST") {
-        options.body = JSON.stringify({ counter: counterKey });
+      if (role === "basic") {
+        document.querySelectorAll(".basic-allowed").forEach(function (card) {
+          card.classList.remove("hidden-by-role");
+        });
       }
 
-      const url = method === "GET"
-        ? "/api/view-counter?counter=" + encodeURIComponent(counterKey)
-        : "/api/view-counter";
-
-      const response = await fetch(url, options);
-      return await response.json();
-    }
-
-    async function updateToolCardCounts() {
-      await Promise.all(TOOL_COUNTERS.map(async function (item) {
-        const el = document.getElementById("count-" + item.key);
-        if (!el) return;
-
-        try {
-          const data = await fetchCounter(item.key, "GET");
-          if (data && data.ok) {
-            el.textContent = Number(data.count).toLocaleString("zh-TW");
-          } else {
-            el.textContent = "--";
-          }
-        } catch (error) {
-          el.textContent = "--";
-        }
-      }));
-    }
-
-    async function countToolOpen(counterKey) {
-      if (!counterKey) return;
-
-      const toolInfo = getToolInfo(counterKey);
-      if (toolUsageName) toolUsageName.textContent = toolInfo ? toolInfo.label : "此工具";
-      if (toolUsageCount) toolUsageCount.textContent = "讀取中";
-      if (toolUsageCounter) toolUsageCounter.style.display = "block";
-
-      const countedKey = "tool_open_counted_" + counterKey;
-      const method = sessionStorage.getItem(countedKey) ? "GET" : "POST";
-
-      try {
-        const data = await fetchCounter(counterKey, method);
-
-        if (data && data.ok) {
-          sessionStorage.setItem(countedKey, "1");
-          if (toolUsageCount) {
-            toolUsageCount.textContent = Number(data.count).toLocaleString("zh-TW");
-          }
-          const cardCountEl = document.getElementById("count-" + counterKey);
-          if (cardCountEl) {
-            cardCountEl.textContent = Number(data.count).toLocaleString("zh-TW");
-          }
-        } else if (toolUsageCount) {
-          toolUsageCount.textContent = "暫時無法讀取";
-        }
-      } catch (error) {
-        if (toolUsageCount) toolUsageCount.textContent = "暫時無法讀取";
+      if (role === "admin") {
+        document.querySelectorAll(".admin-only, .admin-allowed, .basic-allowed").forEach(function (card) {
+          card.classList.remove("hidden-by-role");
+        });
       }
     }
 
-    function showApp() {
+    function showApp(role) {
       loginView.style.display = "none";
       appView.style.display = "block";
       menuArea.style.display = "block";
       toolArea.style.display = "none";
       backBtn.style.display = "none";
       toolFrame.removeAttribute("src");
-      if (toolUsageCounter) toolUsageCounter.style.display = "none";
-      updateToolCardCounts();
+      applyRoleView(role);
     }
 
     function login() {
       const value = passwordInput.value.trim();
+      let role = "";
 
-      if (value === PASSWORD) {
+      if (value === BASIC_PASSWORD) {
+        role = "basic";
+      } else if (value === ADMIN_PASSWORD) {
+        role = "admin";
+      }
+
+      if (role) {
         sessionStorage.setItem("toolLogin", "ok");
-        showApp();
+        sessionStorage.setItem("toolRole", role);
+        showApp(role);
         return;
       }
 
       sessionStorage.removeItem("toolLogin");
+      sessionStorage.removeItem("toolRole");
       errorMsg.style.display = "block";
       passwordInput.value = "";
       passwordInput.focus();
@@ -714,9 +669,13 @@
       loginCard.classList.add("shake");
     }
 
-    function openTool(path, counterKey) {
-      if (sessionStorage.getItem("toolLogin") !== "ok") {
-        location.reload();
+    function openTool(path) {
+      const role = sessionStorage.getItem("toolRole");
+      const allowedRoles = toolPermissions[path] || [];
+
+      if (sessionStorage.getItem("toolLogin") !== "ok" || !allowedRoles.includes(role)) {
+        alert("此密碼無法使用這個工具。");
+        backToMenu();
         return;
       }
 
@@ -724,17 +683,16 @@
       toolArea.style.display = "block";
       backBtn.style.display = "block";
       toolFrame.src = path;
-      countToolOpen(counterKey);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function backToMenu() {
+      const role = sessionStorage.getItem("toolRole");
       toolFrame.removeAttribute("src");
       toolArea.style.display = "none";
       menuArea.style.display = "block";
       backBtn.style.display = "none";
-      if (toolUsageCounter) toolUsageCounter.style.display = "none";
-      updateToolCardCounts();
+      if (role) applyRoleView(role);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -744,8 +702,8 @@
 
     window.addEventListener("DOMContentLoaded", function () {
       sessionStorage.removeItem("toolLogin");
+      sessionStorage.removeItem("toolRole");
       passwordInput.focus();
-      updateVisitorCount();
     });
 
     if ("serviceWorker" in navigator) {

@@ -311,13 +311,6 @@
     }
   </style>
 
-<script>
-if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") {
-    window.location.href = "../";
-}
-</script>
-
-
 <style>
 /* v2：日期欄位加入自製民國日期選擇器 */
 .date-wrap {
@@ -544,6 +537,17 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
   transform: none !important;
 }
 </style>
+
+
+<script>
+const role = sessionStorage.getItem("toolRole");
+if (window.top === window.self && !(role === "basic" || role === "admin")) {
+  window.location.href = "../";
+}
+if (window.top !== window.self && !(role === "basic" || role === "admin")) {
+  window.top.location.href = "../";
+}
+</script>
 
 </head>
 
