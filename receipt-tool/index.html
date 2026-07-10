@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#2f6fed">
+  <meta name="theme-color" content="#8b6a3f">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -13,18 +13,18 @@
   <title>今日收件紀錄</title>
   <style>
     :root{
-      --bg:#f4f7fb;
-      --card:#ffffff;
-      --text:#263238;
-      --muted:#6b7785;
-      --line:#dbe3ec;
-      --primary:#2f6fed;
-      --primary-soft:#eaf1ff;
-      --ok:#1f9d68;
-      --ok-soft:#e8f8f1;
-      --yellow:#fff4a8;
-      --danger:#d9485f;
-      --shadow:0 10px 28px rgba(38,50,56,.08);
+      --bg:#f5ecdf;
+      --card:#fffdfa;
+      --text:#3f3328;
+      --muted:#7a6b5b;
+      --line:#eadcc6;
+      --primary:#8b6a3f;
+      --primary-soft:#f1e7d8;
+      --ok:#6f7f4c;
+      --ok-soft:#eef2e5;
+      --yellow:#fff2b2;
+      --danger:#b84a42;
+      --shadow:0 10px 28px rgba(80,55,30,.10);
       --radius:18px;
     }
 
@@ -66,7 +66,7 @@
       flex:0 0 auto;
       padding:10px 14px;
       border-radius:999px;
-      background:#fff;
+      background:#fffdfa;
       border:1px solid var(--line);
       color:var(--muted);
       font-size:14px;
@@ -115,14 +115,14 @@
       padding:12px 14px;
       font:inherit;
       color:var(--text);
-      background:#fff;
+      background:#fffdfa;
       outline:none;
       transition:.2s;
     }
 
     input:focus, textarea:focus{
       border-color:var(--primary);
-      box-shadow:0 0 0 4px var(--primary-soft);
+      box-shadow:0 0 0 4px rgba(139,106,63,.14);
     }
 
     .top-grid{
@@ -135,7 +135,7 @@
       margin:18px 0 9px;
       font-size:15px;
       font-weight:800;
-      color:#405064;
+      color:#5c4329;
     }
 
     .toggle-grid{
@@ -158,14 +158,14 @@
     }
 
     .toggle:hover{
-      border-color:#9fb8eb;
-      background:#f8fbff;
+      border-color:#b9986d;
+      background:#fff8ee;
     }
 
     .toggle.active{
       border-color:var(--ok);
       background:var(--ok-soft);
-      color:#13744d;
+      color:#5e6b3f;
       font-weight:800;
     }
 
@@ -181,7 +181,7 @@
     }
 
     .qty-box{
-      border:1px solid #ecd86a;
+      border:1px solid #e3c965;
       border-radius:14px;
       background:var(--yellow);
       padding:11px;
@@ -191,7 +191,7 @@
       display:block;
       font-size:13px;
       margin-bottom:6px;
-      color:#695f23;
+      color:#6b5528;
       font-weight:700;
     }
 
@@ -214,7 +214,7 @@
     }
 
     .child-qty-box{
-      border:1px solid #ecd86a;
+      border:1px solid #e3c965;
       border-radius:14px;
       background:var(--yellow);
       padding:10px;
@@ -224,7 +224,7 @@
       display:block;
       font-size:13px;
       margin-bottom:6px;
-      color:#695f23;
+      color:#6b5528;
       font-weight:700;
     }
 
@@ -243,7 +243,7 @@
     .development-inline-title{
       font-size:14px;
       font-weight:800;
-      color:#405064;
+      color:#5c4329;
       margin-bottom:8px;
     }
 
@@ -256,15 +256,15 @@
       border:1px solid var(--line);
       border-radius:12px;
       padding:12px 14px;
-      background:#f8fbff;
-      color:#405064;
+      background:#fff8ee;
+      color:#5c4329;
       font:inherit;
       font-weight:800;
       cursor:pointer;
     }
 
     .development-inline-toggle:hover{
-      border-color:#9fb8eb;
+      border-color:#b9986d;
       background:var(--primary-soft);
     }
 
@@ -281,7 +281,7 @@
       border:1px solid var(--line);
       border-radius:16px;
       padding:14px;
-      background:#fbfcfe;
+      background:#fffaf3;
     }
 
     .child-head{
@@ -293,7 +293,7 @@
 
     .remove{
       border:0;
-      background:#fff0f2;
+      background:#fff0ed;
       color:var(--danger);
       border-radius:10px;
       padding:11px 13px;
@@ -330,15 +330,15 @@
       border:1px solid var(--line);
       border-radius:14px;
       padding:14px 16px;
-      background:#f8fbff;
-      color:#405064;
+      background:#fff8ee;
+      color:#5c4329;
       font:inherit;
       font-weight:800;
       cursor:pointer;
     }
 
     .development-toggle:hover{
-      border-color:#9fb8eb;
+      border-color:#b9986d;
       background:var(--primary-soft);
     }
 
@@ -360,7 +360,7 @@
       border:1px solid var(--line);
       border-radius:14px;
       padding:12px;
-      background:#fbfcfe;
+      background:#fffaf3;
     }
 
     .development-head{
@@ -393,14 +393,14 @@
     }
 
     .age-toggle:hover{
-      border-color:#9fb8eb;
-      background:#f8fbff;
+      border-color:#b9986d;
+      background:#fff8ee;
     }
 
     .age-toggle.active{
       border-color:var(--ok);
       background:var(--ok-soft);
-      color:#13744d;
+      color:#5e6b3f;
       font-weight:800;
     }
 
@@ -428,8 +428,8 @@
     }
 
     .ghost{
-      color:#526173;
-      background:#eef2f6;
+      color:#5c4329;
+      background:#efe6d7;
     }
 
     textarea{
@@ -450,7 +450,7 @@
       left:50%;
       bottom:24px;
       transform:translateX(-50%) translateY(20px);
-      background:#263238;
+      background:#4e321b;
       color:#fff;
       border-radius:999px;
       padding:11px 18px;
@@ -713,7 +713,7 @@
         card.querySelectorAll("[data-child-qty]").forEach(input=>{
           const n = Number(input.value);
           if(n > 0){
-            childItems.push(`${input.dataset.childQty}${n}份`);
+            childItems.push(`${input.dataset.childQty}*${n}`);
           }
         });
 
