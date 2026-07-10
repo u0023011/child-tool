@@ -349,6 +349,35 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 }
 </style>
 
+
+<style>
+/* v16：修正日期格 hover 抖動；只改顏色，不改字重與尺寸 */
+.roc-day {
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.roc-day:hover {
+  background: #efe6d7 !important;
+  border-color: #8b6f47 !important;
+  color: #4e321b !important;
+  font-weight: inherit !important;
+  transform: none !important;
+}
+.roc-day.selected:hover {
+  background: #8b6f47 !important;
+  border-color: #8b6f47 !important;
+  color: #fff !important;
+  font-weight: 950 !important;
+  transform: none !important;
+}
+.roc-day.muted:hover {
+  background: #f1e7d8 !important;
+  border-color: #d3b98f !important;
+  color: #7b5b32 !important;
+  font-weight: inherit !important;
+  transform: none !important;
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
