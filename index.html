@@ -579,6 +579,7 @@
           
 
           
+          
           <div class="tool-grid">
             <button type="button" class="tool-card admin-only" onclick="openTool('childcare-law/')">
               <div class="tool-title">📖 托育法規工具</div>
@@ -618,9 +619,6 @@
   </div>
 
   <script>
-    const BASIC_PASSWORD = "0000";
-    const ADMIN_PASSWORD = "3728";
-
     const loginView = document.getElementById("loginView");
     const appView = document.getElementById("appView");
     const passwordInput = document.getElementById("passwordInput");
@@ -667,25 +665,38 @@
       applyRoleView(role);
     }
 
-    function login() {
+    async function login() {
       const value = passwordInput.value.trim();
-      let role = "";
 
-      if (value === BASIC_PASSWORD) {
-        role = "basic";
-      } else if (value === ADMIN_PASSWORD) {
-        role = "admin";
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: value })
+        });
+
+        const data = await res.json().catch(function () {
+          return { ok: false, message: "後端回應格式錯誤" };
+        });
+
+        if (res.ok && data.ok && data.role) {
+          sessionStorage.setItem("toolLogin", "ok");
+          sessionStorage.setItem("toolRole", data.role);
+          showApp(data.role);
+          return;
+        }
+
+        showLoginError(data.message || "密碼錯誤");
+      } catch (e) {
+        showLoginError("無法連線到後端登入功能，請確認 Cloudflare Pages Functions 已啟用。");
       }
+    }
 
-      if (role) {
-        sessionStorage.setItem("toolLogin", "ok");
-        sessionStorage.setItem("toolRole", role);
-        showApp(role);
-        return;
-      }
-
+    function showLoginError(message) {
       sessionStorage.removeItem("toolLogin");
       sessionStorage.removeItem("toolRole");
+      delete document.body.dataset.role;
+      errorMsg.textContent = message || "密碼錯誤，請重新輸入";
       errorMsg.style.display = "block";
       passwordInput.value = "";
       passwordInput.focus();
@@ -726,10 +737,16 @@
       if (event.key === "Enter") login();
     });
 
-    window.addEventListener("DOMContentLoaded", function () {
+    window.addEventListener("DOMContentLoaded", async function () {
       sessionStorage.removeItem("toolLogin");
       sessionStorage.removeItem("toolRole");
       delete document.body.dataset.role;
+
+      // 每次重新進首頁都清除後端登入 Cookie，符合「每次開啟需重新輸入密碼」
+      try {
+        await fetch("/api/logout", { method: "POST" });
+      } catch (e) {}
+
       passwordInput.focus();
     });
 
