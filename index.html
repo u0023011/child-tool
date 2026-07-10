@@ -558,6 +558,73 @@
       }
     }
 
+  
+    /* 最終權限與人次顯示修正 */
+    .tool-card {
+      display: none;
+    }
+
+    body[data-role="basic"] .tool-card.basic-allowed {
+      display: block !important;
+    }
+
+    body[data-role="admin"] .tool-card {
+      display: block !important;
+    }
+
+    .tool-count {
+      display: block !important;
+      margin-top: 14px !important;
+      color: #8c7a64 !important;
+      font-size: 13px !important;
+      line-height: 1.5 !important;
+      font-weight: 600 !important;
+      letter-spacing: 0 !important;
+    }
+
+    .tool-count strong {
+      color: #7b5b32 !important;
+      font-size: 14px !important;
+      font-weight: 900 !important;
+      margin: 0 2px !important;
+    }
+
+    body[data-role="basic"] #menuArea {
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    body[data-role="basic"] .tool-grid {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+    }
+
+    body[data-role="basic"] .tool-card.basic-allowed {
+      width: auto !important;
+      min-width: 360px !important;
+      max-width: 460px !important;
+      min-height: auto !important;
+      padding: 24px 28px !important;
+    }
+
+    @media (max-width: 760px) {
+      body[data-role="basic"] #menuArea {
+        max-width: none;
+      }
+
+      body[data-role="basic"] .tool-grid {
+        display: block !important;
+      }
+
+      body[data-role="basic"] .tool-card.basic-allowed {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -597,6 +664,7 @@
           <div class="menu-title">請選擇工具</div>
           
 
+          
           
           
           
@@ -707,11 +775,14 @@
 
     async function loadVisibleToolCounters() {
       const role = sessionStorage.getItem("toolRole");
-      Object.keys(counterMap).forEach(async function (path) {
+
+      for (const path of Object.keys(counterMap)) {
         const allowedRoles = toolPermissions[path] || [];
         const cfg = counterMap[path];
         const el = document.getElementById(cfg.cardId);
-        if (!el || !allowedRoles.includes(role)) return;
+
+        if (!el) continue;
+        if (!allowedRoles.includes(role)) continue;
 
         try {
           const data = await fetchCounter(cfg.counter, false);
@@ -719,7 +790,7 @@
         } catch (e) {
           el.textContent = "讀取失敗";
         }
-      });
+      }
     }
 
     async function loadToolUsage(path) {
@@ -755,7 +826,7 @@
         toolUsageCounter.style.display = "none";
       }
 
-      loadVisibleToolCounters();
+      setTimeout(loadVisibleToolCounters, 0);
     }
 
     async function login() {
@@ -828,7 +899,7 @@
       }
       if (role) {
         document.body.dataset.role = role;
-        loadVisibleToolCounters();
+        setTimeout(loadVisibleToolCounters, 0);
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
