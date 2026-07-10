@@ -277,6 +277,57 @@ if (window.top === window.self && sessionStorage.getItem("toolLogin") !== "ok") 
 }
 </style>
 
+
+<style>
+/* v14：日期選擇器改為 年份 → 月份 → 日期 */
+.roc-title-button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px 6px;
+  border-radius: 12px;
+}
+.roc-title-button:hover {
+  background: #fff3df;
+}
+.roc-year-grid,
+.roc-month-grid {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.roc-year-grid.open,
+.roc-month-grid.open {
+  display: grid;
+}
+.roc-year-btn,
+.roc-month-btn {
+  border: 1px solid #eadcc6;
+  border-radius: 12px;
+  background: #fff;
+  color: #4e321b;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 11px 4px;
+}
+.roc-year-btn:hover,
+.roc-month-btn:hover {
+  background: #efe6d7;
+  border-color: #8b6f47;
+  color: #4e321b;
+}
+.roc-year-btn.selected,
+.roc-month-btn.selected {
+  background: #8b6f47;
+  color: #fff;
+  border-color: #8b6f47;
+}
+.roc-month-view.hidden-view {
+  display: none;
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -415,11 +466,15 @@ function pad2(n){return String(n).padStart(2,"0")}
 function rocInput(d){return `${d.getFullYear()-1911}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`}
 let rocPickerTarget = null;
 let rocPickerView = new Date();
+let rocPickerMode = "month";
+let rocYearPageStart = null;
 
 function openRocPicker(targetId){
   rocPickerTarget = targetId;
   const current = parseISO(qs(targetId).value);
   rocPickerView = current ? new Date(current.getFullYear(), current.getMonth(), 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  rocPickerMode = "month";
+  rocYearPageStart = null;
   renderRocPicker(current);
   qs("rocPickerBackdrop").style.display = "flex";
 }
@@ -428,22 +483,141 @@ function closeRocPicker(e){
   qs("rocPickerBackdrop").style.display = "none";
 }
 function moveRocMonth(delta){
+  if(rocPickerMode === "year"){
+    moveRocYearPage(delta);
+    return;
+  }
+
+  if(rocPickerMode === "monthSelect"){
+    rocPickerView.setFullYear(rocPickerView.getFullYear() + delta);
+    const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
+    renderRocPicker(current);
+    return;
+  }
+
   rocPickerView.setMonth(rocPickerView.getMonth()+delta);
   const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
   renderRocPicker(current);
 }
+
+function toggleRocYearPanel(){
+  if(rocPickerMode === "year"){
+    rocPickerMode = "month";
+  }else{
+    rocPickerMode = "year";
+    const rocYear = rocPickerView.getFullYear() - 1911;
+    rocYearPageStart = Math.floor((rocYear - 1) / 12) * 12 + 1;
+  }
+  const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
+  renderRocPicker(current);
+}
+
+function moveRocYearPage(delta){
+  if(rocYearPageStart === null){
+    const rocYear = rocPickerView.getFullYear() - 1911;
+    rocYearPageStart = Math.floor((rocYear - 1) / 12) * 12 + 1;
+  }
+  rocYearPageStart += delta * 12;
+  if(rocYearPageStart < 1) rocYearPageStart = 1;
+
+  const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
+  renderRocPicker(current);
+}
+
 function sameDay(a,b){
   return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
+
+function hideAllRocPickerViews(){
+  const monthView = qs("rocMonthView");
+  const yearGrid = qs("rocYearGrid");
+  const monthGrid = qs("rocMonthGrid");
+
+  if(monthView) monthView.classList.add("hidden-view");
+  if(yearGrid) yearGrid.classList.remove("open");
+  if(monthGrid) monthGrid.classList.remove("open");
+}
+
 function renderRocPicker(selectedDate){
   const y = rocPickerView.getFullYear();
   const m = rocPickerView.getMonth();
-  qs("rocPickerTitle").textContent = `民國${y-1911}年${m+1}月`;
+  const rocYear = y - 1911;
+
+  const monthView = qs("rocMonthView");
+  const yearGrid = qs("rocYearGrid");
+  const monthGrid = qs("rocMonthGrid");
+
+  if(rocPickerMode === "year"){
+    hideAllRocPickerViews();
+    yearGrid.classList.add("open");
+
+    if(rocYearPageStart === null){
+      rocYearPageStart = Math.floor((rocYear - 1) / 12) * 12 + 1;
+    }
+
+    const endYear = rocYearPageStart + 11;
+    qs("rocPickerTitle").textContent = `民國${rocYearPageStart}～${endYear}年`;
+    yearGrid.innerHTML = "";
+
+    for(let year = rocYearPageStart; year <= endYear; year++){
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "roc-year-btn";
+      if(year === rocYear) btn.classList.add("selected");
+      btn.textContent = `民國${year}年`;
+
+      // 點年份後，先進入 1～12 月份選擇
+      btn.onclick = function(){
+        rocPickerView.setFullYear(year + 1911);
+        rocPickerMode = "monthSelect";
+        const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
+        renderRocPicker(current);
+      };
+
+      yearGrid.appendChild(btn);
+    }
+    return;
+  }
+
+  if(rocPickerMode === "monthSelect"){
+    hideAllRocPickerViews();
+    monthGrid.classList.add("open");
+
+    const displayYear = rocPickerView.getFullYear();
+    const displayRocYear = displayYear - 1911;
+    qs("rocPickerTitle").textContent = `民國${displayRocYear}年：選擇月份`;
+    monthGrid.innerHTML = "";
+
+    for(let month = 0; month < 12; month++){
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "roc-month-btn";
+      if(month === rocPickerView.getMonth()) btn.classList.add("selected");
+      btn.textContent = `${month + 1}月`;
+
+      // 點月份後，才進入日期選擇
+      btn.onclick = function(){
+        rocPickerView = new Date(displayYear, month, 1);
+        rocPickerMode = "month";
+        const current = rocPickerTarget ? parseISO(qs(rocPickerTarget).value) : null;
+        renderRocPicker(current);
+      };
+
+      monthGrid.appendChild(btn);
+    }
+    return;
+  }
+
+  hideAllRocPickerViews();
+  monthView.classList.remove("hidden-view");
+  qs("rocPickerTitle").textContent = `民國${rocYear}年${m+1}月`;
+
   const grid = qs("rocPickerGrid");
   grid.innerHTML = "";
   const first = new Date(y,m,1);
   const start = new Date(y,m,1-first.getDay());
   const today = new Date();
+
   for(let i=0;i<42;i++){
     const d = new Date(start);
     d.setDate(start.getDate()+i);
@@ -461,6 +635,7 @@ function renderRocPicker(selectedDate){
     grid.appendChild(btn);
   }
 }
+
 function pickToday(){
   const d = new Date();
   if(rocPickerTarget) qs(rocPickerTarget).value = rocInput(d);
@@ -659,19 +834,23 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
   <div class="roc-picker" onclick="event.stopPropagation()">
     <div class="roc-picker-head">
       <button type="button" class="roc-nav" onclick="moveRocMonth(-1)">‹</button>
-      <div class="roc-title" id="rocPickerTitle">民國115年7月</div>
+      <button type="button" class="roc-title roc-title-button" id="rocPickerTitle" onclick="toggleRocYearPanel()">民國115年7月</button>
       <button type="button" class="roc-nav" onclick="moveRocMonth(1)">›</button>
     </div>
-    <div class="roc-week">
-      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    <div class="roc-month-view" id="rocMonthView">
+      <div class="roc-week">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="roc-grid" id="rocPickerGrid"></div>
     </div>
-    <div class="roc-grid" id="rocPickerGrid"></div>
+    <div class="roc-year-grid" id="rocYearGrid"></div>
+    <div class="roc-month-grid" id="rocMonthGrid"></div>
     <div class="roc-picker-actions">
       <button type="button" class="roc-action light" onclick="pickToday()">今天</button>
       <button type="button" class="roc-action light" onclick="clearRocPickerTarget()">清除</button>
       <button type="button" class="roc-action main" onclick="closeRocPicker()">關閉</button>
     </div>
-    <div class="roc-format-hint">可輸入：115/07/09、1150709、2026/07/09、20260709</div>
+    <div class="roc-format-hint">可輸入民國或西元；點上方民國年可選年份，再選月份與日期</div>
   </div>
 </div>
 
