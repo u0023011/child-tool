@@ -3,6 +3,7 @@ const COUNTER_KEYS = {
   childcare_law: "tool_childcare_law_views",
   age_tool: "tool_age_tool_views",
   report_date_tool: "tool_report_date_tool_views"
+  receipt_tool: "tool_receipt_tool_views"
 };
 
 function getCounterKey(request) {
