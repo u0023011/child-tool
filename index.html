@@ -514,6 +514,31 @@
       }
     }
 
+  
+    /* 一般密碼只顯示一個工具時，避免卡片撐太寬 */
+    body[data-role="basic"] .shell {
+      max-width: 720px;
+    }
+
+    body[data-role="basic"] .tool-grid {
+      grid-template-columns: minmax(260px, 560px) !important;
+      justify-content: center;
+    }
+
+    body[data-role="basic"] .tool-card {
+      min-height: 118px;
+    }
+
+    @media (max-width: 760px) {
+      body[data-role="basic"] .shell {
+        max-width: none;
+      }
+
+      body[data-role="basic"] .tool-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
   </style>
 </head>
 
@@ -632,6 +657,7 @@
     }
 
     function showApp(role) {
+      document.body.dataset.role = role;
       loginView.style.display = "none";
       appView.style.display = "block";
       menuArea.style.display = "block";
@@ -703,6 +729,7 @@
     window.addEventListener("DOMContentLoaded", function () {
       sessionStorage.removeItem("toolLogin");
       sessionStorage.removeItem("toolRole");
+      delete document.body.dataset.role;
       passwordInput.focus();
     });
 
