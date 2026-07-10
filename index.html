@@ -475,13 +475,7 @@
         font-size: 15px;
       }
     }
-
-  
-    .hidden-by-role {
-      display: none !important;
-    }
-
-    @media (max-width: 760px) {
+@media (max-width: 760px) {
       .page {
         padding: 0 !important;
       }
@@ -514,7 +508,20 @@
       }
     }
 
-    /* 一般密碼只顯示年齡工具時，把工具卡縮到文字旁邊 */
+    /* 權限顯示：預設先隱藏所有工具，登入後才依密碼顯示 */
+    .tool-card {
+      display: none;
+    }
+
+    body[data-role="basic"] .tool-card.basic-allowed {
+      display: block;
+    }
+
+    body[data-role="admin"] .tool-card {
+      display: block;
+    }
+
+    /* 一般密碼 0000：只顯示年齡工具，且框框縮到文字旁邊 */
     body[data-role="basic"] #menuArea {
       max-width: 560px;
       margin-left: auto;
@@ -527,13 +534,12 @@
       align-items: center !important;
     }
 
-    body[data-role="basic"] .tool-card {
+    body[data-role="basic"] .tool-card.basic-allowed {
       width: auto !important;
       min-width: 360px !important;
       max-width: 460px !important;
       min-height: auto !important;
       padding: 24px 28px !important;
-      display: inline-block !important;
     }
 
     @media (max-width: 760px) {
@@ -545,7 +551,7 @@
         display: block !important;
       }
 
-      body[data-role="basic"] .tool-card {
+      body[data-role="basic"] .tool-card.basic-allowed {
         width: 100% !important;
         min-width: 0 !important;
         max-width: none !important;
@@ -591,6 +597,7 @@
           <div class="menu-title">請選擇工具</div>
           
 
+          
           
           
           <div class="tool-grid">
@@ -649,24 +656,6 @@
       "receipt-tool/": ["admin"]
     };
 
-    function applyRoleView(role) {
-      document.querySelectorAll(".tool-card").forEach(function (card) {
-        card.classList.add("hidden-by-role");
-      });
-
-      if (role === "basic") {
-        document.querySelectorAll(".basic-allowed").forEach(function (card) {
-          card.classList.remove("hidden-by-role");
-        });
-      }
-
-      if (role === "admin") {
-        document.querySelectorAll(".admin-only, .admin-allowed, .basic-allowed").forEach(function (card) {
-          card.classList.remove("hidden-by-role");
-        });
-      }
-    }
-
     function showApp(role) {
       document.body.dataset.role = role;
       loginView.style.display = "none";
@@ -675,7 +664,6 @@
       toolArea.style.display = "none";
       backBtn.style.display = "none";
       toolFrame.removeAttribute("src");
-      applyRoleView(role);
     }
 
     async function login() {
@@ -742,7 +730,7 @@
       toolArea.style.display = "none";
       menuArea.style.display = "block";
       backBtn.style.display = "none";
-      if (role) applyRoleView(role);
+      if (role) document.body.dataset.role = role;
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -755,7 +743,6 @@
       sessionStorage.removeItem("toolRole");
       delete document.body.dataset.role;
 
-      // 每次重新進首頁都清除後端登入 Cookie，符合「每次開啟需重新輸入密碼」
       try {
         await fetch("/api/logout", { method: "POST" });
       } catch (e) {}
