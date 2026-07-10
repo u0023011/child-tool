@@ -625,6 +625,35 @@
       }
     }
 
+  
+    /* 工具卡片人次線固定到底部，對齊兩行描述高度 */
+    body[data-role="basic"] .tool-card.basic-allowed,
+    body[data-role="admin"] .tool-card {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+    }
+
+    .tool-desc {
+      min-height: 52px !important;
+    }
+
+    .tool-count {
+      margin-top: auto !important;
+      padding-top: 14px !important;
+      border-top: 1px solid #eadcc6 !important;
+    }
+
+    @media (max-width: 760px) {
+      .tool-desc {
+        min-height: auto !important;
+      }
+
+      .tool-count {
+        margin-top: 14px !important;
+      }
+    }
+
   </style>
 </head>
 
