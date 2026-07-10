@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6fed">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="今日收件">
+  <title>今日收件紀錄</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#263238;
+      --muted:#6b7785;
+      --line:#dbe3ec;
+      --primary:#2f6fed;
+      --primary-soft:#eaf1ff;
+      --ok:#1f9d68;
+      --ok-soft:#e8f8f1;
+      --yellow:#fff4a8;
+      --danger:#d9485f;
+      --shadow:0 10px 28px rgba(38,50,56,.08);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+      color:var(--text);
+      background:var(--bg);
+    }
+
+    .page{
+      width:min(1180px,100%);
+      margin:0 auto;
+      padding:20px 16px 48px;
+    }
+
+    .hero{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(26px,4vw,38px);
+      letter-spacing:.04em;
+    }
+
+    .subtitle{
+      margin:8px 0 0;
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .today{
+      flex:0 0 auto;
+      padding:10px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:20px;
+      margin-top:16px;
+    }
+
+    .card-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0 0 14px;
+      font-size:20px;
+    }
+
+    .badge{
+      display:inline-grid;
+      place-items:center;
+      width:30px;
+      height:30px;
+      border-radius:10px;
+      background:var(--primary-soft);
+      color:var(--primary);
+      font-weight:800;
+      font-size:15px;
+    }
+
+    label.field-label{
+      display:block;
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:7px;
+    }
+
+    input[type="text"], input[type="number"], textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 14px;
+      font:inherit;
+      color:var(--text);
+      background:#fff;
+      outline:none;
+      transition:.2s;
+    }
+
+    input:focus, textarea:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px var(--primary-soft);
+    }
+
+    .top-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .section-label{
+      margin:18px 0 9px;
+      font-size:15px;
+      font-weight:800;
+      color:#405064;
+    }
+
+    .toggle-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:9px;
+    }
+
+    .toggle{
+      appearance:none;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:11px 10px;
+      background:#fff;
+      color:var(--text);
+      font:inherit;
+      cursor:pointer;
+      min-height:46px;
+      transition:.16s ease;
+    }
+
+    .toggle:hover{
+      border-color:#9fb8eb;
+      background:#f8fbff;
+    }
+
+    .toggle.active{
+      border-color:var(--ok);
+      background:var(--ok-soft);
+      color:#13744d;
+      font-weight:800;
+    }
+
+    .toggle.active::before{
+      content:"✓ ";
+      font-weight:900;
+    }
+
+    .qty-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .qty-box{
+      border:1px solid #ecd86a;
+      border-radius:14px;
+      background:var(--yellow);
+      padding:11px;
+    }
+
+    .qty-box span{
+      display:block;
+      font-size:13px;
+      margin-bottom:6px;
+      color:#695f23;
+      font-weight:700;
+    }
+
+    .qty-box input{
+      background:rgba(255,255,255,.72);
+      text-align:center;
+      font-weight:800;
+    }
+
+    .child-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .child-qty-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .child-qty-box{
+      border:1px solid #ecd86a;
+      border-radius:14px;
+      background:var(--yellow);
+      padding:10px;
+    }
+
+    .child-qty-box span{
+      display:block;
+      font-size:13px;
+      margin-bottom:6px;
+      color:#695f23;
+      font-weight:700;
+    }
+
+    .child-qty-box input{
+      background:rgba(255,255,255,.72);
+      text-align:center;
+      font-weight:800;
+    }
+
+    .development-inline{
+      margin-top:14px;
+      padding-top:12px;
+      border-top:1px dashed var(--line);
+    }
+
+    .development-inline-title{
+      font-size:14px;
+      font-weight:800;
+      color:#405064;
+      margin-bottom:8px;
+    }
+
+    .development-inline-toggle{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 14px;
+      background:#f8fbff;
+      color:#405064;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .development-inline-toggle:hover{
+      border-color:#9fb8eb;
+      background:var(--primary-soft);
+    }
+
+    .development-inline-note{
+      color:var(--primary);
+      font-size:13px;
+    }
+
+    .development-inline-panel{
+      margin-top:10px;
+    }
+
+    .child-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:#fbfcfe;
+    }
+
+    .child-head{
+      display:grid;
+      grid-template-columns:minmax(160px,280px) 1fr auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .remove{
+      border:0;
+      background:#fff0f2;
+      color:var(--danger);
+      border-radius:10px;
+      padding:11px 13px;
+      cursor:pointer;
+      font-weight:700;
+    }
+
+    .child-toggles{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:16px;
+    }
+
+    .development-wrap{
+      margin-top:22px;
+      border-top:1px dashed var(--line);
+      padding-top:18px;
+    }
+
+    .development-toggle{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px 16px;
+      background:#f8fbff;
+      color:#405064;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .development-toggle:hover{
+      border-color:#9fb8eb;
+      background:var(--primary-soft);
+    }
+
+    .development-note{
+      color:var(--primary);
+      font-size:14px;
+    }
+
+    .development-panel{
+      margin-top:12px;
+    }
+
+    .development-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .development-row{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:#fbfcfe;
+    }
+
+    .development-head{
+      display:grid;
+      grid-template-columns:minmax(160px,260px) 1fr auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .age-grid{
+      display:grid;
+      grid-template-columns:repeat(12,minmax(52px,1fr));
+      gap:7px;
+      margin-top:12px;
+      overflow-x:auto;
+      padding-bottom:3px;
+    }
+
+    .age-toggle{
+      appearance:none;
+      border:1px solid var(--line);
+      border-radius:10px;
+      min-height:42px;
+      padding:8px 6px;
+      background:#fff;
+      color:var(--text);
+      font:inherit;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .age-toggle:hover{
+      border-color:#9fb8eb;
+      background:#f8fbff;
+    }
+
+    .age-toggle.active{
+      border-color:var(--ok);
+      background:var(--ok-soft);
+      color:#13744d;
+      font-weight:800;
+    }
+
+    .age-toggle.active::before{
+      content:"✓ ";
+    }
+
+    button.action{
+      border:0;
+      border-radius:12px;
+      padding:12px 18px;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .primary{
+      color:#fff;
+      background:var(--primary);
+    }
+
+    .secondary{
+      color:var(--primary);
+      background:var(--primary-soft);
+    }
+
+    .ghost{
+      color:#526173;
+      background:#eef2f6;
+    }
+
+    textarea{
+      min-height:150px;
+      resize:vertical;
+      line-height:1.8;
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+      margin-top:8px;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%) translateY(20px);
+      background:#263238;
+      color:#fff;
+      border-radius:999px;
+      padding:11px 18px;
+      opacity:0;
+      pointer-events:none;
+      transition:.2s;
+      z-index:10;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    @media (max-width:900px){
+      .toggle-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .child-toggles{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+
+    @media (max-width:650px){
+      .page{padding:16px 12px 38px}
+      .hero{display:block}
+      .today{display:inline-block;margin-top:12px}
+      .card{padding:15px;border-radius:15px}
+      .top-grid{grid-template-columns:1fr}
+      .toggle-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .qty-grid{grid-template-columns:1fr}
+      .child-head{grid-template-columns:1fr auto}
+      .child-head .field{grid-column:1 / -1}
+      .child-toggles{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .child-qty-grid{grid-template-columns:1fr}
+      .development-head{grid-template-columns:1fr auto}
+      .development-head .field{grid-column:1 / -1}
+      .age-grid{grid-template-columns:repeat(6,minmax(58px,1fr))}
+      .actions{display:grid;grid-template-columns:1fr 1fr}
+      .actions .wide{grid-column:1 / -1}
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>今日收件紀錄</h1>
+        <p class="subtitle">點一下選取，再點一下取消；黃色欄位請輸入收到的份數。</p>
+      </div>
+      <div class="today" id="today"></div>
+    </header>
+
+    <section class="card">
+      <h2 class="card-title"><span class="badge">1</span>基本資料</h2>
+      <div class="top-grid">
+        <div>
+          <label class="field-label" for="caregiver">托育人員姓名</label>
+          <input id="caregiver" type="text" placeholder="例如：王小明">
+        </div>
+        <div>
+          <label class="field-label" for="opening">訊息開頭</label>
+          <input id="opening" type="text" value="您好，今日已收到">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title"><span class="badge">2</span>登記資料</h2>
+
+      <div class="section-label">申請書</div>
+      <div class="toggle-grid" data-group="general">
+        <button class="toggle" data-label="新登記申請書">新登記</button>
+        <button class="toggle" data-label="屆期換證申請書">屆期換證</button>
+        <button class="toggle" data-label="換發申請書">換發</button>
+        <button class="toggle" data-label="恢復申請書">恢復</button>
+        <button class="toggle" data-label="停止申請書">停止</button>
+      </div>
+
+      <div class="section-label">附件</div>
+      <div class="toggle-grid" data-group="general">
+        <button class="toggle" data-label="體檢表">體檢表</button>
+        <button class="toggle" data-label="良民證">良民證</button>
+        <button class="toggle" data-label="結業證書">結業證書</button>
+        <button class="toggle" data-label="登記證書">登記證書</button>
+        <button class="toggle" data-label="環境自評表">環境自評表</button>
+        <button class="toggle" data-label="畢業證書">畢業證書</button>
+        <button class="toggle" data-label="刑事紀錄同意書">刑事紀錄同意書</button>
+        <button class="toggle" data-label="登記切結書">登記切結書</button>
+        <button class="toggle" data-label="個資同意書">個資同意書</button>
+      </div>
+
+      <div class="section-label">其他</div>
+      <div class="toggle-grid" data-group="general">
+        <button class="toggle" data-label="準公資料">準公</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title"><span class="badge">3</span>收托資料</h2>
+
+      <div class="section-label">依托兒登錄資料</div>
+      <div id="childList" class="child-list"></div>
+
+      <div class="actions">
+        <button class="action secondary" id="addChild" type="button">＋新增一位托兒</button>
+      </div>
+
+    </section>
+
+    <section class="card">
+      <h2 class="card-title"><span class="badge">4</span>產出訊息</h2>
+      <textarea id="result" placeholder="按下「產生訊息」後，文字會出現在這裡。"></textarea>
+      <div class="actions">
+        <button class="action primary wide" id="generate" type="button">產生訊息</button>
+        <button class="action secondary" id="copy" type="button">複製文字</button>
+        <button class="action ghost" id="reset" type="button">全部清除</button>
+      </div>
+      <div class="hint">目前先以一整串訊息呈現，不另外區分大項。</div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">已複製</div>
+
+  <script>
+    const childOptions = [
+      "異動申請書","契約書","臨托契約書","補助申報表","戶口名簿",
+      "戶籍謄本","身分證影本","郵局影本","中低收入證明","低收入證明",
+      "弱勢證明","身障證明","停止補助申報表"
+    ];
+
+    const childList = document.getElementById("childList");
+    const toast = document.getElementById("toast");
+
+    const developmentAges = [
+      ["0.4","0歲4個月"],
+      ["0.6","0歲6個月"],
+      ["0.9","0歲9個月"],
+      ["1","1歲"],
+      ["1.3","1歲3個月"],
+      ["1.5","1歲5個月"],
+      ["2","2歲"],
+      ["2.5","2歲5個月"],
+      ["3","3歲"],
+      ["4","4歲"],
+      ["5","5歲"],
+      ["6","6歲"]
+    ];
+
+    function rocDateText(){
+      const d = new Date();
+      const y = d.getFullYear() - 1911;
+      return `民國 ${y} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日`;
+    }
+    document.getElementById("today").textContent = rocDateText();
+
+    function bindToggle(root=document){
+      root.querySelectorAll(".toggle").forEach(btn=>{
+        if(btn.dataset.bound) return;
+        btn.dataset.bound = "1";
+        btn.addEventListener("click", ()=>{
+          btn.classList.toggle("active");
+          btn.setAttribute("aria-pressed", btn.classList.contains("active"));
+        });
+      });
+    }
+    bindToggle();
+
+    function addChild(){
+      const box = document.createElement("div");
+      box.className = "child-card";
+      box.innerHTML = `
+        <div class="child-head">
+          <div class="field">
+            <label class="field-label">托兒姓名</label>
+            <input type="text" class="child-name" placeholder="例如：陳小華">
+          </div>
+          <div></div>
+          <button type="button" class="remove">刪除</button>
+        </div>
+
+        <div class="child-qty-grid">
+          <label class="child-qty-box">
+            <span>異動申請書</span>
+            <input type="number" min="0" inputmode="numeric" data-child-qty="異動申請書" placeholder="0">
+          </label>
+          <label class="child-qty-box">
+            <span>契約書</span>
+            <input type="number" min="0" inputmode="numeric" data-child-qty="契約書" placeholder="0">
+          </label>
+          <label class="child-qty-box">
+            <span>臨托契約書</span>
+            <input type="number" min="0" inputmode="numeric" data-child-qty="臨托契約書" placeholder="0">
+          </label>
+        </div>
+
+        <div class="child-toggles">
+          ${childOptions.filter(x=>!["異動申請書","契約書","臨托契約書"].includes(x))
+            .map(x=>`<button type="button" class="toggle" data-label="${x}">${x}</button>`).join("")}
+        </div>
+
+        <div class="development-inline">
+          <button type="button" class="development-inline-toggle" aria-expanded="false">
+            <span>發展檢核</span>
+            <span class="development-inline-note">點擊展開 ▼</span>
+          </button>
+          <div class="development-inline-panel" hidden>
+            <div class="age-grid">
+              ${developmentAges.map(([short,full]) =>
+                `<button type="button" class="age-toggle" data-age="${full}">${short}</button>`
+              ).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+
+      box.querySelector(".remove").addEventListener("click", ()=>box.remove());
+
+      box.querySelectorAll(".age-toggle").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          btn.classList.toggle("active");
+          btn.setAttribute("aria-pressed", btn.classList.contains("active"));
+        });
+      });
+
+      const developmentToggle = box.querySelector(".development-inline-toggle");
+      const developmentPanel = box.querySelector(".development-inline-panel");
+      developmentToggle.addEventListener("click", ()=>{
+        const isOpen = !developmentPanel.hidden;
+        developmentPanel.hidden = isOpen;
+        developmentToggle.setAttribute("aria-expanded", String(!isOpen));
+        developmentToggle.querySelector(".development-inline-note").textContent =
+          isOpen ? "點擊展開 ▼" : "點擊收合 ▲";
+      });
+
+      childList.appendChild(box);
+      bindToggle(box);
+    }
+
+    addChild();
+    addChild();
+
+    document.getElementById("addChild").addEventListener("click", addChild);
+
+    function joinChinese(items){
+      if(items.length === 0) return "";
+      if(items.length === 1) return items[0];
+      return items.slice(0,-1).join("、") + "及" + items.at(-1);
+    }
+
+    function generateMessage(){
+      const caregiver = document.getElementById("caregiver").value.trim();
+      const opening = document.getElementById("opening").value.trim() || "您好，今日已收到";
+      const parts = [];
+
+      document.querySelectorAll('[data-group="general"] .toggle.active').forEach(btn=>{
+        parts.push(btn.dataset.label);
+      });
+
+      document.querySelectorAll(".child-card").forEach(card=>{
+        const name = card.querySelector(".child-name").value.trim();
+        const childItems = [];
+
+        card.querySelectorAll("[data-child-qty]").forEach(input=>{
+          const n = Number(input.value);
+          if(n > 0){
+            childItems.push(`${input.dataset.childQty}${n}份`);
+          }
+        });
+
+        card.querySelectorAll(".toggle.active").forEach(btn=>{
+          childItems.push(btn.dataset.label);
+        });
+
+        const ageButtons = [...card.querySelectorAll(".age-toggle.active")];
+        ageButtons.forEach(ageBtn=>{
+          childItems.push(`${ageBtn.dataset.age}發展檢核表紀錄`);
+        });
+
+        if(childItems.length){
+          const prefix = name ? `托兒${name}的` : "托兒的";
+          parts.push(prefix + joinChinese(childItems));
+        }
+      });
+
+      let text = caregiver ? `${caregiver}托育人員${opening}` : opening;
+      if(parts.length){
+        text += joinChinese(parts) + "，以上資料已收件，謝謝。";
+      }else{
+        text += "資料。";
+      }
+
+      document.getElementById("result").value = text;
+    }
+
+    document.getElementById("generate").addEventListener("click", generateMessage);
+
+    document.getElementById("copy").addEventListener("click", async ()=>{
+      const result = document.getElementById("result");
+      if(!result.value.trim()) generateMessage();
+      try{
+        await navigator.clipboard.writeText(result.value);
+      }catch(e){
+        result.select();
+        document.execCommand("copy");
+      }
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"), 1400);
+    });
+
+    document.getElementById("reset").addEventListener("click", ()=>{
+      document.querySelectorAll("input").forEach(input=>{
+        if(input.id === "opening") input.value = "您好，今日已收到";
+        else input.value = "";
+      });
+      document.querySelectorAll(".toggle.active").forEach(btn=>btn.classList.remove("active"));
+      document.getElementById("result").value = "";
+      childList.innerHTML = "";
+      addChild();
+      addChild();
+    });
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./service-worker.js").catch(function () {});
+      });
+    }
+  </script>
+</body>
+</html>

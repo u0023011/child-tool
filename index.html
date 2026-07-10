@@ -526,6 +526,12 @@
               <div class="tool-count">已有 <strong id="count-report_date_tool">--</strong> 人次使用</div>
             </button>
 
+            <button type="button" class="tool-card" onclick="openTool('receipt-tool/', 'receipt_tool')">
+              <div class="tool-title">📥 今日收件紀錄</div>
+              <div class="tool-desc">登錄收到的托育與托兒資料，並自動整理成通知訊息。</div>
+              <div class="tool-count">已有 <strong id="count-receipt_tool">--</strong> 人次使用</div>
+            </button>
+
           </div>
 
           <div class="footer">登入狀態僅保留於目前瀏覽器分頁；重新開啟後需重新輸入密碼。</div>
@@ -590,7 +596,8 @@
     const TOOL_COUNTERS = [
       { key: "childcare_law", label: "托育法規工具" },
       { key: "age_tool", label: "幼兒年齡檢核工具" },
-      { key: "report_date_tool", label: "回報日期計算工具" }
+      { key: "report_date_tool", label: "回報日期計算工具" },
+      { key: "receipt_tool", label: "今日收件紀錄" }
     ];
 
     function getToolInfo(counterKey) {
