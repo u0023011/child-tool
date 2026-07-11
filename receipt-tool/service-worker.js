@@ -1,4 +1,4 @@
-const CACHE_NAME = "receipt-tool-v4";
+const CACHE_NAME = "receipt-tool-v11";
 const APP_SHELL = [
   "./",
   "./index.html",

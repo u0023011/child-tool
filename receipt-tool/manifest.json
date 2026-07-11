@@ -1,12 +1,12 @@
 {
-  "name": "今日收件紀錄",
-  "short_name": "今日收件",
-  "description": "登錄托育人員寄送資料，並自動整理成收件通知文字。",
+  "name": "托育訊息工具",
+  "short_name": "托育訊息",
+  "description": "提供收件紀錄、托育媒合資訊與在職研習通知訊息產生功能。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f7fb",
-  "theme_color": "#2f6fed",
+  "background_color": "#f5ecdf",
+  "theme_color": "#8b6a3f",
   "lang": "zh-Hant",
   "orientation": "any",
   "icons": [
