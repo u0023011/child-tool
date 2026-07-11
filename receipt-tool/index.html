@@ -117,6 +117,16 @@
     .tool-section{display:none}
     .tool-section.active{display:block}
 
+
+    .tool-section{
+      padding-top:4px;
+    }
+
+    .tool-section > .card:first-of-type,
+    .tool-section > details:first-of-type{
+      margin-top:0;
+    }
+
     .section-head{
       position:relative;
       display:inline-flex;
@@ -1071,7 +1081,7 @@
 
     <!-- 收件紀錄 -->
     <section class="tool-section active" id="section-receipt">
-      <div class="section-head"><span class="section-icon">1</span><h2>收件紀錄</h2></div>
+      
 
       <details class="card collapsible-card" id="registrationDetails">
         <summary class="collapse-summary">
@@ -1123,7 +1133,7 @@
           <h3 class="card-title"><span class="badge">3</span>產出訊息</h3>
           <div class="opening-inline">
             <label for="opening">訊息開頭</label>
-            <input id="opening" type="text" value="您好，今日已收到：">
+            <input id="opening" type="text" value="您好，今日已收到">
           </div>
         </div>
         <textarea id="receiptResult"></textarea>
@@ -1137,7 +1147,7 @@
 
     <!-- 媒合資訊 -->
     <section class="tool-section" id="section-matching">
-      <div class="section-head"><span class="section-icon">2</span><h2>媒合資訊</h2></div>
+      
 
       <section class="card">
         <h3 class="card-title"><span class="badge">1</span>服務類型</h3>
@@ -1382,7 +1392,7 @@
 
     <!-- 在職通知 -->
     <section class="tool-section" id="section-training">
-      <div class="section-head"><span class="section-icon">3</span><h2>在職通知</h2></div>
+      
 
       <section class="card">
         <h3 class="card-title"><span class="badge">1</span>場地選擇</h3>
