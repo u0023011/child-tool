@@ -712,6 +712,56 @@
       border-color:var(--primary);
     }
 
+
+    .matching-child-list{
+      display:grid;
+      gap:14px;
+    }
+
+    .matching-child-card{
+      border:1.5px solid #d9bd92;
+      border-radius:16px;
+      padding:16px;
+      background:#fffaf3;
+    }
+
+    .matching-child-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .matching-child-title{
+      color:#5a3b20;
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .matching-child-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(210px,.9fr);
+      gap:14px;
+      align-items:start;
+    }
+
+    .matching-child-remove{
+      min-height:38px;
+      padding:7px 13px;
+      border-radius:10px;
+    }
+
+    .matching-child-actions{
+      margin-top:14px;
+    }
+
+    @media(max-width:850px){
+      .matching-child-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
     .single-choice-grid{
       display:grid;
       grid-template-columns:repeat(2,1fr);
@@ -1133,7 +1183,7 @@
           <h3 class="card-title"><span class="badge">3</span>產出訊息</h3>
           <div class="opening-inline">
             <label for="opening">訊息開頭</label>
-            <input id="opening" type="text" value="您好，今日已收到：">
+            <input id="opening" type="text" value="您好，今日已收到">
           </div>
         </div>
         <textarea id="receiptResult"></textarea>
@@ -1353,29 +1403,9 @@
 
       <section class="card">
         <h3 class="card-title"><span class="badge">5</span>幼兒資料</h3>
-        <div class="grid-3">
-          <div>
-            <label class="field-label" for="childBirthday">出生日期</label>
-            <div class="roc-date-wrap">
-              <input id="childBirthday" class="roc-date-input" type="text" inputmode="numeric" autocomplete="off">
-              <button type="button" class="roc-date-btn" onclick="openRocPicker('childBirthday')" aria-label="選擇出生日期">📅</button>
-            </div>
-            <div class="age-result" id="calculatedAge">尚未計算年齡</div>
-          </div>
-
-          <div>
-            <label class="field-label" for="childAgeText">直接輸入年齡</label>
-            <input id="childAgeText" type="text">
-            <div class="hint">直接輸入的文字會優先使用。</div>
-          </div>
-
-          <div>
-            <label class="field-label">幼兒性別</label>
-            <div class="single-choice-grid" id="childGender">
-              <button type="button" class="gender-choice" data-value="男">男</button>
-              <button type="button" class="gender-choice" data-value="女">女</button>
-            </div>
-          </div>
+        <div class="matching-child-list" id="matchingChildList"></div>
+        <div class="actions matching-child-actions">
+          <button type="button" class="action secondary" id="addMatchingChild">＋新增一位托兒</button>
         </div>
       </section>
 
@@ -1830,7 +1860,7 @@
       closeRocPicker();
     }
 
-    ["matchStartDate","matchEndDate","childBirthday","trainingDate"].forEach(id=>{
+    ["matchStartDate","matchEndDate","trainingDate"].forEach(id=>{
       $(id).addEventListener("blur",()=>normalizeRocInput(id));
     });
 
@@ -2150,50 +2180,161 @@
       return days.length ? "每"+days.map(d=>names[d].replace("週","週")).join("、") : "";
     }
 
-    function calculateAge(){
-      const birth=$("childBirthday").value;
+    let matchingChildCounter=0;
+
+    function calculateMatchingChildAge(card){
+      const birthdayInput=card.querySelector(".matching-child-birthday");
+      const result=card.querySelector(".matching-child-age-result");
+      const birth=birthdayInput.value;
+
       if(!birth){
-        $("calculatedAge").textContent="尚未計算年齡";
+        result.textContent="尚未計算年齡";
         return "";
       }
+
       const ref=parseFlexibleDate($("matchStartDate").value) || new Date();
       const b=parseFlexibleDate(birth);
+
       if(!b){
-        $("calculatedAge").textContent="出生日期格式不正確";
+        result.textContent="出生日期格式不正確";
         return "";
       }
+
       if(b>ref){
-        $("calculatedAge").textContent="出生日期晚於服務日期";
+        result.textContent="出生日期晚於服務日期";
         return "";
       }
+
       let years=ref.getFullYear()-b.getFullYear();
       let months=ref.getMonth()-b.getMonth();
       if(ref.getDate()<b.getDate()) months--;
-      if(months<0){years--;months+=12}
-      const text=years>0?`${years}歲${months?months+"個月":""}`:`${months}個月`;
-      $("calculatedAge").textContent=`系統計算：${text}`;
+      if(months<0){
+        years--;
+        months+=12;
+      }
+
+      const text=years>0
+        ? `${years}歲${months ? months+"個月" : ""}`
+        : `${months}個月`;
+
+      result.textContent=`系統計算：${text}`;
       return text;
     }
-    ["childBirthday","matchStartDate"].forEach(id=>$(id).addEventListener("change",calculateAge));
 
-    let selectedChildGender="";
+    function updateMatchingChildNumbers(){
+      const cards=[...document.querySelectorAll("#matchingChildList .matching-child-card")];
 
-    document.querySelectorAll("#childGender .gender-choice").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        const wasSelected=btn.classList.contains("active");
-        document.querySelectorAll("#childGender .gender-choice").forEach(x=>{
-          x.classList.remove("active");
-          x.setAttribute("aria-pressed","false");
-        });
-
-        if(!wasSelected){
-          btn.classList.add("active");
-          btn.setAttribute("aria-pressed","true");
-          selectedChildGender=btn.dataset.value;
-        }else{
-          selectedChildGender="";
-        }
+      cards.forEach((card,index)=>{
+        card.querySelector(".matching-child-title").textContent=`托兒 ${index+1}`;
+        const removeButton=card.querySelector(".matching-child-remove");
+        removeButton.hidden=cards.length===1;
       });
+    }
+
+    function addMatchingChild(){
+      matchingChildCounter++;
+      const birthdayId=`matchingChildBirthday${matchingChildCounter}`;
+
+      const card=document.createElement("div");
+      card.className="matching-child-card";
+      card.innerHTML=`
+        <div class="matching-child-head">
+          <div class="matching-child-title">托兒</div>
+          <button type="button" class="action danger matching-child-remove">刪除</button>
+        </div>
+
+        <div class="matching-child-grid">
+          <div>
+            <label class="field-label" for="${birthdayId}">出生日期</label>
+            <div class="roc-date-wrap">
+              <input id="${birthdayId}" class="roc-date-input matching-child-birthday" type="text" inputmode="numeric" autocomplete="off">
+              <button type="button" class="roc-date-btn" data-date-target="${birthdayId}" aria-label="選擇出生日期">📅</button>
+            </div>
+            <div class="age-result matching-child-age-result">尚未計算年齡</div>
+          </div>
+
+          <div>
+            <label class="field-label">直接輸入年齡</label>
+            <input class="matching-child-age-text" type="text">
+            <div class="hint">直接輸入的文字會優先使用。</div>
+          </div>
+
+          <div>
+            <label class="field-label">幼兒性別</label>
+            <div class="single-choice-grid matching-child-gender">
+              <button type="button" class="gender-choice" data-value="男">男</button>
+              <button type="button" class="gender-choice" data-value="女">女</button>
+            </div>
+          </div>
+        </div>`;
+
+      const birthdayInput=card.querySelector(".matching-child-birthday");
+      birthdayInput.addEventListener("blur",()=>{
+        normalizeRocInput(birthdayId);
+        calculateMatchingChildAge(card);
+      });
+      birthdayInput.addEventListener("change",()=>calculateMatchingChildAge(card));
+
+      card.querySelector("[data-date-target]").addEventListener("click",()=>{
+        openRocPicker(birthdayId);
+      });
+
+      card.querySelectorAll(".matching-child-gender .gender-choice").forEach(btn=>{
+        btn.addEventListener("click",()=>{
+          const wasSelected=btn.classList.contains("active");
+
+          card.querySelectorAll(".matching-child-gender .gender-choice").forEach(x=>{
+            x.classList.remove("active");
+            x.setAttribute("aria-pressed","false");
+          });
+
+          if(!wasSelected){
+            btn.classList.add("active");
+            btn.setAttribute("aria-pressed","true");
+          }
+        });
+      });
+
+      card.querySelector(".matching-child-remove").addEventListener("click",()=>{
+        card.remove();
+
+        if(!document.querySelector("#matchingChildList .matching-child-card")){
+          addMatchingChild();
+        }
+
+        updateMatchingChildNumbers();
+      });
+
+      $("matchingChildList").appendChild(card);
+      updateMatchingChildNumbers();
+    }
+
+    function resetMatchingChildren(){
+      $("matchingChildList").innerHTML="";
+      matchingChildCounter=0;
+      addMatchingChild();
+    }
+
+    function collectMatchingChildren(){
+      return [...document.querySelectorAll("#matchingChildList .matching-child-card")]
+        .map(card=>{
+          const directAge=card.querySelector(".matching-child-age-text").value.trim();
+          const calculatedAge=calculateMatchingChildAge(card);
+          const age=directAge || calculatedAge;
+          const selectedGender=card.querySelector(".matching-child-gender .gender-choice.active");
+          const gender=selectedGender ? selectedGender.dataset.value : "";
+
+          return {age,gender};
+        })
+        .filter(child=>child.age || child.gender);
+    }
+
+    addMatchingChild();
+    $("addMatchingChild").addEventListener("click",addMatchingChild);
+
+    $("matchStartDate").addEventListener("change",()=>{
+      document.querySelectorAll("#matchingChildList .matching-child-card")
+        .forEach(calculateMatchingChildAge);
     });
 
     function generateMatching(){
@@ -2229,7 +2370,7 @@
       const timeNote=$("matchTimeNote").value.trim();
       const regions=selectedValues("#regionChoices");
       const other=$("otherRegion").value.trim();
-      const ageText=$("childAgeText").value.trim() || calculateAge();
+      const children=collectMatchingChildren();
 
       const lines=["【托育媒合資訊】"];
       if(types.length) lines.push(`服務類型：${types.join("、")}`);
@@ -2258,8 +2399,16 @@
         lines.push(`服務地區：${homePlaces.join("、")}`);
       }
       if(selectedFixedUnit && types.includes("定點臨托")) lines.push(`定點單位：${selectedFixedUnit}`);
-      if(ageText) lines.push(`幼兒年齡：${ageText}`);
-      if(selectedChildGender) lines.push(`幼兒性別：${selectedChildGender}`);
+
+      if(children.length===1){
+        if(children[0].age) lines.push(`幼兒年齡：${children[0].age}`);
+        if(children[0].gender) lines.push(`幼兒性別：${children[0].gender}`);
+      }else if(children.length>1){
+        children.forEach((child,index)=>{
+          const details=[child.age,child.gender].filter(Boolean).join("／");
+          lines.push(`幼兒${index+1}：${details}`);
+        });
+      }
 
       lines.push("");
       if(types.includes("定點臨托")) {
@@ -2281,18 +2430,13 @@
     $("matchingReset").addEventListener("click",()=>{
       document.querySelectorAll("#section-matching .active").forEach(x=>x.classList.remove("active"));
       [1,2,3,4,5].forEach(d=>document.querySelector(`#weekdayGrid [data-day="${d}"]`).classList.add("active"));
-      ["matchStartDate","matchEndDate","matchTimeNote","otherRegion","childBirthday","childAgeText","matchingResult"].forEach(id=>$(id).value="");
+      ["matchStartDate","matchEndDate","matchTimeNote","otherRegion","matchingResult"].forEach(id=>$(id).value="");
       $("matchStartTime").value="07:00";
       $("matchEndTime").value="18:00";
       selectedFixedUnit="";
       $("otherFixedUnitsDetails").open=false;
       weekdayAutoApplied=false;
-      selectedChildGender="";
-      document.querySelectorAll("#childGender .gender-choice").forEach(x=>{
-        x.classList.remove("active");
-        x.setAttribute("aria-pressed","false");
-      });
-      $("calculatedAge").textContent="尚未計算年齡";
+      resetMatchingChildren();
       updateLocationVisibility();
       renderFixedUnits();
     });
