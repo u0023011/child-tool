@@ -120,25 +120,32 @@
     .section-head{
       display:flex;
       align-items:center;
-      gap:10px;
-      margin:20px 2px 2px;
+      gap:12px;
+      margin:24px 0 4px;
+      padding:14px 18px;
+      border-radius:16px;
+      background:linear-gradient(135deg,#7b552f,#9a7143);
+      box-shadow:0 7px 18px rgba(75,48,24,.18);
     }
 
     .section-head h2{
       margin:0;
-      color:#4e321b;
-      font-size:25px;
+      color:#fff;
+      font-size:24px;
+      letter-spacing:.5px;
     }
 
     .section-icon{
-      width:38px;
-      height:38px;
+      width:40px;
+      height:40px;
       display:grid;
       place-items:center;
-      border-radius:12px;
-      background:var(--primary-soft);
-      color:var(--primary);
-      font-weight:900;
+      border-radius:50%;
+      background:#fffaf1;
+      color:#7b552f;
+      font-size:20px;
+      font-weight:950;
+      box-shadow:0 2px 8px rgba(48,31,15,.2);
     }
 
     .card{
@@ -169,6 +176,70 @@
       color:var(--primary);
       font-weight:900;
       box-shadow:inset 0 0 0 1px #d3b78e;
+    }
+
+
+    .collapsible-card{
+      padding:0;
+      overflow:hidden;
+    }
+
+    .collapse-summary{
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      width:100%;
+      padding:20px;
+      cursor:pointer;
+      user-select:none;
+      background:#fff;
+    }
+
+    .collapse-summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .collapse-summary:hover{
+      background:#fffaf3;
+    }
+
+    .collapse-summary .card-title{
+      margin:0;
+    }
+
+    .collapse-status{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      color:#7a5a37;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .collapse-status::before{
+      content:"展開";
+    }
+
+    .collapse-arrow{
+      display:inline-block;
+      transition:transform .18s ease;
+      font-size:17px;
+    }
+
+    .collapsible-card[open] .collapse-status::before{
+      content:"收合";
+    }
+
+    .collapsible-card[open] .collapse-arrow{
+      transform:rotate(180deg);
+    }
+
+    .collapse-content{
+      padding:0 20px 20px;
+      border-top:1px solid #eadcc6;
     }
 
     .field-label{
@@ -423,6 +494,60 @@
       grid-template-columns:220px 1fr;
       gap:12px;
       align-items:end;
+    }
+
+
+    .fixed-other-details{
+      margin-top:16px;
+      border:1.5px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+    }
+
+    .fixed-other-details summary{
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 16px;
+      cursor:pointer;
+      color:#5c3f24;
+      font-weight:900;
+      user-select:none;
+    }
+
+    .fixed-other-details summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .fixed-other-details summary::after{
+      content:"展開 ▾";
+      color:#8a683f;
+      font-size:14px;
+    }
+
+    .fixed-other-details[open] summary::after{
+      content:"收合 ▴";
+    }
+
+    .fixed-other-details[open] summary{
+      border-bottom:1px solid #eadcc6;
+      background:#fffaf3;
+    }
+
+    .fixed-other-details .unit-list{
+      padding:0 14px 14px;
+    }
+
+    .fixed-other-count{
+      margin-left:auto;
+      padding:3px 9px;
+      border-radius:999px;
+      background:#f1e5d3;
+      color:#74512f;
+      font-size:13px;
     }
 
     .unit-list{
@@ -806,6 +931,27 @@
     })();
   </script>
 
+
+  <style>
+    .time-category-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1.7fr) minmax(150px,.9fr);
+      gap:12px;
+      align-items:end;
+    }
+
+    .session-setting{
+      min-width:0;
+    }
+
+    @media(max-width:780px){
+      .time-category-grid{
+        grid-template-columns:1fr;
+        gap:10px;
+      }
+    }
+  </style>
+
 </head>
 
 <body>
@@ -844,36 +990,41 @@
         </div>
       </section>
 
-      <section class="card">
-        <h3 class="card-title"><span class="badge">2</span>登記資料</h3>
+      <details class="card collapsible-card" id="registrationDetails">
+        <summary class="collapse-summary">
+          <h3 class="card-title"><span class="badge">2</span>登記資料</h3>
+          <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+        </summary>
 
-        <div class="section-label">申請書</div>
-        <div class="toggle-grid" data-group="general">
-          <button class="toggle" data-label="新登記申請書">新登記</button>
-          <button class="toggle" data-label="屆期換證申請書">屆期換證</button>
-          <button class="toggle" data-label="換發申請書">換發</button>
-          <button class="toggle" data-label="恢復申請書">恢復</button>
-          <button class="toggle" data-label="停止申請書">停止</button>
-        </div>
+        <div class="collapse-content">
+          <div class="section-label">申請書</div>
+          <div class="toggle-grid" data-group="general">
+            <button class="toggle" data-label="新登記申請書">新登記</button>
+            <button class="toggle" data-label="屆期換證申請書">屆期換證</button>
+            <button class="toggle" data-label="換發申請書">換發</button>
+            <button class="toggle" data-label="恢復申請書">恢復</button>
+            <button class="toggle" data-label="停止申請書">停止</button>
+          </div>
 
-        <div class="section-label">附件</div>
-        <div class="toggle-grid" data-group="general">
-          <button class="toggle" data-label="體檢表">體檢表</button>
-          <button class="toggle" data-label="良民證">良民證</button>
-          <button class="toggle" data-label="結業證書">結業證書</button>
-          <button class="toggle" data-label="登記證書">登記證書</button>
-          <button class="toggle" data-label="環境自評表">環境自評表</button>
-          <button class="toggle" data-label="畢業證書">畢業證書</button>
-          <button class="toggle" data-label="刑事紀錄同意書">刑事紀錄同意書</button>
-          <button class="toggle" data-label="登記切結書">登記切結書</button>
-          <button class="toggle" data-label="個資同意書">個資同意書</button>
-        </div>
+          <div class="section-label">附件</div>
+          <div class="toggle-grid" data-group="general">
+            <button class="toggle" data-label="體檢表">體檢表</button>
+            <button class="toggle" data-label="良民證">良民證</button>
+            <button class="toggle" data-label="結業證書">結業證書</button>
+            <button class="toggle" data-label="登記證書">登記證書</button>
+            <button class="toggle" data-label="環境自評表">環境自評表</button>
+            <button class="toggle" data-label="畢業證書">畢業證書</button>
+            <button class="toggle" data-label="刑事紀錄同意書">刑事紀錄同意書</button>
+            <button class="toggle" data-label="登記切結書">登記切結書</button>
+            <button class="toggle" data-label="個資同意書">個資同意書</button>
+          </div>
 
-        <div class="section-label">其他</div>
-        <div class="toggle-grid" data-group="general">
-          <button class="toggle" data-label="準公資料">準公</button>
+          <div class="section-label">其他</div>
+          <div class="toggle-grid" data-group="general">
+            <button class="toggle" data-label="準公資料">準公</button>
+          </div>
         </div>
-      </section>
+      </details>
 
       <section class="card">
         <h3 class="card-title"><span class="badge">3</span>收托資料</h3>
@@ -1081,21 +1232,28 @@
         </div>
 
         <div class="location-box" id="fixedLocationBox" hidden>
-          <div class="section-label" style="margin-top:0">定點臨托區域</div>
-          <div class="choice-grid" id="fixedAreaChoices"></div>
-          <div class="hint" id="fixedFilterHint" style="margin-top:10px">
-            可複選區域；未選區域時顯示全部。系統也會依服務星期與時間篩選可選單位。
+          <div class="section-label" style="margin-top:0">定點臨托單位</div>
+          <div class="hint" id="fixedFilterHint">
+            系統會依服務星期與時間，列出可選擇的定點臨托單位。
           </div>
 
-          <div class="section-label">符合的定點臨托單位</div>
+          <div class="section-label">本中心服務區域</div>
           <div class="unit-list" id="fixedUnitList"></div>
+
+          <details class="fixed-other-details" id="otherFixedUnitsDetails">
+            <summary>
+              <span>其他區域的定點臨托單位</span>
+              <span class="fixed-other-count" id="otherFixedUnitCount"></span>
+            </summary>
+            <div class="unit-list" id="otherFixedUnitList"></div>
+          </details>
         </div>
 
         <div class="notice" id="locationEmptyNotice">請先選擇服務類型。</div>
       </section>
 
       <section class="card">
-        <h3 class="card-title"><span class="badge">5</span>幼兒年齡</h3>
+        <h3 class="card-title"><span class="badge">5</span>幼兒資料</h3>
         <div class="grid-3">
           <div>
             <label class="field-label" for="childBirthday">出生日期</label>
@@ -1169,22 +1327,66 @@
           <button type="button" class="choice" data-value="split">上、下午</button>
         </div>
 
-        <div id="fullDayTime" class="notice">全天時間：08：00～17：00</div>
+        <div id="fullDayTime" class="notice">
+          全天時間：08：00～17：00　｜　課程：基本救命術　｜　類別：第六類（固定）
+          <div class="hint" style="margin-top:8px">
+            穿著建議：請穿著輕便、方便活動的服裝及長褲，以利實作練習。
+          </div>
+        </div>
 
         <div id="splitTimeBox" class="grid-2" style="margin-top:14px" hidden>
-          <div>
-            <label class="field-label" for="morningTime">上午時間</label>
-            <select id="morningTime">
-              <option value="08：00～12：00">08：00～12：00</option>
-              <option value="09：00～12：00" selected>09：00～12：00</option>
-            </select>
+          <div class="session-setting">
+            <div class="time-category-grid">
+              <div>
+                <label class="field-label" for="morningTime">上午時間</label>
+                <select id="morningTime">
+                  <option value="08：00～12：00">08：00～12：00</option>
+                  <option value="09：00～12：00" selected>09：00～12：00</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="morningCategory">類別（選填）</label>
+                <select id="morningCategory">
+                  <option value="">未選擇</option>
+                  <option value="第1類">第1類</option>
+                  <option value="第2類">第2類</option>
+                  <option value="第3類">第3類</option>
+                  <option value="第4類">第4類</option>
+                  <option value="第5類">第5類</option>
+                  <option value="第6類">第6類</option>
+                  <option value="第7類">第7類</option>
+                  <option value="第8類">第8類</option>
+                  <option value="第9類">第9類</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div>
-            <label class="field-label" for="afternoonTime">下午時間</label>
-            <select id="afternoonTime">
-              <option value="13：00～16：00">13：00～16：00</option>
-              <option value="13：00～17：00">13：00～17：00</option>
-            </select>
+
+          <div class="session-setting">
+            <div class="time-category-grid">
+              <div>
+                <label class="field-label" for="afternoonTime">下午時間</label>
+                <select id="afternoonTime">
+                  <option value="13：00～16：00">13：00～16：00</option>
+                  <option value="13：00～17：00">13：00～17：00</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="afternoonCategory">類別（選填）</label>
+                <select id="afternoonCategory">
+                  <option value="">未選擇</option>
+                  <option value="第1類">第1類</option>
+                  <option value="第2類">第2類</option>
+                  <option value="第3類">第3類</option>
+                  <option value="第4類">第4類</option>
+                  <option value="第5類">第5類</option>
+                  <option value="第6類">第6類</option>
+                  <option value="第7類">第7類</option>
+                  <option value="第8類">第8類</option>
+                  <option value="第9類">第9類</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1652,12 +1854,13 @@
       $("opening").value="您好，今日已收到";
       document.querySelectorAll('#section-receipt .toggle.active').forEach(x=>x.classList.remove("active"));
       $("receiptResult").value="";
+      $("registrationDetails").open=false;
       $("childList").innerHTML="";
       addChild();
     });
 
     // 媒合資訊
-    const regions=["新營","鹽水","後壁","白河","東山","柳營","佳里","學甲","將軍","北門","麻豆","下營","六甲","官田","大內","善化","玉井","楠西","南化"];
+    const regions=["新營","鹽水","後壁","白河","東山","善化","麻豆","佳里","學甲","六甲","柳營","下營","官田","大內","玉井","將軍","北門","楠西","南化"];
     $("regionChoices").innerHTML=regions.map(x=>`<button type="button" class="choice" data-value="${x}區">${x}</button>`).join("");
     bindMultiButtons($("regionChoices"));
 
@@ -1696,12 +1899,7 @@
       {area:"北區",name:"北區親子悠遊館",schedules:[{days:[2,3,4,5,6],start:"17:00",end:"20:30",label:"週二至週六 17:00～20:30"}]}
     ];
 
-    const areas=[...new Set(fixedUnits.map(x=>x.area))];
-    $("fixedAreaChoices").innerHTML=areas.map(area=>{
-      const shortName=area.endsWith("區") ? area.slice(0,-1) : area;
-      return `<button type="button" class="choice" data-value="${area}">${shortName}</button>`;
-    }).join("");
-    bindMultiButtons($("fixedAreaChoices"));
+    const fixedServiceAreas=new Set(regions.map(area=>`${area}區`));
 
     let selectedFixedUnit="";
 
@@ -1761,15 +1959,7 @@
       }
     }
 
-    function selectedFixedAreas(){
-      return [...document.querySelectorAll("#fixedAreaChoices .choice.active")]
-        .map(btn=>btn.dataset.value);
-    }
-
     function unitMatches(unit){
-      const selectedAreas=selectedFixedAreas();
-      if(selectedAreas.length && !selectedAreas.includes(unit.area)) return false;
-
       const start=$("matchStartTime").value;
       const end=$("matchEndTime").value;
       if(!start || !end) return true;
@@ -1781,25 +1971,44 @@
       return days.every(day=>unit.schedules.some(s=>s.days.includes(day) && sm>=minutes(s.start) && em<=minutes(s.end)));
     }
 
-    function renderFixedUnits(){
-      const list=fixedUnits.filter(unitMatches);
-      if(!list.some(x=>`${x.area}｜${x.name}`===selectedFixedUnit)) selectedFixedUnit="";
+    function fixedUnitCard(unit){
+      const key=`${unit.area}｜${unit.name}`;
+      const schedules=unit.schedules.map(s=>s.label).join("；");
+      return `<button type="button" class="unit-card ${key===selectedFixedUnit?"active":""}" data-key="${key}">
+        <strong>${unit.area}｜${unit.name}</strong>
+        <small>${schedules}</small>
+      </button>`;
+    }
 
-      $("fixedUnitList").innerHTML=list.length?list.map(unit=>{
-        const key=`${unit.area}｜${unit.name}`;
-        const schedules=unit.schedules.map(s=>s.label).join("；");
-        return `<button type="button" class="unit-card ${key===selectedFixedUnit?"active":""}" data-key="${key}">
-          <strong>${unit.area}｜${unit.name}</strong>
-          <small>${schedules}</small>
-        </button>`;
-      }).join(""):`<div class="notice">目前沒有符合所選區域、星期及時間的定點臨托單位。</div>`;
-
-      $("fixedUnitList").querySelectorAll(".unit-card").forEach(btn=>{
+    function bindFixedUnitCards(root){
+      root.querySelectorAll(".unit-card").forEach(btn=>{
         btn.addEventListener("click",()=>{
           selectedFixedUnit=btn.dataset.key;
           renderFixedUnits();
         });
       });
+    }
+
+    function renderFixedUnits(){
+      const list=fixedUnits.filter(unitMatches);
+      if(!list.some(x=>`${x.area}｜${x.name}`===selectedFixedUnit)) selectedFixedUnit="";
+
+      const serviceUnits=list.filter(unit=>fixedServiceAreas.has(unit.area));
+      const otherUnits=list.filter(unit=>!fixedServiceAreas.has(unit.area));
+
+      $("fixedUnitList").innerHTML=serviceUnits.length
+        ? serviceUnits.map(fixedUnitCard).join("")
+        : `<div class="notice">目前沒有符合服務星期與時間的本中心服務區域單位。</div>`;
+
+      $("otherFixedUnitList").innerHTML=otherUnits.length
+        ? otherUnits.map(fixedUnitCard).join("")
+        : `<div class="notice">目前沒有符合服務星期與時間的其他區域單位。</div>`;
+
+      $("otherFixedUnitCount").textContent=`${otherUnits.length}個`;
+      $("otherFixedUnitsDetails").hidden=otherUnits.length===0;
+
+      bindFixedUnitCards($("fixedUnitList"));
+      bindFixedUnitCards($("otherFixedUnitList"));
     }
 
     function updateLocationVisibility(){
@@ -1814,9 +2023,6 @@
 
     document.querySelectorAll("#serviceTypes .choice").forEach(btn=>btn.addEventListener("click",updateLocationVisibility));
     ["matchStartTime","matchEndTime"].forEach(id=>$(id).addEventListener("change",renderFixedUnits));
-    document.querySelectorAll("#fixedAreaChoices .choice").forEach(btn=>{
-      btn.addEventListener("click",renderFixedUnits);
-    });
     document.querySelectorAll("#weekdayGrid .weekday").forEach(btn=>{
       btn.addEventListener("click",()=>{
         weekdayAutoApplied=false;
@@ -1888,7 +2094,23 @@
       const modes=selectedValues("#serviceModes");
       const startDate=$("matchStartDate").value;
       const endDate=$("matchEndDate").value;
-      const weekdays=formatWeekdaySelection();
+
+      const startDateObj=parseFlexibleDate(startDate);
+      const endDateObj=parseFlexibleDate(endDate);
+      const isSingleDay=
+        startDateObj &&
+        endDateObj &&
+        sameDay(startDateObj,endDateObj);
+
+      const isSingleDayFixedCare=
+        types.includes("定點臨托") &&
+        isSingleDay;
+
+      // 定點臨托且只有一天時，顯示「週三」而不是「每週三」。
+      const weekdays=isSingleDayFixedCare
+        ? `週${weekdayText(startDate)}`
+        : formatWeekdaySelection();
+
       const startTime=$("matchStartTime").value;
       const endTime=$("matchEndTime").value;
       const timeNote=$("matchTimeNote").value.trim();
@@ -1900,7 +2122,10 @@
       if(types.length) lines.push(`服務類型：${types.join("、")}`);
       if(modes.length) lines.push(`服務型態：${modes.join("、")}`);
 
-      if(startDate && endDate) lines.push(`服務期間：${formatRocDate(startDate)}至${formatRocDate(endDate)}`);
+      if(startDate && endDate){
+        if(isSingleDay) lines.push(`服務期間：${formatRocDate(startDate)}`);
+        else lines.push(`服務期間：${formatRocDate(startDate)}至${formatRocDate(endDate)}`);
+      }
       else if(startDate) lines.push(`服務期間：自${formatRocDate(startDate)}起，常態性收托`);
       else if(!endDate) lines.push("服務期間：常態性收托");
 
@@ -1919,7 +2144,10 @@
 
       lines.push("");
       if(types.includes("定點臨托")) {
-        lines.push("定點臨托提醒：請確認已完成托育人員責任保險投保，並依規定與家長簽訂臨時托育契約、確認收托時間及費用，服務結束後完成相關托育紀錄。");
+        lines.push("提醒：");
+        lines.push("1.請確認已完成「托育人員責任保險」投保。");
+        lines.push("2.中心僅協助媒合托育人員，後續相關問題請洽「定點臨托單位」。");
+        lines.push("3.建議當天出門前，先向「定點臨托單位」確定家長無取消服務。");
         lines.push("");
       }
       lines.push("如有意願承接，請與中心聯繫，謝謝。");
@@ -1938,6 +2166,7 @@
       $("matchStartTime").value="07:00";
       $("matchEndTime").value="18:00";
       selectedFixedUnit="";
+      $("otherFixedUnitsDetails").open=false;
       weekdayAutoApplied=false;
       selectedChildGender="";
       document.querySelectorAll("#childGender .gender-choice").forEach(x=>{
@@ -2140,10 +2369,14 @@
 
       lines.push("⏰ 時間：");
       if(trainingMode==="full"){
-        lines.push("　 08：00～17：00");
+        lines.push("　 08：00～17：00（基本救命術／第六類）");
+        lines.push("");
+        lines.push("👕 穿著建議：全天課程為基本救命術實作，請穿著輕便、方便活動的服裝及長褲，並避免裙裝、高跟鞋或不便活動的服飾。");
       }else{
-        lines.push(`　 上午 ${$("morningTime").value}`);
-        lines.push(`　 下午 ${$("afternoonTime").value}`);
+        const morningCategory=$("morningCategory").value;
+        const afternoonCategory=$("afternoonCategory").value;
+        lines.push(`　 上午 ${$("morningTime").value}${morningCategory ? `（${morningCategory}）` : ""}`);
+        lines.push(`　 下午 ${$("afternoonTime").value}${afternoonCategory ? `（${afternoonCategory}）` : ""}`);
       }
       lines.push("");
 
@@ -2188,6 +2421,8 @@
       $("trainingResult").value="";
       $("morningTime").value="09：00～12：00";
       $("afternoonTime").value="13：00～16：00";
+      $("morningCategory").value="";
+      $("afternoonCategory").value="";
       $("waterClassroomBox").hidden=true;
       $("fullDayTime").hidden=false;
       $("splitTimeBox").hidden=true;
