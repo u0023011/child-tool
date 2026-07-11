@@ -237,7 +237,7 @@
       gap:9px;
     }
 
-    .toggle,.choice,.weekday,.age-toggle{
+    .toggle,.choice,.weekday,.age-toggle,.gender-choice{
       appearance:none;
       border:1.5px solid #c9ad85;
       border-radius:12px;
@@ -248,12 +248,12 @@
       transition:.16s;
     }
 
-    .toggle:hover,.choice:hover,.weekday:hover,.age-toggle:hover{
+    .toggle:hover,.choice:hover,.weekday:hover,.age-toggle:hover,.gender-choice:hover{
       border-color:#8b6439;
       background:#fff7ea;
     }
 
-    .toggle.active,.choice.active,.weekday.active,.age-toggle.active{
+    .toggle.active,.choice.active,.weekday.active,.age-toggle.active,.gender-choice.active{
       border-color:var(--ok);
       background:var(--ok-soft);
       color:#52632f;
@@ -261,7 +261,7 @@
       box-shadow:inset 0 0 0 1px rgba(82,99,47,.16);
     }
 
-    .toggle.active::before,.choice.active::before,.weekday.active::before,.age-toggle.active::before{
+    .toggle.active::before,.choice.active::before,.weekday.active::before,.age-toggle.active::before,.gender-choice.active::before{
       content:"✓ ";
       font-weight:900;
     }
@@ -935,6 +935,7 @@
         </div>
 
         <div class="section-label">服務星期</div>
+        <div class="hint" style="margin:-3px 0 9px">開始與結束日期在 7 日內時，會自動選取期間涵蓋的星期；仍可手動調整。</div>
         <div class="weekday-grid" id="weekdayGrid">
           <button type="button" class="weekday" data-day="0">週日</button>
           <button type="button" class="weekday active" data-day="1">週一</button>
@@ -1074,14 +1075,13 @@
         </div>
 
         <div class="location-box" id="fixedLocationBox" hidden>
-          <div class="section-label" style="margin-top:0">定點臨托單位</div>
-          <div class="fixed-filter">
-            <div>
-              <label class="field-label" for="fixedAreaFilter">區域篩選</label>
-              <select id="fixedAreaFilter"><option value="">全部區域</option></select>
-            </div>
-            <div class="hint" id="fixedFilterHint">填寫服務時間後，系統會依星期與時段篩選可選單位。</div>
+          <div class="section-label" style="margin-top:0">定點臨托區域</div>
+          <div class="choice-grid" id="fixedAreaChoices"></div>
+          <div class="hint" id="fixedFilterHint" style="margin-top:10px">
+            可複選區域；未選區域時顯示全部。系統也會依服務星期與時間篩選可選單位。
           </div>
+
+          <div class="section-label">符合的定點臨托單位</div>
           <div class="unit-list" id="fixedUnitList"></div>
         </div>
 
@@ -1090,7 +1090,7 @@
 
       <section class="card">
         <h3 class="card-title"><span class="badge">5</span>幼兒年齡</h3>
-        <div class="grid-2">
+        <div class="grid-3">
           <div>
             <label class="field-label" for="childBirthday">出生日期</label>
             <div class="roc-date-wrap">
@@ -1099,10 +1099,19 @@
             </div>
             <div class="age-result" id="calculatedAge">尚未計算年齡</div>
           </div>
+
           <div>
             <label class="field-label" for="childAgeText">直接輸入年齡</label>
             <input id="childAgeText" type="text">
             <div class="hint">直接輸入的文字會優先使用。</div>
+          </div>
+
+          <div>
+            <label class="field-label">幼兒性別</label>
+            <div class="single-choice-grid" id="childGender">
+              <button type="button" class="gender-choice" data-value="男">男</button>
+              <button type="button" class="gender-choice" data-value="女">女</button>
+            </div>
           </div>
         </div>
       </section>
@@ -1133,7 +1142,7 @@
         <div id="waterClassroomBox" class="location-box" hidden>
           <div class="section-label" style="margin-top:0">教室選擇</div>
           <div class="single-choice-grid" id="waterClassrooms">
-            <button type="button" class="choice" data-value="小教室（教室303）">小教室</button>
+            <button type="button" class="choice" data-value="教室303">教室303</button>
             <button type="button" class="choice" data-value="國際會議廳">國際會議廳</button>
           </div>
         </div>
@@ -1681,8 +1690,12 @@
       {area:"北區",name:"北區親子悠遊館",schedules:[{days:[2,3,4,5,6],start:"17:00",end:"20:30",label:"週二至週六 17:00～20:30"}]}
     ];
 
-    const areas=[...new Set(fixedUnits.map(x=>x.area))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
-    $("fixedAreaFilter").innerHTML += areas.map(x=>`<option value="${x}">${x}</option>`).join("");
+    const areas=[...new Set(fixedUnits.map(x=>x.area))];
+    $("fixedAreaChoices").innerHTML=areas.map(area=>{
+      const shortName=area.endsWith("區") ? area.slice(0,-1) : area;
+      return `<button type="button" class="choice" data-value="${area}">${shortName}</button>`;
+    }).join("");
+    bindMultiButtons($("fixedAreaChoices"));
 
     let selectedFixedUnit="";
 
@@ -1696,9 +1709,60 @@
       return [...document.querySelectorAll("#weekdayGrid .weekday.active")].map(x=>Number(x.dataset.day));
     }
 
+    let weekdayAutoApplied=false;
+
+    function setSelectedWeekdays(days){
+      const selected=new Set(days);
+      document.querySelectorAll("#weekdayGrid .weekday").forEach(btn=>{
+        btn.classList.toggle("active",selected.has(Number(btn.dataset.day)));
+        btn.setAttribute("aria-pressed",String(selected.has(Number(btn.dataset.day))));
+      });
+    }
+
+    function autoSelectWeekdaysForShortRange(){
+      const start=parseFlexibleDate($("matchStartDate").value);
+      const end=parseFlexibleDate($("matchEndDate").value);
+
+      if(!start || !end || end<start){
+        if(weekdayAutoApplied){
+          setSelectedWeekdays([1,2,3,4,5]);
+          weekdayAutoApplied=false;
+          renderFixedUnits();
+        }
+        return;
+      }
+
+      const oneDay=24*60*60*1000;
+      const diffDays=Math.round((end-start)/oneDay);
+
+      // 同一天為 0；相隔 6 天代表含首尾共 7 天
+      if(diffDays>=0 && diffDays<=6){
+        const days=[];
+        for(let i=0;i<=diffDays;i++){
+          const d=new Date(start);
+          d.setDate(start.getDate()+i);
+          if(!days.includes(d.getDay())) days.push(d.getDay());
+        }
+
+        setSelectedWeekdays(days);
+        weekdayAutoApplied=true;
+        renderFixedUnits();
+      }else if(weekdayAutoApplied){
+        // 日期改為超過一週時，恢復原本預設的週一至週五
+        setSelectedWeekdays([1,2,3,4,5]);
+        weekdayAutoApplied=false;
+        renderFixedUnits();
+      }
+    }
+
+    function selectedFixedAreas(){
+      return [...document.querySelectorAll("#fixedAreaChoices .choice.active")]
+        .map(btn=>btn.dataset.value);
+    }
+
     function unitMatches(unit){
-      const area=$("fixedAreaFilter").value;
-      if(area && unit.area!==area) return false;
+      const selectedAreas=selectedFixedAreas();
+      if(selectedAreas.length && !selectedAreas.includes(unit.area)) return false;
 
       const start=$("matchStartTime").value;
       const end=$("matchEndTime").value;
@@ -1743,8 +1807,21 @@
     }
 
     document.querySelectorAll("#serviceTypes .choice").forEach(btn=>btn.addEventListener("click",updateLocationVisibility));
-    ["matchStartTime","matchEndTime","fixedAreaFilter"].forEach(id=>$(id).addEventListener("change",renderFixedUnits));
-    document.querySelectorAll("#weekdayGrid .weekday").forEach(btn=>btn.addEventListener("click",renderFixedUnits));
+    ["matchStartTime","matchEndTime"].forEach(id=>$(id).addEventListener("change",renderFixedUnits));
+    document.querySelectorAll("#fixedAreaChoices .choice").forEach(btn=>{
+      btn.addEventListener("click",renderFixedUnits);
+    });
+    document.querySelectorAll("#weekdayGrid .weekday").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        weekdayAutoApplied=false;
+        renderFixedUnits();
+      });
+    });
+
+    ["matchStartDate","matchEndDate"].forEach(id=>{
+      $(id).addEventListener("change",autoSelectWeekdaysForShortRange);
+      $(id).addEventListener("blur",autoSelectWeekdaysForShortRange);
+    });
 
     function formatWeekdaySelection(){
       const days=selectedWeekdays().sort((a,b)=>a-b);
@@ -1780,6 +1857,26 @@
     }
     ["childBirthday","matchStartDate"].forEach(id=>$(id).addEventListener("change",calculateAge));
 
+    let selectedChildGender="";
+
+    document.querySelectorAll("#childGender .gender-choice").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const wasSelected=btn.classList.contains("active");
+        document.querySelectorAll("#childGender .gender-choice").forEach(x=>{
+          x.classList.remove("active");
+          x.setAttribute("aria-pressed","false");
+        });
+
+        if(!wasSelected){
+          btn.classList.add("active");
+          btn.setAttribute("aria-pressed","true");
+          selectedChildGender=btn.dataset.value;
+        }else{
+          selectedChildGender="";
+        }
+      });
+    });
+
     function generateMatching(){
       const types=selectedValues("#serviceTypes");
       const modes=selectedValues("#serviceModes");
@@ -1812,6 +1909,7 @@
       }
       if(selectedFixedUnit && types.includes("定點臨托")) lines.push(`定點單位：${selectedFixedUnit}`);
       if(ageText) lines.push(`幼兒年齡：${ageText}`);
+      if(selectedChildGender) lines.push(`幼兒性別：${selectedChildGender}`);
 
       lines.push("");
       if(types.includes("定點臨托")) {
@@ -1833,8 +1931,13 @@
       ["matchStartDate","matchEndDate","matchTimeNote","otherRegion","childBirthday","childAgeText","matchingResult"].forEach(id=>$(id).value="");
       $("matchStartTime").value="07:00";
       $("matchEndTime").value="18:00";
-      $("fixedAreaFilter").value="";
       selectedFixedUnit="";
+      weekdayAutoApplied=false;
+      selectedChildGender="";
+      document.querySelectorAll("#childGender .gender-choice").forEach(x=>{
+        x.classList.remove("active");
+        x.setAttribute("aria-pressed","false");
+      });
       $("calculatedAge").textContent="尚未計算年齡";
       updateLocationVisibility();
       renderFixedUnits();
@@ -1932,11 +2035,11 @@
         const data=venueData.water;
         const images=[];
 
-        if(selectedClassroom==="小教室（教室303）"){
+        if(selectedClassroom==="教室303"){
           images.push({
             src:data.smallImage,
-            name:"新營自來水_小教室路線圖.jpg",
-            caption:"小教室（教室303）路線圖"
+            name:"新營自來水_教室303路線圖.jpg",
+            caption:"教室303路線圖"
           });
         }
 
@@ -1975,7 +2078,7 @@
       }
 
       if(selectedVenue==="water" && !selectedClassroom){
-        $("venuePreview").innerHTML='<div class="notice">請先選擇小教室或國際會議廳；選擇後會一併顯示停車場位置圖。</div>';
+        $("venuePreview").innerHTML='<div class="notice">請先選擇教室303或國際會議廳；選擇後會一併顯示停車場位置圖。</div>';
         $("venueImageActions").hidden=true;
         $("venueImageActions").innerHTML="";
         currentVenueImage="";
