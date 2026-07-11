@@ -791,6 +791,21 @@
     }
   </style>
 
+
+  <script>
+    (function () {
+      if (location.protocol === "file:") return;
+
+      const role = sessionStorage.getItem("toolRole");
+
+      // 第四工具僅限管理者；直接輸入網址或未登入時回到首頁。
+      // 僅重新導向目前頁面，不操作 window.top，避免影響首頁及其他工具。
+      if (role !== "admin") {
+        location.replace("../");
+      }
+    })();
+  </script>
+
 </head>
 
 <body>
