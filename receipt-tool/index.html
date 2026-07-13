@@ -1771,18 +1771,18 @@
       <section class="card">
         <h3 class="card-title"><span class="badge">3</span>上課時段</h3>
         <div class="single-choice-grid" id="trainingMode">
-          <button type="button" class="choice active" data-value="full">整天</button>
-          <button type="button" class="choice" data-value="split">上、下午</button>
+          <button type="button" class="choice" data-value="full">整天</button>
+          <button type="button" class="choice active" data-value="split">上、下午</button>
         </div>
 
-        <div id="fullDayTime" class="notice">
+        <div id="fullDayTime" class="notice" hidden>
           整天時間：08：00～17：00　｜　課程：基本救命術　｜　類別：第六類
           <div class="hint" style="margin-top:8px">
             穿著建議：請穿著輕便、方便活動的服裝及長褲，以利實作練習。
           </div>
         </div>
 
-        <div id="splitTimeBox" class="grid-2" style="margin-top:14px" hidden>
+        <div id="splitTimeBox" class="grid-2" style="margin-top:14px">
           <div class="session-setting">
             <div class="time-category-grid">
               <div>
@@ -2896,7 +2896,7 @@
 
     let selectedVenue="";
     let selectedClassroom="";
-    let trainingMode="full";
+    let trainingMode="split";
     let currentVenueImage="";
 
     document.querySelectorAll(".venue-card").forEach(btn=>{
@@ -3905,10 +3905,12 @@
     $("trainingReset").addEventListener("click",()=>{
       selectedVenue="";
       selectedClassroom="";
-      trainingMode="full";
+      trainingMode="split";
       currentVenueImage="";
       document.querySelectorAll("#section-training .active").forEach(x=>x.classList.remove("active"));
-      document.querySelector('#trainingMode [data-value="full"]').classList.add("active");
+      document.querySelector('#trainingMode [data-value="split"]').classList.add("active");
+      $("fullDayTime").hidden=true;
+      $("splitTimeBox").hidden=false;
       setDefaultTrainingDate();
       $("trainingExtra").value="";
       $("trainingResult").value="";
