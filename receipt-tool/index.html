@@ -752,6 +752,18 @@
       border-radius:10px;
     }
 
+
+    .matching-child-reminder{
+      margin-top:14px;
+    }
+
+    .matching-child-reminder textarea{
+      width:100%;
+      min-height:92px;
+      resize:vertical;
+      background:#fff;
+    }
+
     .matching-child-actions{
       margin-top:14px;
     }
@@ -1109,6 +1121,55 @@
     }
   </style>
 
+<style>
+    .roc-year-grid{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      grid-auto-rows:52px;
+      gap:8px;
+    }
+
+    .roc-year-btn{
+      width:100%;
+      height:52px;
+      min-height:52px;
+      padding:6px 4px;
+      white-space:nowrap;
+      line-height:1;
+      font-size:14px;
+    }
+
+    @media(max-width:430px){
+      .roc-year-grid{
+        gap:7px;
+      }
+
+      .roc-year-btn{
+        height:50px;
+        min-height:50px;
+        padding:5px 2px;
+        font-size:13px;
+      }
+    }
+</style>
+<style>
+    /* 收件紀錄各步驟卡片保持清楚間距 */
+    #section-receipt > .card,
+    #section-receipt > details.card{
+      margin-top:18px;
+    }
+
+    #section-receipt > .card:first-child,
+    #section-receipt > details.card:first-child{
+      margin-top:0;
+    }
+
+    @media(max-width:650px){
+      #section-receipt > .card,
+      #section-receipt > details.card{
+        margin-top:14px;
+      }
+    }
+</style>
 </head>
 
 <body>
@@ -1183,7 +1244,7 @@
           <h3 class="card-title"><span class="badge">3</span>產出訊息</h3>
           <div class="opening-inline">
             <label for="opening">訊息開頭</label>
-            <input id="opening" type="text" value="您好，今日已收到：">
+            <input id="opening" type="text" value="您好，今日已收到">
           </div>
         </div>
         <textarea id="receiptResult"></textarea>
@@ -1381,12 +1442,10 @@
         </div>
 
         <div class="location-box" id="fixedLocationBox" hidden>
-          <div class="section-label" style="margin-top:0">定點臨托單位</div>
+          <div class="section-label">定點臨托單位－本中心服務區域</div>
           <div class="hint" id="fixedFilterHint">
             系統會依服務星期與時間，列出可選擇的定點臨托單位。
           </div>
-
-          <div class="section-label">本中心服務區域</div>
           <div class="unit-list" id="fixedUnitList"></div>
 
           <details class="fixed-other-details" id="otherFixedUnitsDetails">
@@ -2266,6 +2325,11 @@
               <button type="button" class="gender-choice" data-value="女">女</button>
             </div>
           </div>
+        </div>
+
+        <div class="matching-child-reminder">
+          <label class="field-label">特殊提醒</label>
+          <textarea class="matching-child-reminder-text" rows="3" placeholder="請輸入需要提醒托育人員的事項"></textarea>
         </div>`;
 
       const birthdayInput=card.querySelector(".matching-child-birthday");
@@ -2323,10 +2387,11 @@
           const age=directAge || calculatedAge;
           const selectedGender=card.querySelector(".matching-child-gender .gender-choice.active");
           const gender=selectedGender ? selectedGender.dataset.value : "";
+          const reminder=card.querySelector(".matching-child-reminder-text").value.trim();
 
-          return {age,gender};
+          return {age,gender,reminder};
         })
-        .filter(child=>child.age || child.gender);
+        .filter(child=>child.age || child.gender || child.reminder);
     }
 
     addMatchingChild();
@@ -2403,10 +2468,12 @@
       if(children.length===1){
         if(children[0].age) lines.push(`幼兒年齡：${children[0].age}`);
         if(children[0].gender) lines.push(`幼兒性別：${children[0].gender}`);
+        if(children[0].reminder) lines.push(`特殊提醒：${children[0].reminder}`);
       }else if(children.length>1){
         children.forEach((child,index)=>{
           const details=[child.age,child.gender].filter(Boolean).join("／");
-          lines.push(`幼兒${index+1}：${details}`);
+          lines.push(`幼兒${index+1}：${details || "未填年齡及性別"}`);
+          if(child.reminder) lines.push(`幼兒${index+1}特殊提醒：${child.reminder}`);
         });
       }
 
