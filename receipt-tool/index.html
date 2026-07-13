@@ -1176,11 +1176,88 @@
       line-height:1.8;
     }
 
-    .excel-paste-box{
-      min-height:170px;
-      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
-      white-space:pre;
+    #section-training > #trainingRosterDetails{
+      margin-top:18px;
+    }
+
+    .excel-grid-paste{
+      width:100%;
+      min-height:220px;
+      max-height:430px;
       overflow:auto;
+      border:1.5px solid #d4b687;
+      border-radius:14px;
+      background:#fff;
+      outline:none;
+      box-shadow:inset 0 0 0 1px rgba(154,123,79,.04);
+    }
+
+    .excel-grid-paste:focus{
+      border-color:#9a7b4f;
+      box-shadow:0 0 0 4px rgba(154,123,79,.12);
+    }
+
+    .excel-grid-table{
+      width:100%;
+      min-width:780px;
+      border-collapse:collapse;
+      table-layout:fixed;
+      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+    }
+
+    .excel-grid-table th,
+    .excel-grid-table td{
+      height:46px;
+      padding:8px 10px;
+      border-right:1px solid #ddc9aa;
+      border-bottom:1px solid #ddc9aa;
+      text-align:center;
+      vertical-align:middle;
+      color:#463321;
+      background:#fff;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .excel-grid-table th{
+      position:sticky;
+      top:0;
+      z-index:2;
+      background:#f4e8d5;
+      color:#5b3c20;
+      font-weight:900;
+    }
+
+    .excel-grid-table td[contenteditable="true"],
+    .excel-grid-table th[contenteditable="true"]{
+      cursor:text;
+    }
+
+    .excel-grid-table td[contenteditable="true"]:focus,
+    .excel-grid-table th[contenteditable="true"]:focus{
+      outline:2px solid #9a7b4f;
+      outline-offset:-2px;
+      background:#fffaf0;
+    }
+
+    .excel-grid-table th:last-child,
+    .excel-grid-table td:last-child{
+      border-right:0;
+    }
+
+    .excel-grid-hint{
+      margin-top:8px;
+    }
+
+    @media(max-width:650px){
+      #section-training > #trainingRosterDetails{
+        margin-top:14px;
+      }
+
+      .excel-grid-paste{
+        min-height:190px;
+      }
     }
 
     .roster-status{
@@ -1269,7 +1346,6 @@
     }
 
     .roster-table td:nth-child(2){
-      text-align:left;
       font-weight:800;
     }
 
@@ -1758,12 +1834,15 @@
         <div class="collapse-content">
           <div class="hint roster-intro">
             從 Excel 複製包含「編號、姓名、身分證、性別、協力圈、區域、上午、下午」的表格後，直接貼在下方。
-            系統會自動辨識標題、將 A 與 A組視為同一組，上午／下午只有 V 才判定為有上課。
           </div>
 
-          <label class="field-label" for="trainingExcelPaste">貼上 Excel 資料</label>
-          <textarea id="trainingExcelPaste" class="excel-paste-box" spellcheck="false"
-            placeholder="請直接貼上從 Excel 複製的多欄資料"></textarea>
+          <label class="field-label">貼上 Excel 資料</label>
+          <div class="excel-grid-paste" id="trainingExcelGridPaste" tabindex="0"
+               aria-label="Excel 名單貼上表格">
+            <table class="excel-grid-table" id="trainingExcelGridTable"></table>
+          </div>
+          <div class="hint excel-grid-hint">點一下表格後直接貼上；貼上後仍可點選儲存格修改內容。</div>
+          <textarea id="trainingExcelPaste" hidden></textarea>
 
           <div class="actions">
             <button type="button" class="action primary" id="trainingRosterParse">解析名單</button>
@@ -2928,6 +3007,116 @@
       return "";
     }
 
+    const trainingExcelDefaultHeaders=[
+      "編號","姓名","身分證","性別","協力圈","區域","上午","下午"
+    ];
+
+    function trimTrainingExcelRows(rows){
+      const cloned=rows.map(row=>row.map(cell=>String(cell??"")));
+
+      while(cloned.length>1 && cloned[cloned.length-1].every(cell=>cell.trim()==="")){
+        cloned.pop();
+      }
+
+      let maxColumns=0;
+      cloned.forEach(row=>{
+        let lastNonEmpty=-1;
+        row.forEach((cell,index)=>{
+          if(String(cell).trim()!=="") lastNonEmpty=index;
+        });
+        maxColumns=Math.max(maxColumns,lastNonEmpty+1);
+      });
+
+      maxColumns=Math.max(maxColumns,trainingExcelDefaultHeaders.length);
+
+      return cloned.map(row=>{
+        const output=[];
+        for(let index=0;index<maxColumns;index++){
+          output.push(String(row[index]??""));
+        }
+        return output;
+      });
+    }
+
+    function renderTrainingExcelPasteGrid(rows){
+      const table=$("trainingExcelGridTable");
+      const hasRows=Array.isArray(rows) && rows.length>0;
+
+      let displayRows=hasRows
+        ? trimTrainingExcelRows(rows)
+        : [
+            [...trainingExcelDefaultHeaders],
+            Array(trainingExcelDefaultHeaders.length).fill(""),
+            Array(trainingExcelDefaultHeaders.length).fill(""),
+            Array(trainingExcelDefaultHeaders.length).fill(""),
+            Array(trainingExcelDefaultHeaders.length).fill("")
+          ];
+
+      const columnCount=Math.max(
+        trainingExcelDefaultHeaders.length,
+        ...displayRows.map(row=>row.length)
+      );
+
+      displayRows=displayRows.map(row=>{
+        const padded=[...row];
+        while(padded.length<columnCount) padded.push("");
+        return padded;
+      });
+
+      const headerRow=displayRows[0];
+      const bodyRows=displayRows.slice(1);
+
+      table.innerHTML=`
+        <thead>
+          <tr>
+            ${headerRow.map(cell=>`
+              <th contenteditable="true" spellcheck="false">${escapeHtml(cell)}</th>
+            `).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows.map(row=>`
+            <tr>
+              ${row.map(cell=>`
+                <td contenteditable="true" spellcheck="false">${escapeHtml(cell)}</td>
+              `).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+
+      table.querySelectorAll('[contenteditable="true"]').forEach(cell=>{
+        cell.addEventListener("input",syncTrainingExcelGridToRaw);
+        cell.addEventListener("blur",syncTrainingExcelGridToRaw);
+      });
+
+      syncTrainingExcelGridToRaw();
+    }
+
+    function trainingExcelGridRows(){
+      const table=$("trainingExcelGridTable");
+      return [...table.querySelectorAll("tr")].map(row=>
+        [...row.children].map(cell=>cell.textContent.trim())
+      );
+    }
+
+    function syncTrainingExcelGridToRaw(){
+      const rows=trimTrainingExcelRows(trainingExcelGridRows());
+      $("trainingExcelPaste").value=rows.map(row=>row.join("\t")).join("\n");
+      clearGeneratedRosterImages();
+    }
+
+    function pasteIntoTrainingExcelGrid(event){
+      const clipboard=event.clipboardData || window.clipboardData;
+      const text=clipboard ? clipboard.getData("text/plain") : "";
+      if(!text.trim()) return;
+
+      event.preventDefault();
+      const rows=splitExcelRows(text);
+      renderTrainingExcelPasteGrid(rows);
+      setTimeout(parseTrainingRoster,40);
+    }
+
     function splitExcelRows(raw){
       return String(raw??"")
         .replace(/^\uFEFF/,"")
@@ -2986,6 +3175,7 @@
       trainingRosterGroups=[];
       trainingRosterGeneratedImages=[];
       $("trainingExcelPaste").value="";
+      renderTrainingExcelPasteGrid();
       $("trainingRosterStatus").hidden=true;
       $("trainingRosterStatus").classList.remove("error");
       $("trainingRosterStatus").innerHTML="";
@@ -2997,6 +3187,7 @@
     }
 
     function parseTrainingRoster(){
+      syncTrainingExcelGridToRaw();
       const raw=$("trainingExcelPaste").value;
       clearGeneratedRosterImages();
 
@@ -3251,6 +3442,15 @@
       return `民國${date.getFullYear()-1911}年${pad2(date.getMonth()+1)}月${pad2(date.getDate())}日（${weekdayText(value)}）`;
     }
 
+    function maskRosterName(name){
+      const text=String(name??"").trim();
+      if(!text) return "";
+      const chars=[...text];
+      if(chars.length===1) return text;
+      if(chars.length===2) return `${chars[0]}○`;
+      return `${chars[0]}${"○".repeat(chars.length-2)}${chars[chars.length-1]}`;
+    }
+
     function drawTrainingRosterCanvas(groupData){
       const width=1200;
       const rowHeight=72;
@@ -3289,7 +3489,6 @@
       const dateText=getTrainingRosterDateText() || "在職研習";
       const locationText=getTrainingRosterLocationText() || "尚未選擇場地";
       const courseLines=getTrainingRosterCourseLines();
-      const areas=[...new Set(groupData.members.map(person=>person.area).filter(Boolean))];
 
       ctx.fillStyle=colors.dark;
       drawCanvasTextFit(ctx,dateText,width/2,70,width-130,34,"900","center");
@@ -3301,18 +3500,13 @@
       ctx.fillStyle=colors.dark;
       drawCanvasTextFit(ctx,`${groupData.group} 上課名單`,width/2,188,width-150,38,"900","center");
 
-      if(areas.length){
-        ctx.fillStyle=colors.muted;
-        drawCanvasTextFit(ctx,`區域：${areas.join("、")}`,width/2,228,width-160,24,"700","center");
-      }
-
       courseLines.forEach((line,index)=>{
         ctx.fillStyle=index===0 ? colors.dark : colors.muted;
         drawCanvasTextFit(
           ctx,
           line,
           width/2,
-          areas.length ? 270+(index*38) : 240+(index*38),
+          240+(index*38),
           width-160,
           26,
           index===0 ? "900" : "700",
@@ -3369,7 +3563,7 @@
 
         ctx.fillStyle=colors.dark;
         drawCanvasTextFit(ctx,person.number,145,y+(rowHeight/2),120,25,"700","center");
-        drawCanvasTextFit(ctx,person.name,250,y+(rowHeight/2),440,28,"800","left");
+        drawCanvasTextFit(ctx,maskRosterName(person.name),250,y+(rowHeight/2),440,28,"800","left");
 
         ctx.fillStyle=colors.greenDark;
         drawCanvasTextFit(ctx,person.morning ? "✓" : "",822,y+(rowHeight/2),150,32,"900","center");
@@ -3476,9 +3670,8 @@
     $("trainingRosterGenerateImages").addEventListener("click",generateTrainingRosterImages);
     $("trainingRosterDownloadAll").addEventListener("click",downloadAllTrainingRosterImages);
 
-    $("trainingExcelPaste").addEventListener("paste",()=>{
-      setTimeout(parseTrainingRoster,60);
-    });
+    $("trainingExcelGridPaste").addEventListener("paste",pasteIntoTrainingExcelGrid);
+    renderTrainingExcelPasteGrid();
 
 
     function generateTraining(){
