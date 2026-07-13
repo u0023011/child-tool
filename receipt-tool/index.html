@@ -259,16 +259,20 @@
 
     .collapse-arrow{
       display:inline-block;
-      transition:transform .18s ease;
-      font-size:17px;
+      font-size:13px;
+      line-height:1;
+    }
+
+    .collapse-arrow::before{
+      content:"▼";
     }
 
     .collapsible-card[open] .collapse-status::before{
       content:"點擊收合";
     }
 
-    .collapsible-card[open] .collapse-arrow{
-      transform:rotate(180deg);
+    .collapsible-card[open] .collapse-arrow::before{
+      content:"▲";
     }
 
     .collapse-content{
@@ -1463,7 +1467,7 @@
       <details class="card collapsible-card" id="registrationDetails">
         <summary class="collapse-summary">
           <h3 class="card-title"><span class="badge">1</span>登記資料</h3>
-          <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+          <span class="collapse-status"><span class="collapse-arrow"></span></span>
         </summary>
 
         <div class="collapse-content">
@@ -1869,7 +1873,7 @@
       <details class="card collapsible-card" id="trainingRosterDetails">
         <summary class="collapse-summary">
           <h3 class="card-title"><span class="badge">5</span>Excel 名單匯入（選填）</h3>
-          <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+          <span class="collapse-status"><span class="collapse-arrow"></span></span>
         </summary>
 
         <div class="collapse-content">
@@ -1894,7 +1898,7 @@
           <details class="card collapsible-card roster-preview-wrap" id="trainingRosterPreviewDetails" hidden>
             <summary class="collapse-summary">
               <h4 class="card-title"><span class="badge">預</span>解析後資料</h4>
-              <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+              <span class="collapse-status"><span class="collapse-arrow"></span></span>
             </summary>
             <div class="collapse-content">
               <div id="trainingRosterPreview" class="roster-preview"></div>
@@ -1902,14 +1906,13 @@
           </details>
 
           <div class="actions" id="trainingRosterImageActions" hidden>
-            <button type="button" class="action primary wide" id="trainingRosterGenerateImages">產生協力圈圖片</button>
             <button type="button" class="action secondary" id="trainingRosterDownloadAll" hidden>下載全部圖片</button>
           </div>
 
           <details class="card collapsible-card roster-preview-wrap" id="trainingRosterImagesDetails" hidden>
             <summary class="collapse-summary">
               <h4 class="card-title"><span class="badge">圖</span>協力圈圖片</h4>
-              <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+              <span class="collapse-status"><span class="collapse-arrow"></span></span>
             </summary>
             <div class="collapse-content">
               <div id="trainingRosterImages" class="roster-images"></div>
@@ -2901,6 +2904,7 @@
         $("waterClassroomBox").hidden=selectedVenue!=="water";
         document.querySelectorAll("#waterClassrooms .choice").forEach(x=>x.classList.remove("active"));
         renderVenuePreview();
+        scheduleTrainingRosterImageRefresh();
       });
     });
 
@@ -2910,6 +2914,7 @@
         btn.classList.add("active");
         selectedClassroom=btn.dataset.value;
         renderVenuePreview();
+        scheduleTrainingRosterImageRefresh();
       });
     });
 
@@ -2920,6 +2925,7 @@
         trainingMode=btn.dataset.value;
         $("fullDayTime").hidden=trainingMode!=="full";
         $("splitTimeBox").hidden=trainingMode!=="split";
+        scheduleTrainingRosterImageRefresh();
       });
     });
 
@@ -3226,6 +3232,7 @@
       $("trainingRosterImages").innerHTML="";
       $("trainingRosterImagesDetails").hidden=true;
       $("trainingRosterImagesDetails").open=false;
+      $("trainingRosterImageActions").hidden=true;
       $("trainingRosterDownloadAll").hidden=true;
     }
 
@@ -3396,7 +3403,7 @@
         mapping
       );
 
-      $("trainingRosterImageActions").hidden=false;
+      $("trainingRosterImageActions").hidden=true;
 
       if(canGenerateTrainingRosterImages()){
         generateTrainingRosterImages(true);
@@ -3699,10 +3706,12 @@
         });
       });
 
+      const hasImages=trainingRosterGeneratedImages.length>0;
       const imageDetails=$("trainingRosterImagesDetails");
-      imageDetails.hidden=!trainingRosterGeneratedImages.length;
+      imageDetails.hidden=!hasImages;
       imageDetails.open=false;
-      $("trainingRosterDownloadAll").hidden=!trainingRosterGeneratedImages.length;
+      $("trainingRosterImageActions").hidden=!hasImages;
+      $("trainingRosterDownloadAll").hidden=!hasImages;
     }
 
     function generateTrainingRosterImages(fromAuto=false){
@@ -3793,6 +3802,10 @@
       },250);
     }
 
+
+    $("trainingDate").addEventListener("change",scheduleTrainingRosterImageRefresh);
+    $("trainingDate").addEventListener("input",scheduleTrainingRosterImageRefresh);
+
     ["morningTime","afternoonTime","morningCategory","afternoonCategory","morningCourse","afternoonCourse"]
       .forEach(id=>{
         $(id).addEventListener("change",scheduleTrainingRosterImageRefresh);
@@ -3801,7 +3814,6 @@
 
     $("trainingRosterParse").addEventListener("click",parseTrainingRoster);
     $("trainingRosterClear").addEventListener("click",clearTrainingRoster);
-    $("trainingRosterGenerateImages").addEventListener("click",generateTrainingRosterImages);
     $("trainingRosterDownloadAll").addEventListener("click",downloadAllTrainingRosterImages);
 
     $("trainingExcelGridPaste").addEventListener("paste",pasteIntoTrainingExcelGrid);
