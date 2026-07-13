@@ -340,7 +340,26 @@ function setStep(n){
  },80);
 }
 function renderCats(){let a=qs("#cats");a.innerHTML="";categories.forEach(c=>{let l=document.createElement("label");l.className="card";l.innerHTML=`<input type="checkbox" class="cat" value="${c.id}" onchange="this.closest('.card').classList.toggle('selected',this.checked)"><div><div class="ct">${c.title}</div><div class="cs">${c.sub}</div></div>`;a.appendChild(l)})}
-function selectedCats(){return qsa(".cat:checked").map(i=>i.value)} function go1(){setStep(1)} function go2(){if(!selectedCats().length){alert("請至少選擇一項問題類型。");return}renderDetails();setStep(2)} function go3(){let r=getSelected(); if(!r.length){alert("請勾選至少一項細項，或在收托人數表填入超過規定的人數。");return}setStep(3);generate()}
+function selectedCats(){return qsa(".cat:checked").map(i=>i.value)}
+function go1(){setStep(1)}
+function go2(){
+ if(!selectedCats().length){alert("請至少選擇一項問題類型。");return}
+ renderDetails();
+ setStep(2);
+}
+function go3(){
+ let r=getSelected();
+ if(!r.length){
+  if(hasCountInput()){
+   alert("目前填寫的收托人數組合未超過第7條附表規定；如要查詢其他違規，請再勾選細項。");
+  }else{
+   alert("請勾選至少一項細項，或填寫不符合第7條附表規定的收托人數組合。");
+  }
+  return;
+ }
+ setStep(3);
+ generate();
+}
 
 function itemPriority(it){
  const text = ((it.title||"")+" "+(it.law||"")+" "+(it.summary||"")+" "+(it.effect||"")+" "+(it.penalty||"")+" "+(it.public||"")+" "+(it.revoke||"")+" "+(it.stop||"")+" "+(it.transfer||""));
@@ -378,14 +397,102 @@ function itemClassByPriority(it){
 }
 
 function renderDetails(){let cats=selectedCats(),kw="",area=qs("#details");area.innerHTML="";cats.forEach(cid=>{let c=categories.find(x=>x.id===cid);let block=document.createElement("div");block.className="block";block.innerHTML=`<h2>${c.title}</h2><div class="helper">${c.sub}</div>`;
-if(cid==="ratio"){block.innerHTML+=`<div class="count-box"><div class="count-title">收托人數填寫</div><div class="count-note">請填同一時段實際照顧人數。半日／日間／延長／臨時托育合計至多4人且未滿2歲至多2人；全日／夜間至多2人；達5人以上會補充兒托法第71條（尚未實施）。</div><table class="count-table"><thead><tr><th></th><th>未滿2歲</th><th>2歲以上</th></tr></thead><tbody>${["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"].map((n,i)=>`<tr><td>${n}</td><td><input type="number" min="0" class="count-input u2" data-row="${i}"></td><td><input type="number" min="0" class="count-input o2" data-row="${i}"></td></tr>`).join("")}</tbody></table></div>`}
+if(cid==="ratio"){block.innerHTML+=`<div class="count-box"><div class="count-title">收托人數填寫</div><div class="count-note">請填同一時段實際照顧人數。系統會將半日／日間／延長／臨時托育合併計算，並依管理辦法第7條附表，比對全日、夜間及其他托育方式的合法組合；達5人以上會補充兒托法第71條（尚未實施）。</div><table class="count-table"><thead><tr><th></th><th>未滿2歲</th><th>2歲以上</th></tr></thead><tbody>${["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"].map((n,i)=>`<tr><td>${n}</td><td><input type="number" min="0" step="1" class="count-input u2" data-row="${i}"></td><td><input type="number" min="0" step="1" class="count-input o2" data-row="${i}"></td></tr>`).join("")}</tbody></table></div>`}
 let fs=items.filter(it=>it.cat===cid && (!kw || (it.title+it.law+it.summary).includes(kw)));
 fs.sort((a,b)=>itemPriority(b)-itemPriority(a) || a.title.localeCompare(b.title,"zh-Hant"));
 block.innerHTML+=`<div class="priority-note">已優先排序：退準公／廢止登記／停止服務／罰鍰等高風險項目會排在前面並以顏色標示。</div>`;
 fs.forEach(it=>{let l=document.createElement("label");l.className=itemClassByPriority(it);l.innerHTML=`<input type="checkbox" class="detail" value="${it.id}"><div><div class="ct">${it.title}</div><div class="cs">${it.law}</div>${itemBadgeHtml(it)}</div>`;block.appendChild(l)});if(!fs.length) block.innerHTML+=`<div class="empty">沒有符合的細項。</div>`;area.appendChild(block)})}
-function num(sel,row){let e=qs(`${sel}[data-row="${row}"]`);return e?Number(e.value||0):0}
-function autoCounts(){if(!selectedCats().includes("ratio"))return [];let names=["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"],res=[];for(let i=0;i<6;i++){let u=num(".u2",i),o=num(".o2",i),t=u+o;if(t<=0)continue;let isFour=[0,1,4,5].includes(i),isTwo=[2,3].includes(i);if(isFour&&t>4)res.push(autoItem(names[i]+"合計超過4人",`${names[i]}未滿2歲 ${u} 人、2歲以上 ${o} 人，合計 ${t} 人，超過至多4人規定。`,t));if(isFour&&u>2)res.push(autoItem(names[i]+"未滿2歲超過2人",`${names[i]}未滿2歲 ${u} 人，超過至多2人規定。`,t));if(isTwo&&t>2)res.push(autoItem(names[i]+"合計超過2人",`${names[i]}未滿2歲 ${u} 人、2歲以上 ${o} 人，合計 ${t} 人，超過至多2人規定。`,t));}return res}
-function autoItem(title,summary,total){return {cat:"ratio",id:"auto"+title,title,law:"管理辦法第7條；兒少權法第90條；準公共作業要點第8點",summary:`${summary}<br><br><strong>管理辦法第7條：</strong>居家托育人員收托人數，半日托育、日間托育、延長托育或臨時托育合計至多4人，其中未滿2歲兒童至多2人；全日托育及夜間托育至多2人。收托人數應包含托育人員未滿3歲子女、受其監護者、三親等內未滿5歲兒童，以及未滿12歲且未收取托育費用之兒童；到宅托育以該住所或居所實際受照顧兒童人數計算。<br><br><strong>兒少權法第90條：</strong>居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。`,effect:"違反收托人數規定；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。",penalty:"依兒少權法第90條第5項，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。",fine:"是",improve:"是",per:"是",stop:"視情節",transfer:"視情節",revoke:"可能",public:"準公共作業要點第8點：收托比違反法令規定，應即終止契約",future:total>=5?"第71條規定，居家托育人員違反收托人數規定且收托人數五人以上者，處6萬～30萬元罰鍰，並令限期改善；屆期未改善得按次處罰，情節重大或三次仍未改善者，廢止登記。":""}}
+function num(sel,row){
+ let e=qs(`${sel}[data-row="${row}"]`);
+ if(!e)return 0;
+ let value=Number(e.value||0);
+ if(!Number.isFinite(value)||value<0)return 0;
+ return Math.floor(value);
+}
+function hasCountInput(){
+ if(!selectedCats().includes("ratio"))return false;
+ return qsa(".count-input").some(e=>Number(e.value||0)>0);
+}
+function countSnapshot(){
+ const names=["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"];
+ const rows=names.map((name,row)=>{
+  const u=num(".u2",row),o=num(".o2",row);
+  return {name,row,u,o,total:u+o};
+ });
+ const shortRows=[rows[0],rows[1],rows[4],rows[5]];
+ const shortU=shortRows.reduce((sum,r)=>sum+r.u,0);
+ const shortO=shortRows.reduce((sum,r)=>sum+r.o,0);
+ const full=rows[3];
+ const night=rows[2];
+ const longU=full.u+night.u;
+ const longO=full.o+night.o;
+ return {
+  rows,
+  shortU,
+  shortO,
+  shortTotal:shortU+shortO,
+  fullU:full.u,
+  fullO:full.o,
+  fullTotal:full.total,
+  nightU:night.u,
+  nightO:night.o,
+  nightTotal:night.total,
+  longU,
+  longO,
+  longTotal:longU+longO,
+  totalU:shortU+longU,
+  totalO:shortO+longO,
+  total:shortU+shortO+longU+longO
+ };
+}
+function countEntrySummary(c){
+ const entered=c.rows.filter(r=>r.total>0).map(r=>`${r.name}：未滿2歲 ${r.u} 人、2歲以上 ${r.o} 人`).join("；");
+ return entered||"未填寫收托人數";
+}
+function autoCounts(){
+ if(!selectedCats().includes("ratio"))return [];
+ const c=countSnapshot();
+ if(c.total<=0)return [];
+ const reasons=[];
+ const addReason=text=>{if(!reasons.includes(text))reasons.push(text)};
+
+ // 第7條附表：半日、日間、延長、臨時須合併計算。
+ if(c.shortTotal>4){
+  addReason(`半日、日間、延長及臨時托育合計 ${c.shortTotal} 人，超過至多4人。`);
+ }
+ if(c.shortU>2){
+  addReason(`半日、日間、延長及臨時托育的未滿2歲兒童合計 ${c.shortU} 人，超過至多2人。`);
+ }
+
+ // 全日及夜間名額也必須合併檢視。
+ if(c.longTotal>2){
+  addReason(`全日及夜間托育合計 ${c.longTotal} 人，超過附表可容許的2人。`);
+ }
+
+ // 附表各種混合組合均以同一時段未滿2歲兒童至多2人為上限。
+ if(c.totalU>2){
+  addReason(`同一時段實際照顧的未滿2歲兒童合計 ${c.totalU} 人，不符合第7條附表的年齡組合限制。`);
+ }
+
+ // 已有1名全日或夜間兒童時，其他短時托育最多再2人。
+ if(c.longTotal===1&&c.shortTotal>2){
+  addReason(`已有1名全日或夜間托育兒童時，半日、日間、延長及臨時托育最多再收2人；目前為 ${c.shortTotal} 人。`);
+ }
+
+ // 已有2名全日／夜間兒童時，須依附表進一步比對。
+ if(c.longTotal>=2){
+  if(c.fullTotal>0&&c.shortTotal>0){
+   addReason(`全日與夜間托育合計已達 ${c.longTotal} 人，且其中包含全日托育，不得再同時收托半日、日間、延長或臨時托育兒童。`);
+  }else if(c.fullTotal===0&&c.shortTotal>c.nightO){
+   addReason(`夜間托育共 ${c.nightTotal} 人時，可再收的半日、日間、延長或臨時托育人數，最多等於其中2歲以上夜間托育兒童人數 ${c.nightO} 人；目前另收 ${c.shortTotal} 人。`);
+  }
+ }
+
+ if(!reasons.length)return [];
+ const summary=`<strong>填寫情形：</strong>${countEntrySummary(c)}<br><br><strong>不符合原因：</strong><br>${reasons.map((r,i)=>`${i+1}. ${r}`).join("<br>")}`;
+ return [autoItem("收托人數組合不符第7條附表",summary,c.total)];
+}
+function autoItem(title,summary,total){return {cat:"ratio",id:"auto"+title,title,law:"管理辦法第7條及附表；兒少權法第90條；準公共作業要點第8點",summary:`${summary}<br><br><strong>管理辦法第7條及附表：</strong>每一托育人員應依同一時段實際照顧兒童的收托方式、年齡及人數，對照附表判斷可否再收托。半日、日間、延長或臨時托育應合併計算；全日、夜間與其他托育方式混合時，也必須依附表所列組合判斷，不得只分別查看單一欄位上限。<br><br><strong>兒少權法第90條：</strong>居家式托育服務提供者違反收托人數規定者，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。<br><br><strong>準公共作業要點第8點：</strong>合作對象擅自改變原收托條件或收托比違反法令規定，地方政府應即終止契約。`,effect:"違反收托人數及附表組合規定；若為準公共合作對象，亦屬準公共作業要點第8點收托比違反法令規定之退場情形。",penalty:"依兒少權法第90條第5項，處新臺幣6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或經處罰三次後仍未改善者，得廢止登記。",fine:"是",improve:"是",per:"是",stop:"視情節",transfer:"視情節",revoke:"可能",public:"準公共作業要點第8點：收托比違反法令規定，應即終止契約",future:total>=5?"第71條規定，居家托育人員違反收托人數規定且收托人數五人以上者，處6萬～30萬元罰鍰，並令限期改善；屆期未改善得按次處罰，情節重大或三次仍未改善者，廢止登記。":""}}
 function getSelected(){let ids=qsa(".detail:checked").map(i=>i.value);return items.filter(i=>ids.includes(i.id)).concat(autoCounts())}
 function flag(k,v){return `<div class="flag"><strong>${k}</strong><br>${v||"—"}</div>`}
 
