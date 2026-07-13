@@ -3207,14 +3207,7 @@
       const status=$("trainingRosterStatus");
       status.hidden=false;
       status.classList.toggle("error",isError);
-
-      const mapHtml=mapping.length
-        ? `<div class="roster-map">${mapping.map(item=>
-            `<span>${escapeHtml(item.header)} → ${escapeHtml(item.label)}</span>`
-          ).join("")}</div>`
-        : "";
-
-      status.innerHTML=`<div>${escapeHtml(message)}</div>${mapHtml}`;
+      status.innerHTML=`<div>${escapeHtml(message)}</div>`;
     }
 
     function clearGeneratedRosterImages(){
@@ -3664,15 +3657,15 @@
         drawCanvasTextFit(ctx,person.afternoon ? "✓" : "",1027,y+(rowHeight/2),150,32,"900","center");
       });
 
-      ctx.fillStyle=colors.muted;
+      ctx.fillStyle=colors.accentRed;
       drawCanvasTextFit(
         ctx,
         "請先確認自己的編號，簽到會更快。",
         width/2,
         height-70,
         width-180,
-        21,
-        "700",
+        28,
+        "900",
         "center"
       );
 
