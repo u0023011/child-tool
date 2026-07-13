@@ -3341,7 +3341,7 @@
         }
 
         parsed.push({
-          number:value("number") || String(offset+1),
+          number:value("number"),
           name,
           identity:value("identity"),
           gender:value("gender"),
@@ -3375,8 +3375,15 @@
         .map(([group,members])=>({
           group,
           members:members.sort((a,b)=>{
-            const byNumber=naturalRosterSort(a.number,b.number);
-            return byNumber!==0 ? byNumber : a.sourceOrder-b.sourceOrder;
+            if(a.number && b.number){
+              const byNumber=naturalRosterSort(a.number,b.number);
+              if(byNumber!==0) return byNumber;
+            }else if(a.number && !b.number){
+              return -1;
+            }else if(!a.number && b.number){
+              return 1;
+            }
+            return a.sourceOrder-b.sourceOrder;
           })
         }));
 
@@ -3542,7 +3549,7 @@
       const rowHeight=72;
       const topHeight=trainingMode==="full" ? 330 : 350;
       const tableHeaderHeight=68;
-      const bottomPadding=70;
+      const bottomPadding=108;
       const height=topHeight+tableHeaderHeight+(groupData.members.length*rowHeight)+bottomPadding;
 
       const canvas=document.createElement("canvas");
@@ -3660,9 +3667,21 @@
       ctx.fillStyle=colors.muted;
       drawCanvasTextFit(
         ctx,
+        "請先確認自己的編號，簽到會更快。",
+        width/2,
+        height-70,
+        width-180,
+        21,
+        "700",
+        "center"
+      );
+
+      ctx.fillStyle=colors.muted;
+      drawCanvasTextFit(
+        ctx,
         `共 ${groupData.members.length} 人`,
         width-85,
-        height-45,
+        height-38,
         300,
         21,
         "700",
