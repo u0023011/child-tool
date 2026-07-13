@@ -253,7 +253,7 @@
       font-weight:900;
     }
 
-    .collapse-status::before{
+    .collapsible-card > .collapse-summary .collapse-status::before{
       content:"點擊展開";
     }
 
@@ -263,15 +263,15 @@
       line-height:1;
     }
 
-    .collapse-arrow::before{
+    .collapsible-card > .collapse-summary .collapse-arrow::before{
       content:"▼";
     }
 
-    .collapsible-card[open] .collapse-status::before{
+    .collapsible-card[open] > .collapse-summary .collapse-status::before{
       content:"點擊收合";
     }
 
-    .collapsible-card[open] .collapse-arrow::before{
+    .collapsible-card[open] > .collapse-summary .collapse-arrow::before{
       content:"▲";
     }
 
