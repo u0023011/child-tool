@@ -1991,6 +1991,20 @@
       return `${date.getFullYear()-1911}/${pad2(date.getMonth()+1)}/${pad2(date.getDate())}`;
     }
 
+    function getCurrentWeekSaturday(){
+      const today=new Date();
+      const saturday=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+      saturday.setDate(today.getDate()+(6-today.getDay()));
+      return saturday;
+    }
+
+    function setDefaultTrainingDate(){
+      const input=$("trainingDate");
+      if(!input) return;
+      input.value=rocInput(getCurrentWeekSaturday());
+      input.dispatchEvent(new Event("change",{bubbles:true}));
+    }
+
     function normalizeRocInput(id){
       const el=$(id);
       if(!el || !el.value.trim()) return;
@@ -3895,7 +3909,7 @@
       currentVenueImage="";
       document.querySelectorAll("#section-training .active").forEach(x=>x.classList.remove("active"));
       document.querySelector('#trainingMode [data-value="full"]').classList.add("active");
-      $("trainingDate").value="";
+      setDefaultTrainingDate();
       $("trainingExtra").value="";
       $("trainingResult").value="";
       clearTrainingRoster();
@@ -3930,6 +3944,7 @@
       details.addEventListener("toggle",()=>updateCollapseIndicator(details));
     });
 
+    setDefaultTrainingDate();
     renderFixedUnits();
     updateLocationVisibility();
 
