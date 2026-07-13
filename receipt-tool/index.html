@@ -1906,7 +1906,15 @@
             <button type="button" class="action secondary" id="trainingRosterDownloadAll" hidden>下載全部圖片</button>
           </div>
 
-          <div id="trainingRosterImages" class="roster-images"></div>
+          <details class="card collapsible-card roster-preview-wrap" id="trainingRosterImagesDetails" hidden>
+            <summary class="collapse-summary">
+              <h4 class="card-title"><span class="badge">圖</span>協力圈圖片</h4>
+              <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+            </summary>
+            <div class="collapse-content">
+              <div id="trainingRosterImages" class="roster-images"></div>
+            </div>
+          </details>
 
           <div class="hint roster-privacy">
             名單資料只在目前瀏覽器頁面處理，不會上傳至網站後端。
@@ -3216,6 +3224,8 @@
     function clearGeneratedRosterImages(){
       trainingRosterGeneratedImages=[];
       $("trainingRosterImages").innerHTML="";
+      $("trainingRosterImagesDetails").hidden=true;
+      $("trainingRosterImagesDetails").open=false;
       $("trainingRosterDownloadAll").hidden=true;
     }
 
@@ -3233,6 +3243,8 @@
       $("trainingRosterPreview").innerHTML="";
       $("trainingRosterImageActions").hidden=true;
       $("trainingRosterDownloadAll").hidden=true;
+      $("trainingRosterImagesDetails").hidden=true;
+      $("trainingRosterImagesDetails").open=false;
       $("trainingRosterImages").innerHTML="";
     }
 
@@ -3639,7 +3651,7 @@
 
         ctx.fillStyle=colors.dark;
         drawCanvasTextFit(ctx,person.number,145,y+(rowHeight/2),120,25,"700","center");
-        drawCanvasTextFit(ctx,maskRosterName(person.name),250,y+(rowHeight/2),440,28,"800","left");
+        drawCanvasTextFit(ctx,maskRosterName(person.name),470,y+(rowHeight/2),440,28,"800","center");
 
         ctx.fillStyle=colors.greenDark;
         drawCanvasTextFit(ctx,person.morning ? "✓" : "",822,y+(rowHeight/2),150,32,"900","center");
@@ -3687,6 +3699,9 @@
         });
       });
 
+      const imageDetails=$("trainingRosterImagesDetails");
+      imageDetails.hidden=!trainingRosterGeneratedImages.length;
+      imageDetails.open=false;
       $("trainingRosterDownloadAll").hidden=!trainingRosterGeneratedImages.length;
     }
 
