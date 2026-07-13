@@ -718,8 +718,8 @@
             </button>
 
             <button type="button" class="tool-card admin-only" onclick="openTool('receipt-tool/')">
-              <div class="tool-title">🧾 今日收件紀錄</div>
-              <div class="tool-desc">整理今日收到的發展檢核表、收托資料與相關文件。</div>
+              <div class="tool-title">🧾 訊息生成器</div>
+              <div class="tool-desc">產生收件、托育媒合及在職通知訊息。</div>
               <div class="tool-count">已有 <strong id="count-receipt-tool">讀取中</strong> 人次使用</div>
             </button>
           </div>
@@ -780,14 +780,27 @@
       },
       "receipt-tool/": {
         counter: "receipt_tool",
-        name: "今日收件紀錄",
+        name: "訊息生成器",
         cardId: "count-receipt-tool"
       }
     };
 
     async function fetchCounter(counter, increment) {
-      const url = "/api/view-counter?counter=" + encodeURIComponent(counter) + (increment ? "&increment=1" : "");
-      const res = await fetch(url, { cache: "no-store" });
+      const url = "/api/view-counter?counter=" + encodeURIComponent(counter);
+
+      const options = increment
+        ? {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ counter: counter }),
+            cache: "no-store"
+          }
+        : {
+            method: "GET",
+            cache: "no-store"
+          };
+
+      const res = await fetch(url, options);
       if (!res.ok) throw new Error("counter error");
       return await res.json();
     }
