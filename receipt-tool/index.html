@@ -1170,6 +1170,163 @@
       }
     }
 </style>
+<style>
+    .roster-intro{
+      margin:14px 0;
+      line-height:1.8;
+    }
+
+    .excel-paste-box{
+      min-height:170px;
+      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+      white-space:pre;
+      overflow:auto;
+    }
+
+    .roster-status{
+      margin-top:14px;
+      line-height:1.7;
+    }
+
+    .roster-status.error{
+      border-color:#dca49d;
+      background:#fff3f1;
+      color:#9c382d;
+    }
+
+    .roster-map{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      margin-top:9px;
+    }
+
+    .roster-map span{
+      display:inline-flex;
+      align-items:center;
+      padding:5px 9px;
+      border-radius:999px;
+      background:#f0e5d4;
+      color:#664522;
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .roster-preview{
+      display:grid;
+      gap:14px;
+      margin-top:16px;
+    }
+
+    .roster-group-card{
+      overflow:hidden;
+      border:1.5px solid #d8bc91;
+      border-radius:15px;
+      background:#fff;
+    }
+
+    .roster-group-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 15px;
+      background:#f7eddd;
+      color:#52351d;
+      font-weight:950;
+    }
+
+    .roster-group-count{
+      padding:3px 9px;
+      border-radius:999px;
+      background:#fff;
+      color:#7b592f;
+      font-size:13px;
+    }
+
+    .roster-table-wrap{
+      overflow-x:auto;
+    }
+
+    .roster-table{
+      width:100%;
+      min-width:520px;
+      border-collapse:collapse;
+    }
+
+    .roster-table th,
+    .roster-table td{
+      padding:10px 12px;
+      border-top:1px solid #eadcc6;
+      text-align:center;
+      font-size:14px;
+    }
+
+    .roster-table th{
+      background:#fffaf2;
+      color:#664522;
+      font-weight:900;
+    }
+
+    .roster-table td:nth-child(2){
+      text-align:left;
+      font-weight:800;
+    }
+
+    .roster-v{
+      color:#506b2d;
+      font-weight:950;
+      font-size:17px;
+    }
+
+    .roster-images{
+      display:grid;
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .roster-image-card{
+      padding:14px;
+      border:1.5px solid #d8bc91;
+      border-radius:16px;
+      background:#fffaf3;
+    }
+
+    .roster-image-card img{
+      display:block;
+      width:100%;
+      height:auto;
+      border:1px solid #e6d5ba;
+      border-radius:12px;
+      background:#fff;
+    }
+
+    .roster-image-title{
+      margin:0 0 10px;
+      color:#51351d;
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .roster-privacy{
+      margin-top:14px;
+      text-align:center;
+    }
+
+    @media(max-width:650px){
+      .excel-paste-box{
+        min-height:145px;
+      }
+
+      .roster-group-head{
+        padding:11px 12px;
+      }
+
+      .roster-image-card{
+        padding:10px;
+      }
+    }
+</style>
 </head>
 
 <body>
@@ -1592,8 +1749,45 @@
         <div class="actions" id="venueImageActions" hidden></div>
       </section>
 
+      <details class="card collapsible-card" id="trainingRosterDetails">
+        <summary class="collapse-summary">
+          <h3 class="card-title"><span class="badge">5</span>Excel 名單匯入（選填）</h3>
+          <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+        </summary>
+
+        <div class="collapse-content">
+          <div class="hint roster-intro">
+            從 Excel 複製包含「編號、姓名、身分證、性別、協力圈、區域、上午、下午」的表格後，直接貼在下方。
+            系統會自動辨識標題、將 A 與 A組視為同一組，上午／下午只有 V 才判定為有上課。
+          </div>
+
+          <label class="field-label" for="trainingExcelPaste">貼上 Excel 資料</label>
+          <textarea id="trainingExcelPaste" class="excel-paste-box" spellcheck="false"
+            placeholder="請直接貼上從 Excel 複製的多欄資料"></textarea>
+
+          <div class="actions">
+            <button type="button" class="action primary" id="trainingRosterParse">解析名單</button>
+            <button type="button" class="action ghost" id="trainingRosterClear">清除名單</button>
+          </div>
+
+          <div id="trainingRosterStatus" class="notice roster-status" hidden></div>
+          <div id="trainingRosterPreview" class="roster-preview" hidden></div>
+
+          <div class="actions" id="trainingRosterImageActions" hidden>
+            <button type="button" class="action primary wide" id="trainingRosterGenerateImages">產生協力圈圖片</button>
+            <button type="button" class="action secondary" id="trainingRosterDownloadAll" hidden>下載全部圖片</button>
+          </div>
+
+          <div id="trainingRosterImages" class="roster-images"></div>
+
+          <div class="hint roster-privacy">
+            名單資料只在目前瀏覽器頁面處理，不會上傳至網站後端。
+          </div>
+        </div>
+      </details>
+
       <section class="card">
-        <h3 class="card-title"><span class="badge">5</span>產出在職通知</h3>
+        <h3 class="card-title"><span class="badge">6</span>產出在職通知</h3>
         <textarea id="trainingResult"></textarea>
         <div class="actions">
           <button type="button" class="action primary wide" id="trainingGenerate">產生訊息</button>
@@ -2679,6 +2873,614 @@
       $("venueImageActions").hidden=!images.length;
     }
 
+
+    // Excel 在職名單匯入與協力圈圖片
+    let trainingRosterRows=[];
+    let trainingRosterGroups=[];
+    let trainingRosterGeneratedImages=[];
+
+    const rosterHeaderAliases={
+      number:["編號","序號","編碼","no","number"],
+      name:["姓名","托育人員姓名","學員姓名","人員姓名"],
+      identity:["身分證","身份證","身分證字號","身份證字號","身分證號","身份證號"],
+      gender:["性別"],
+      group:["協力圈","協力圈別","組別","圈別"],
+      area:["區域","服務區域","所屬區域"],
+      morning:["上午","上午班","上午場","上午出席"],
+      afternoon:["下午","下午班","下午場","下午出席"]
+    };
+
+    function escapeHtml(value){
+      return String(value??"")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function toHalfWidth(text){
+      return String(text??"").replace(/[\uff01-\uff5e]/g,ch=>
+        String.fromCharCode(ch.charCodeAt(0)-0xfee0)
+      ).replace(/\u3000/g," ");
+    }
+
+    function normalizeRosterHeader(value){
+      return toHalfWidth(value)
+        .trim()
+        .toLowerCase()
+        .replace(/[\s　:：()（）_\-－]/g,"");
+    }
+
+    function identifyRosterHeader(value){
+      const normalized=normalizeRosterHeader(value);
+      if(!normalized) return "";
+
+      for(const [field,aliases] of Object.entries(rosterHeaderAliases)){
+        const aliasMatch=aliases.some(alias=>{
+          const normalizedAlias=normalizeRosterHeader(alias);
+          return normalized===normalizedAlias ||
+            normalized.startsWith(normalizedAlias) ||
+            normalized.endsWith(normalizedAlias);
+        });
+        if(aliasMatch) return field;
+      }
+      return "";
+    }
+
+    function splitExcelRows(raw){
+      return String(raw??"")
+        .replace(/^\uFEFF/,"")
+        .replace(/\r/g,"")
+        .split("\n")
+        .filter(line=>line.trim()!=="")
+        .map(line=>{
+          if(line.includes("\t")) return line.split("\t");
+          return line.split(",");
+        })
+        .map(row=>row.map(cell=>String(cell??"").trim()));
+    }
+
+    function normalizeCooperationGroup(value){
+      let text=toHalfWidth(value).trim().toUpperCase().replace(/\s+/g,"");
+      if(!text) return "未分組";
+
+      text=text.replace(/組+$/,"");
+      if(!text) return "未分組";
+      return `${text}組`;
+    }
+
+    function isRosterAttendance(value){
+      return toHalfWidth(value).trim().toUpperCase()==="V";
+    }
+
+    function naturalRosterSort(a,b){
+      return String(a).localeCompare(String(b),"zh-Hant",{
+        numeric:true,
+        sensitivity:"base"
+      });
+    }
+
+    function setRosterStatus(message,isError=false,mapping=[]){
+      const status=$("trainingRosterStatus");
+      status.hidden=false;
+      status.classList.toggle("error",isError);
+
+      const mapHtml=mapping.length
+        ? `<div class="roster-map">${mapping.map(item=>
+            `<span>${escapeHtml(item.header)} → ${escapeHtml(item.label)}</span>`
+          ).join("")}</div>`
+        : "";
+
+      status.innerHTML=`<div>${escapeHtml(message)}</div>${mapHtml}`;
+    }
+
+    function clearGeneratedRosterImages(){
+      trainingRosterGeneratedImages=[];
+      $("trainingRosterImages").innerHTML="";
+      $("trainingRosterDownloadAll").hidden=true;
+    }
+
+    function clearTrainingRoster(){
+      trainingRosterRows=[];
+      trainingRosterGroups=[];
+      trainingRosterGeneratedImages=[];
+      $("trainingExcelPaste").value="";
+      $("trainingRosterStatus").hidden=true;
+      $("trainingRosterStatus").classList.remove("error");
+      $("trainingRosterStatus").innerHTML="";
+      $("trainingRosterPreview").hidden=true;
+      $("trainingRosterPreview").innerHTML="";
+      $("trainingRosterImageActions").hidden=true;
+      $("trainingRosterDownloadAll").hidden=true;
+      $("trainingRosterImages").innerHTML="";
+    }
+
+    function parseTrainingRoster(){
+      const raw=$("trainingExcelPaste").value;
+      clearGeneratedRosterImages();
+
+      if(!raw.trim()){
+        trainingRosterRows=[];
+        trainingRosterGroups=[];
+        $("trainingRosterPreview").hidden=true;
+        $("trainingRosterImageActions").hidden=true;
+        setRosterStatus("請先貼上 Excel 名單資料。",true);
+        return false;
+      }
+
+      const rows=splitExcelRows(raw);
+      if(rows.length<2){
+        setRosterStatus("資料列數不足，請包含標題列與至少一筆名單。",true);
+        return false;
+      }
+
+      let headerRowIndex=-1;
+      let fieldMap={};
+      let headerValues=[];
+
+      for(let rowIndex=0;rowIndex<Math.min(rows.length,20);rowIndex++){
+        const candidateMap={};
+        rows[rowIndex].forEach((header,index)=>{
+          const field=identifyRosterHeader(header);
+          if(field && candidateMap[field]===undefined){
+            candidateMap[field]=index;
+          }
+        });
+
+        const recognizedCount=Object.keys(candidateMap).length;
+        if(candidateMap.name!==undefined &&
+           candidateMap.group!==undefined &&
+           (candidateMap.morning!==undefined || candidateMap.afternoon!==undefined) &&
+           recognizedCount>=3){
+          headerRowIndex=rowIndex;
+          fieldMap=candidateMap;
+          headerValues=rows[rowIndex];
+          break;
+        }
+      }
+
+      if(headerRowIndex<0){
+        setRosterStatus(
+          "找不到可辨識的標題列。至少需要「姓名、協力圈、上午或下午」欄位。",
+          true
+        );
+        return false;
+      }
+
+      const labelMap={
+        number:"編號",
+        name:"姓名",
+        identity:"身分證",
+        gender:"性別",
+        group:"協力圈",
+        area:"區域",
+        morning:"上午",
+        afternoon:"下午"
+      };
+
+      const mapping=Object.entries(fieldMap).map(([field,index])=>({
+        header:headerValues[index] || labelMap[field],
+        label:labelMap[field]
+      }));
+
+      const parsed=[];
+      let skippedNoAttendance=0;
+      let skippedNoName=0;
+
+      rows.slice(headerRowIndex+1).forEach((row,offset)=>{
+        const value=field=>{
+          const index=fieldMap[field];
+          return index===undefined ? "" : String(row[index]??"").trim();
+        };
+
+        const name=value("name");
+        if(!name){
+          skippedNoName++;
+          return;
+        }
+
+        const morning=isRosterAttendance(value("morning"));
+        const afternoon=isRosterAttendance(value("afternoon"));
+
+        // 上午／下午只有 V 才視為有上課；空白或「取消」均不列入名單。
+        if(!morning && !afternoon){
+          skippedNoAttendance++;
+          return;
+        }
+
+        parsed.push({
+          number:value("number") || String(offset+1),
+          name,
+          identity:value("identity"),
+          gender:value("gender"),
+          group:normalizeCooperationGroup(value("group")),
+          area:value("area"),
+          morning,
+          afternoon,
+          sourceOrder:offset
+        });
+      });
+
+      if(!parsed.length){
+        trainingRosterRows=[];
+        trainingRosterGroups=[];
+        $("trainingRosterPreview").hidden=true;
+        $("trainingRosterImageActions").hidden=true;
+        setRosterStatus("沒有找到上午或下午欄位標記為 V 的上課人員。",true,mapping);
+        return false;
+      }
+
+      const groupedMap=new Map();
+      parsed.forEach(person=>{
+        if(!groupedMap.has(person.group)) groupedMap.set(person.group,[]);
+        groupedMap.get(person.group).push(person);
+      });
+
+      trainingRosterRows=parsed;
+      trainingRosterGroups=[...groupedMap.entries()]
+        .sort((a,b)=>naturalRosterSort(a[0],b[0]))
+        .map(([group,members])=>({
+          group,
+          members:members.sort((a,b)=>{
+            const byNumber=naturalRosterSort(a.number,b.number);
+            return byNumber!==0 ? byNumber : a.sourceOrder-b.sourceOrder;
+          })
+        }));
+
+      renderTrainingRosterPreview();
+
+      const skippedParts=[];
+      if(skippedNoAttendance) skippedParts.push(`略過 ${skippedNoAttendance} 筆未標記 V`);
+      if(skippedNoName) skippedParts.push(`略過 ${skippedNoName} 筆無姓名`);
+      const skippedText=skippedParts.length ? `；${skippedParts.join("，")}` : "";
+
+      setRosterStatus(
+        `已匯入 ${parsed.length} 人，共 ${trainingRosterGroups.length} 個協力圈${skippedText}。`,
+        false,
+        mapping
+      );
+
+      $("trainingRosterImageActions").hidden=false;
+      return true;
+    }
+
+    function renderTrainingRosterPreview(){
+      const preview=$("trainingRosterPreview");
+
+      preview.innerHTML=trainingRosterGroups.map(groupData=>{
+        const rows=groupData.members.map(person=>`
+          <tr>
+            <td>${escapeHtml(person.number)}</td>
+            <td>${escapeHtml(person.name)}</td>
+            <td>${escapeHtml(person.area)}</td>
+            <td class="roster-v">${person.morning ? "V" : ""}</td>
+            <td class="roster-v">${person.afternoon ? "V" : ""}</td>
+          </tr>
+        `).join("");
+
+        return `
+          <section class="roster-group-card">
+            <div class="roster-group-head">
+              <span>${escapeHtml(groupData.group)}</span>
+              <span class="roster-group-count">${groupData.members.length}人</span>
+            </div>
+            <div class="roster-table-wrap">
+              <table class="roster-table">
+                <thead>
+                  <tr>
+                    <th>編號</th>
+                    <th>姓名</th>
+                    <th>區域</th>
+                    <th>上午</th>
+                    <th>下午</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </section>`;
+      }).join("");
+
+      preview.hidden=false;
+    }
+
+    function roundedRectPath(ctx,x,y,w,h,r){
+      const radius=Math.min(r,w/2,h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+radius,y);
+      ctx.arcTo(x+w,y,x+w,y+h,radius);
+      ctx.arcTo(x+w,y+h,x,y+h,radius);
+      ctx.arcTo(x,y+h,x,y,radius);
+      ctx.arcTo(x,y,x+w,y,radius);
+      ctx.closePath();
+    }
+
+    function drawCanvasTextFit(ctx,text,x,y,maxWidth,fontSize,weight="700",align="left"){
+      let size=fontSize;
+      ctx.textAlign=align;
+      ctx.textBaseline="middle";
+
+      while(size>18){
+        ctx.font=`${weight} ${size}px "Noto Sans TC","Microsoft JhengHei",sans-serif`;
+        if(ctx.measureText(text).width<=maxWidth) break;
+        size-=2;
+      }
+
+      let output=text;
+      if(ctx.measureText(output).width>maxWidth){
+        while(output.length>1 && ctx.measureText(`${output}…`).width>maxWidth){
+          output=output.slice(0,-1);
+        }
+        output=`${output}…`;
+      }
+
+      ctx.fillText(output,x,y);
+    }
+
+    function getTrainingRosterCourseLines(){
+      if(trainingMode==="full"){
+        return [
+          "全天 08：00～17：00",
+          "基本救命術｜第六類"
+        ];
+      }
+
+      const morningCategory=$("morningCategory").value;
+      const afternoonCategory=$("afternoonCategory").value;
+
+      return [
+        `上午 ${$("morningTime").value}${morningCategory ? `｜${morningCategory}` : ""}`,
+        `下午 ${$("afternoonTime").value}${afternoonCategory ? `｜${afternoonCategory}` : ""}`
+      ];
+    }
+
+    function getTrainingRosterLocationText(){
+      if(!selectedVenue) return "";
+      const data=venueData[selectedVenue];
+      const classroom=selectedVenue==="water" && selectedClassroom
+        ? `｜${selectedClassroom}`
+        : "";
+      return `${data.place}${classroom}`;
+    }
+
+    function getTrainingRosterDateText(){
+      const value=$("trainingDate").value;
+      const date=parseFlexibleDate(value);
+      if(!date) return "";
+      return `民國${date.getFullYear()-1911}年${pad2(date.getMonth()+1)}月${pad2(date.getDate())}日（${weekdayText(value)}）`;
+    }
+
+    function drawTrainingRosterCanvas(groupData){
+      const width=1200;
+      const rowHeight=72;
+      const topHeight=trainingMode==="full" ? 330 : 350;
+      const tableHeaderHeight=68;
+      const bottomPadding=70;
+      const height=topHeight+tableHeaderHeight+(groupData.members.length*rowHeight)+bottomPadding;
+
+      const canvas=document.createElement("canvas");
+      canvas.width=width;
+      canvas.height=height;
+      const ctx=canvas.getContext("2d");
+
+      const colors={
+        background:"#fffdf8",
+        border:"#9a7b4f",
+        dark:"#4c321d",
+        muted:"#76614d",
+        beige:"#f3e7d3",
+        green:"#eaf1df",
+        greenDark:"#526b2d",
+        line:"#cdb58f",
+        white:"#ffffff"
+      };
+
+      ctx.fillStyle=colors.background;
+      ctx.fillRect(0,0,width,height);
+
+      roundedRectPath(ctx,24,24,width-48,height-48,28);
+      ctx.fillStyle=colors.white;
+      ctx.fill();
+      ctx.lineWidth=3;
+      ctx.strokeStyle=colors.border;
+      ctx.stroke();
+
+      const dateText=getTrainingRosterDateText() || "在職研習";
+      const locationText=getTrainingRosterLocationText() || "尚未選擇場地";
+      const courseLines=getTrainingRosterCourseLines();
+      const areas=[...new Set(groupData.members.map(person=>person.area).filter(Boolean))];
+
+      ctx.fillStyle=colors.dark;
+      drawCanvasTextFit(ctx,dateText,width/2,70,width-130,34,"900","center");
+      drawCanvasTextFit(ctx,`【${locationText}】`,width/2,118,width-130,32,"900","center");
+
+      ctx.fillStyle=colors.border;
+      ctx.fillRect(80,150,width-160,3);
+
+      ctx.fillStyle=colors.dark;
+      drawCanvasTextFit(ctx,`${groupData.group} 上課名單`,width/2,188,width-150,38,"900","center");
+
+      if(areas.length){
+        ctx.fillStyle=colors.muted;
+        drawCanvasTextFit(ctx,`區域：${areas.join("、")}`,width/2,228,width-160,24,"700","center");
+      }
+
+      courseLines.forEach((line,index)=>{
+        ctx.fillStyle=index===0 ? colors.dark : colors.muted;
+        drawCanvasTextFit(
+          ctx,
+          line,
+          width/2,
+          areas.length ? 270+(index*38) : 240+(index*38),
+          width-160,
+          26,
+          index===0 ? "900" : "700",
+          "center"
+        );
+      });
+
+      const tableY=topHeight;
+      const columns=[
+        {label:"編號",x:70,w:150},
+        {label:"姓名",x:220,w:500},
+        {label:"上午",x:720,w:205},
+        {label:"下午",x:925,w:205}
+      ];
+
+      ctx.fillStyle=colors.beige;
+      ctx.fillRect(70,tableY,width-140,tableHeaderHeight);
+
+      ctx.lineWidth=2;
+      ctx.strokeStyle=colors.line;
+      ctx.strokeRect(70,tableY,width-140,tableHeaderHeight+(groupData.members.length*rowHeight));
+
+      columns.forEach((column,index)=>{
+        if(index>0){
+          ctx.beginPath();
+          ctx.moveTo(column.x,tableY);
+          ctx.lineTo(column.x,tableY+tableHeaderHeight+(groupData.members.length*rowHeight));
+          ctx.stroke();
+        }
+
+        ctx.fillStyle=colors.dark;
+        drawCanvasTextFit(
+          ctx,
+          column.label,
+          column.x+(column.w/2),
+          tableY+(tableHeaderHeight/2),
+          column.w-24,
+          27,
+          "900",
+          "center"
+        );
+      });
+
+      groupData.members.forEach((person,index)=>{
+        const y=tableY+tableHeaderHeight+(index*rowHeight);
+        ctx.fillStyle=index%2===0 ? "#fffdf9" : "#faf5ec";
+        ctx.fillRect(70,y,width-140,rowHeight);
+
+        ctx.beginPath();
+        ctx.moveTo(70,y);
+        ctx.lineTo(width-70,y);
+        ctx.strokeStyle=colors.line;
+        ctx.stroke();
+
+        ctx.fillStyle=colors.dark;
+        drawCanvasTextFit(ctx,person.number,145,y+(rowHeight/2),120,25,"700","center");
+        drawCanvasTextFit(ctx,person.name,250,y+(rowHeight/2),440,28,"800","left");
+
+        ctx.fillStyle=colors.greenDark;
+        drawCanvasTextFit(ctx,person.morning ? "✓" : "",822,y+(rowHeight/2),150,32,"900","center");
+        drawCanvasTextFit(ctx,person.afternoon ? "✓" : "",1027,y+(rowHeight/2),150,32,"900","center");
+      });
+
+      ctx.fillStyle=colors.muted;
+      drawCanvasTextFit(
+        ctx,
+        `共 ${groupData.members.length} 人`,
+        width-85,
+        height-45,
+        300,
+        21,
+        "700",
+        "right"
+      );
+
+      return canvas;
+    }
+
+    function safeRosterFilename(value){
+      return String(value??"")
+        .replace(/[\\/:*?"<>|]/g,"_")
+        .replace(/\s+/g,"_");
+    }
+
+    function renderGeneratedRosterImages(){
+      const root=$("trainingRosterImages");
+      root.innerHTML=trainingRosterGeneratedImages.map((item,index)=>`
+        <section class="roster-image-card">
+          <h4 class="roster-image-title">${escapeHtml(item.group)}｜${item.count}人</h4>
+          <img src="${item.dataUrl}" alt="${escapeHtml(item.group)}上課名單圖片">
+          <div class="actions">
+            <button type="button" class="action secondary roster-image-download" data-index="${index}">
+              下載${escapeHtml(item.group)}圖片
+            </button>
+          </div>
+        </section>
+      `).join("");
+
+      root.querySelectorAll(".roster-image-download").forEach(button=>{
+        button.addEventListener("click",()=>{
+          downloadTrainingRosterImage(Number(button.dataset.index));
+        });
+      });
+
+      $("trainingRosterDownloadAll").hidden=!trainingRosterGeneratedImages.length;
+    }
+
+    function generateTrainingRosterImages(){
+      if(!trainingRosterGroups.length && !parseTrainingRoster()) return;
+
+      if(!selectedVenue){
+        alert("請先選擇上課場地。");
+        return;
+      }
+
+      if(!$("trainingDate").value.trim()){
+        alert("請先選擇上課日期。");
+        return;
+      }
+
+      if(selectedVenue==="water" && !selectedClassroom){
+        alert("請先選擇教室303或國際會議廳。");
+        return;
+      }
+
+      trainingRosterGeneratedImages=trainingRosterGroups.map(groupData=>{
+        const canvas=drawTrainingRosterCanvas(groupData);
+        return {
+          group:groupData.group,
+          count:groupData.members.length,
+          dataUrl:canvas.toDataURL("image/png")
+        };
+      });
+
+      renderGeneratedRosterImages();
+      showToast(`已產生 ${trainingRosterGeneratedImages.length} 張圖片`);
+    }
+
+    function downloadTrainingRosterImage(index){
+      const item=trainingRosterGeneratedImages[index];
+      if(!item) return;
+
+      const date=$("trainingDate").value.replaceAll("/","");
+      const a=document.createElement("a");
+      a.href=item.dataUrl;
+      a.download=`${safeRosterFilename(date || "在職研習")}_${safeRosterFilename(item.group)}_上課名單.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function downloadAllTrainingRosterImages(){
+      for(let index=0;index<trainingRosterGeneratedImages.length;index++){
+        downloadTrainingRosterImage(index);
+        await new Promise(resolve=>setTimeout(resolve,180));
+      }
+    }
+
+    $("trainingRosterParse").addEventListener("click",parseTrainingRoster);
+    $("trainingRosterClear").addEventListener("click",clearTrainingRoster);
+    $("trainingRosterGenerateImages").addEventListener("click",generateTrainingRosterImages);
+    $("trainingRosterDownloadAll").addEventListener("click",downloadAllTrainingRosterImages);
+
+    $("trainingExcelPaste").addEventListener("paste",()=>{
+      setTimeout(parseTrainingRoster,60);
+    });
+
+
     function generateTraining(){
       if(!selectedVenue){
         alert("請先選擇場地。");
@@ -2749,6 +3551,8 @@
       $("trainingDate").value="";
       $("trainingExtra").value="";
       $("trainingResult").value="";
+      clearTrainingRoster();
+      $("trainingRosterDetails").open=false;
       $("morningTime").value="09：00～12：00";
       $("afternoonTime").value="13：00～16：00";
       $("morningCategory").value="";
