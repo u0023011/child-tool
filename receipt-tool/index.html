@@ -1086,7 +1086,8 @@
   </style>
 
 
-  <script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
     (function () {
       if (location.protocol === "file:") return;
 
@@ -1289,6 +1290,29 @@
       font-weight:800;
     }
 
+    .roster-preview-wrap{
+      margin-top:16px;
+    }
+
+    .roster-preview-wrap .collapse-summary{
+      padding:16px 18px;
+    }
+
+    .roster-preview-wrap .collapse-content{
+      padding:0 16px 16px;
+    }
+
+    .roster-preview-wrap .card-title{
+      font-size:18px;
+    }
+
+    .roster-preview-wrap .badge{
+      width:28px;
+      height:28px;
+      font-size:13px;
+      border-radius:9px;
+    }
+
     .roster-preview{
       display:grid;
       gap:14px;
@@ -1401,6 +1425,15 @@
       .roster-image-card{
         padding:10px;
       }
+    }
+</style>
+<style>
+    .course-name-field{
+      margin-top:12px;
+    }
+
+    .course-name-field input{
+      min-height:48px;
     }
 </style>
 </head>
@@ -1744,12 +1777,12 @@
       <section class="card">
         <h3 class="card-title"><span class="badge">3</span>上課時段</h3>
         <div class="single-choice-grid" id="trainingMode">
-          <button type="button" class="choice active" data-value="full">全天</button>
+          <button type="button" class="choice active" data-value="full">整天</button>
           <button type="button" class="choice" data-value="split">上、下午</button>
         </div>
 
         <div id="fullDayTime" class="notice">
-          全天時間：08：00～17：00　｜　課程：基本救命術　｜　類別：第六類
+          整天時間：08：00～17：00　｜　課程：基本救命術　｜　類別：第六類
           <div class="hint" style="margin-top:8px">
             穿著建議：請穿著輕便、方便活動的服裝及長褲，以利實作練習。
           </div>
@@ -1781,6 +1814,10 @@
                 </select>
               </div>
             </div>
+            <div class="course-name-field">
+              <label class="field-label" for="morningCourse">上午課程名稱</label>
+              <input id="morningCourse" type="text" placeholder="請輸入上午課程名稱">
+            </div>
           </div>
 
           <div class="session-setting">
@@ -1807,6 +1844,10 @@
                   <option value="第9類">第9類</option>
                 </select>
               </div>
+            </div>
+            <div class="course-name-field">
+              <label class="field-label" for="afternoonCourse">下午課程名稱</label>
+              <input id="afternoonCourse" type="text" placeholder="請輸入下午課程名稱">
             </div>
           </div>
         </div>
@@ -1850,7 +1891,15 @@
           </div>
 
           <div id="trainingRosterStatus" class="notice roster-status" hidden></div>
-          <div id="trainingRosterPreview" class="roster-preview" hidden></div>
+          <details class="card collapsible-card roster-preview-wrap" id="trainingRosterPreviewDetails" hidden>
+            <summary class="collapse-summary">
+              <h4 class="card-title"><span class="badge">預</span>解析後資料</h4>
+              <span class="collapse-status"><span class="collapse-arrow">⌄</span></span>
+            </summary>
+            <div class="collapse-content">
+              <div id="trainingRosterPreview" class="roster-preview"></div>
+            </div>
+          </details>
 
           <div class="actions" id="trainingRosterImageActions" hidden>
             <button type="button" class="action primary wide" id="trainingRosterGenerateImages">產生協力圈圖片</button>
@@ -3179,7 +3228,8 @@
       $("trainingRosterStatus").hidden=true;
       $("trainingRosterStatus").classList.remove("error");
       $("trainingRosterStatus").innerHTML="";
-      $("trainingRosterPreview").hidden=true;
+      $("trainingRosterPreviewDetails").hidden=true;
+      $("trainingRosterPreviewDetails").open=false;
       $("trainingRosterPreview").innerHTML="";
       $("trainingRosterImageActions").hidden=true;
       $("trainingRosterDownloadAll").hidden=true;
@@ -3194,7 +3244,8 @@
       if(!raw.trim()){
         trainingRosterRows=[];
         trainingRosterGroups=[];
-        $("trainingRosterPreview").hidden=true;
+        $("trainingRosterPreviewDetails").hidden=true;
+        $("trainingRosterPreviewDetails").open=false;
         $("trainingRosterImageActions").hidden=true;
         setRosterStatus("請先貼上 Excel 名單資料。",true);
         return false;
@@ -3296,7 +3347,8 @@
       if(!parsed.length){
         trainingRosterRows=[];
         trainingRosterGroups=[];
-        $("trainingRosterPreview").hidden=true;
+        $("trainingRosterPreviewDetails").hidden=true;
+        $("trainingRosterPreviewDetails").open=false;
         $("trainingRosterImageActions").hidden=true;
         setRosterStatus("沒有找到上午或下午欄位標記為 V 的上課人員。",true,mapping);
         return false;
@@ -3333,6 +3385,11 @@
       );
 
       $("trainingRosterImageActions").hidden=false;
+
+      if(canGenerateTrainingRosterImages()){
+        generateTrainingRosterImages(true);
+      }
+
       return true;
     }
 
@@ -3373,7 +3430,9 @@
           </section>`;
       }).join("");
 
-      preview.hidden=false;
+      const previewDetails=$("trainingRosterPreviewDetails");
+      previewDetails.hidden=false;
+      previewDetails.open=false;
     }
 
     function roundedRectPath(ctx,x,y,w,h,r){
@@ -3412,17 +3471,19 @@
     function getTrainingRosterCourseLines(){
       if(trainingMode==="full"){
         return [
-          "全天 08：00～17：00",
+          "整天 08：00～17：00",
           "基本救命術｜第六類"
         ];
       }
 
       const morningCategory=$("morningCategory").value;
       const afternoonCategory=$("afternoonCategory").value;
+      const morningCourse=$("morningCourse").value.trim();
+      const afternoonCourse=$("afternoonCourse").value.trim();
 
       return [
-        `上午 ${$("morningTime").value}${morningCategory ? `｜${morningCategory}` : ""}`,
-        `下午 ${$("afternoonTime").value}${afternoonCategory ? `｜${afternoonCategory}` : ""}`
+        `上午 ${$("morningTime").value}${morningCategory ? `｜${morningCategory}` : ""}${morningCourse ? `｜${morningCourse}` : ""}`,
+        `下午 ${$("afternoonTime").value}${afternoonCategory ? `｜${afternoonCategory}` : ""}${afternoonCourse ? `｜${afternoonCourse}` : ""}`
       ];
     }
 
@@ -3440,6 +3501,21 @@
       const date=parseFlexibleDate(value);
       if(!date) return "";
       return `民國${date.getFullYear()-1911}年${pad2(date.getMonth()+1)}月${pad2(date.getDate())}日（${weekdayText(value)}）`;
+    }
+
+    function getTrainingRosterFileDate(){
+      const value=$("trainingDate").value;
+      const date=parseFlexibleDate(value);
+      if(!date) return "在職研習";
+      return `${date.getFullYear()-1911}${pad2(date.getMonth()+1)}${pad2(date.getDate())}`;
+    }
+
+    function canGenerateTrainingRosterImages(){
+      if(!trainingRosterGroups.length) return false;
+      if(!selectedVenue) return false;
+      if(!$("trainingDate").value.trim()) return false;
+      if(selectedVenue==="water" && !selectedClassroom) return false;
+      return true;
     }
 
     function maskRosterName(name){
@@ -3614,21 +3690,21 @@
       $("trainingRosterDownloadAll").hidden=!trainingRosterGeneratedImages.length;
     }
 
-    function generateTrainingRosterImages(){
+    function generateTrainingRosterImages(fromAuto=false){
       if(!trainingRosterGroups.length && !parseTrainingRoster()) return;
 
       if(!selectedVenue){
-        alert("請先選擇上課場地。");
+        if(!fromAuto) alert("請先選擇上課場地。");
         return;
       }
 
       if(!$("trainingDate").value.trim()){
-        alert("請先選擇上課日期。");
+        if(!fromAuto) alert("請先選擇上課日期。");
         return;
       }
 
       if(selectedVenue==="water" && !selectedClassroom){
-        alert("請先選擇教室303或國際會議廳。");
+        if(!fromAuto) alert("請先選擇教室303或國際會議廳。");
         return;
       }
 
@@ -3642,28 +3718,71 @@
       });
 
       renderGeneratedRosterImages();
-      showToast(`已產生 ${trainingRosterGeneratedImages.length} 張圖片`);
+      showToast(fromAuto ? `已自動產生 ${trainingRosterGeneratedImages.length} 張圖片` : `已產生 ${trainingRosterGeneratedImages.length} 張圖片`);
     }
 
     function downloadTrainingRosterImage(index){
       const item=trainingRosterGeneratedImages[index];
       if(!item) return;
 
-      const date=$("trainingDate").value.replaceAll("/","");
+      const date=getTrainingRosterFileDate();
       const a=document.createElement("a");
       a.href=item.dataUrl;
-      a.download=`${safeRosterFilename(date || "在職研習")}_${safeRosterFilename(item.group)}_上課名單.png`;
+      a.download=`${safeRosterFilename(date)}_${safeRosterFilename(item.group)}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();
     }
 
     async function downloadAllTrainingRosterImages(){
+      if(!trainingRosterGeneratedImages.length) return;
+
+      if(window.JSZip){
+        const zip=new JSZip();
+        const date=getTrainingRosterFileDate();
+
+        trainingRosterGeneratedImages.forEach(item=>{
+          const base64=item.dataUrl.split(",")[1];
+          const filename=`${safeRosterFilename(date)}_${safeRosterFilename(item.group)}.png`;
+          zip.file(filename,base64,{base64:true});
+        });
+
+        const blob=await zip.generateAsync({type:"blob"});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a");
+        a.href=url;
+        a.download=`${safeRosterFilename(date)}_協力圈圖片.zip`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1500);
+        return;
+      }
+
       for(let index=0;index<trainingRosterGeneratedImages.length;index++){
         downloadTrainingRosterImage(index);
-        await new Promise(resolve=>setTimeout(resolve,180));
+        await new Promise(resolve=>setTimeout(resolve,300));
       }
     }
+
+
+    let trainingRosterCourseRefreshTimer=null;
+
+    function scheduleTrainingRosterImageRefresh(){
+      clearTimeout(trainingRosterCourseRefreshTimer);
+
+      if(!trainingRosterGroups.length || !canGenerateTrainingRosterImages()) return;
+
+      trainingRosterCourseRefreshTimer=setTimeout(()=>{
+        generateTrainingRosterImages(true);
+      },250);
+    }
+
+    ["morningTime","afternoonTime","morningCategory","afternoonCategory","morningCourse","afternoonCourse"]
+      .forEach(id=>{
+        $(id).addEventListener("change",scheduleTrainingRosterImageRefresh);
+        $(id).addEventListener("input",scheduleTrainingRosterImageRefresh);
+      });
 
     $("trainingRosterParse").addEventListener("click",parseTrainingRoster);
     $("trainingRosterClear").addEventListener("click",clearTrainingRoster);
@@ -3696,12 +3815,15 @@
       if(trainingMode==="full"){
         lines.push("　 08：00～17：00（基本救命術）");
         lines.push("");
-        lines.push("👕 穿著建議：全天課程為基本救命術實作，請穿著輕便、方便活動的服裝及長褲，並避免裙裝、高跟鞋或不便活動的服飾。");
+        lines.push("👕 穿著建議：整天課程為基本救命術實作，請穿著輕便、方便活動的服裝及長褲，並避免裙裝、高跟鞋或不便活動的服飾。");
       }else{
         const morningCategory=$("morningCategory").value;
         const afternoonCategory=$("afternoonCategory").value;
-        lines.push(`　 上午 ${$("morningTime").value}${morningCategory ? `（${morningCategory}）` : ""}`);
-        lines.push(`　 下午 ${$("afternoonTime").value}${afternoonCategory ? `（${afternoonCategory}）` : ""}`);
+        const morningCourse=$("morningCourse").value.trim();
+        const afternoonCourse=$("afternoonCourse").value.trim();
+
+        lines.push(`　 上午 ${$("morningTime").value}${morningCategory ? `（${morningCategory}）` : ""}${morningCourse ? `｜${morningCourse}` : ""}`);
+        lines.push(`　 下午 ${$("afternoonTime").value}${afternoonCategory ? `（${afternoonCategory}）` : ""}${afternoonCourse ? `｜${afternoonCourse}` : ""}`);
       }
       lines.push("");
 
@@ -3750,6 +3872,8 @@
       $("afternoonTime").value="13：00～16：00";
       $("morningCategory").value="";
       $("afternoonCategory").value="";
+      $("morningCourse").value="";
+      $("afternoonCourse").value="";
       $("waterClassroomBox").hidden=true;
       $("fullDayTime").hidden=false;
       $("splitTimeBox").hidden=true;
