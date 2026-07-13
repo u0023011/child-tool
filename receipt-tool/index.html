@@ -3559,7 +3559,8 @@
         green:"#eaf1df",
         greenDark:"#526b2d",
         line:"#cdb58f",
-        white:"#ffffff"
+        white:"#ffffff",
+        accentRed:"#c43b31"
       };
 
       ctx.fillStyle=colors.background;
@@ -3587,7 +3588,7 @@
       drawCanvasTextFit(ctx,`${groupData.group} 上課名單`,width/2,188,width-150,38,"900","center");
 
       courseLines.forEach((line,index)=>{
-        ctx.fillStyle=index===0 ? colors.dark : colors.muted;
+        ctx.fillStyle=colors.accentRed;
         drawCanvasTextFit(
           ctx,
           line,
@@ -3595,7 +3596,7 @@
           240+(index*38),
           width-160,
           26,
-          index===0 ? "900" : "700",
+          "900",
           "center"
         );
       });
