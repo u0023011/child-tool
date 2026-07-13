@@ -253,26 +253,16 @@
       font-weight:900;
     }
 
-    .collapsible-card > .collapse-summary .collapse-status::before{
-      content:"點擊展開";
+    .collapse-action-text{
+      white-space:nowrap;
     }
 
     .collapse-arrow{
       display:inline-block;
+      min-width:1em;
       font-size:13px;
       line-height:1;
-    }
-
-    .collapsible-card > .collapse-summary .collapse-arrow::before{
-      content:"▼";
-    }
-
-    .collapsible-card[open] > .collapse-summary .collapse-status::before{
-      content:"點擊收合";
-    }
-
-    .collapsible-card[open] > .collapse-summary .collapse-arrow::before{
-      content:"▲";
+      text-align:center;
     }
 
     .collapse-content{
@@ -1467,7 +1457,7 @@
       <details class="card collapsible-card" id="registrationDetails">
         <summary class="collapse-summary">
           <h3 class="card-title"><span class="badge">1</span>登記資料</h3>
-          <span class="collapse-status"><span class="collapse-arrow"></span></span>
+          <span class="collapse-status"><span class="collapse-action-text">點擊展開</span><span class="collapse-arrow">▼</span></span>
         </summary>
 
         <div class="collapse-content">
@@ -1870,10 +1860,10 @@
         <div class="actions" id="venueImageActions" hidden></div>
       </section>
 
-      <details class="card collapsible-card" id="trainingRosterDetails">
+      <details class="card collapsible-card" id="trainingRosterDetails" open>
         <summary class="collapse-summary">
           <h3 class="card-title"><span class="badge">5</span>Excel 名單匯入（選填）</h3>
-          <span class="collapse-status"><span class="collapse-arrow"></span></span>
+          <span class="collapse-status"><span class="collapse-action-text">點擊展開</span><span class="collapse-arrow">▼</span></span>
         </summary>
 
         <div class="collapse-content">
@@ -1898,7 +1888,7 @@
           <details class="card collapsible-card roster-preview-wrap" id="trainingRosterPreviewDetails" hidden>
             <summary class="collapse-summary">
               <h4 class="card-title"><span class="badge">預</span>解析後資料</h4>
-              <span class="collapse-status"><span class="collapse-arrow"></span></span>
+              <span class="collapse-status"><span class="collapse-action-text">點擊展開</span><span class="collapse-arrow">▼</span></span>
             </summary>
             <div class="collapse-content">
               <div id="trainingRosterPreview" class="roster-preview"></div>
@@ -1912,7 +1902,7 @@
           <details class="card collapsible-card roster-preview-wrap" id="trainingRosterImagesDetails" hidden>
             <summary class="collapse-summary">
               <h4 class="card-title"><span class="badge">圖</span>協力圈圖片</h4>
-              <span class="collapse-status"><span class="collapse-arrow"></span></span>
+              <span class="collapse-status"><span class="collapse-action-text">點擊展開</span><span class="collapse-arrow">▼</span></span>
             </summary>
             <div class="collapse-content">
               <div id="trainingRosterImages" class="roster-images"></div>
@@ -3452,6 +3442,7 @@
       const previewDetails=$("trainingRosterPreviewDetails");
       previewDetails.hidden=false;
       previewDetails.open=false;
+      updateCollapseIndicator(previewDetails);
     }
 
     function roundedRectPath(ctx,x,y,w,h,r){
@@ -3710,6 +3701,7 @@
       const imageDetails=$("trainingRosterImagesDetails");
       imageDetails.hidden=!hasImages;
       imageDetails.open=false;
+      updateCollapseIndicator(imageDetails);
       $("trainingRosterImageActions").hidden=!hasImages;
       $("trainingRosterDownloadAll").hidden=!hasImages;
     }
@@ -3894,7 +3886,8 @@
       $("trainingExtra").value="";
       $("trainingResult").value="";
       clearTrainingRoster();
-      $("trainingRosterDetails").open=false;
+      $("trainingRosterDetails").open=true;
+      updateCollapseIndicator($("trainingRosterDetails"));
       $("morningTime").value="09：00～12：00";
       $("afternoonTime").value="13：00～16：00";
       $("morningCategory").value="";
@@ -3905,6 +3898,23 @@
       $("fullDayTime").hidden=false;
       $("splitTimeBox").hidden=true;
       renderVenuePreview();
+    });
+
+    function updateCollapseIndicator(details){
+      if(!details) return;
+      const summary=details.firstElementChild;
+      if(!summary || summary.tagName!=="SUMMARY") return;
+
+      const text=summary.querySelector(".collapse-action-text");
+      const arrow=summary.querySelector(".collapse-arrow");
+
+      if(text) text.textContent=details.open ? "點擊收合" : "點擊展開";
+      if(arrow) arrow.textContent=details.open ? "▲" : "▼";
+    }
+
+    document.querySelectorAll("details.collapsible-card").forEach(details=>{
+      updateCollapseIndicator(details);
+      details.addEventListener("toggle",()=>updateCollapseIndicator(details));
     });
 
     renderFixedUnits();
