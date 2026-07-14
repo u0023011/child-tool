@@ -947,23 +947,54 @@
 
   <script>
     const FIELD_DEFS = [
-      {id:"name", title:"姓名", aliases:["姓名"]},
+      {id:"name", title:"姓名", aliases:["姓名","托育人員姓名","保母姓名"]},
       {id:"gender", title:"性別", aliases:["性別"]},
-      {id:"age3", title:"3歲以上", aliases:["3歲以上","3歲↑","3歲↑人數"]},
-      {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3"]},
-      {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2"]},
-      {id:"total", title:"總人數", aliases:["總人數","總數","加總","合計"]},
-      {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托","他區跨本區收托"]},
-      {id:"eligible", title:"符合簽準公", aliases:["符合簽準公","符合簽準公共","符合準公"]},
-      {id:"publicStatus", title:"準公共", aliases:["準公共","準公"]},
-      {id:"qualification", title:"證照／相關／結業", aliases:["證照／相關／結業","證照/相關/結業","證照相關結業"]},
-      {id:"district", title:"區", aliases:["區","里"]}
+      {id:"age3", title:"3歲以上", aliases:["3歲以上","3歲↑","3歲↑人數","3歲以上人數"]},
+      {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3","2至3歲"]},
+      {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2","0至2歲"]},
+      {id:"total", title:"總人數", aliases:["總人數","總數","加總","合計","托兒加總","托兒總數","收托加總","收托總數"]},
+      {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托","他區跨本區收托","其他區跨四區收托"]},
+      {id:"eligible", title:"符合簽準公", aliases:["符合簽準公","符合簽準公共","符合準公","符合準公共"]},
+      {id:"publicStatus", title:"準公共", aliases:["準公共","準公","準公共狀態"]},
+      {id:"qualification", title:"證照／相關／結業", aliases:["證照／相關／結業","證照/相關/結業","證照相關結業","證照","資格","證照類別"]},
+      {id:"district", title:"區", aliases:["區","里","行政區","區別","里別"]}
+    ];
+
+    // 這五種十九區工作表的核心欄位位置一致，標題文字可能不同。
+    // 位置以整張工作表從 A 欄開始貼上時計算（0 為 A 欄）。
+    const BUILT_IN_FIELD_PROFILES = [
+      {
+        name:"十九區五種版本通用版型",
+        minColumns:30,
+        minAnchorMatches:7,
+        fieldMap:{
+          name:2,
+          gender:3,
+          age3:4,
+          age23:5,
+          age02:6,
+          total:7,
+          otherArea:11,
+          eligible:16,
+          publicStatus:17,
+          qualification:26,
+          district:29
+        },
+        anchors:[
+          "name","gender","age3","age23","age02",
+          "total","otherArea","eligible","publicStatus",
+          "qualification","district"
+        ]
+      }
     ];
 
     const QUALS = ["技術證","相關科系","核心課程"];
 
     const $ = id => document.getElementById(id);
+    const FIELD_MEMORY_KEY = "reportGeneratorFieldProfilesV1";
     let parsedRowsStore = [];
+    let parsedFieldIdsStore = new Set();
+    let lastParseMeta = null;
 
     function normalize(value){
       return String(value ?? "").normalize("NFKC").trim();
@@ -981,6 +1012,184 @@
     function headerMatches(value,def){
       const target = normalizeHeader(value);
       return def.aliases.some(alias => normalizeHeader(alias) === target);
+    }
+
+    function headerMatchesInColumn(matrix,colIndex,def,maxRows = 4){
+      const rowLimit = Math.min(matrix.length,maxRows);
+
+      for(let rowIndex=0; rowIndex<rowLimit; rowIndex++){
+        if(headerMatches(matrix[rowIndex]?.[colIndex] ?? "",def)){
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function chooseBuiltInProfile(matrix,currentMap = {}){
+      const columnCount = matrixColumnCount(matrix);
+      let best = null;
+
+      BUILT_IN_FIELD_PROFILES.forEach(profile => {
+        if(columnCount < profile.minColumns) return;
+
+        const conflicts = Object.entries(currentMap).some(
+          ([fieldId,colIndex]) =>
+            profile.fieldMap[fieldId] !== undefined &&
+            profile.fieldMap[fieldId] !== colIndex
+        );
+        if(conflicts) return;
+
+        const matchedAnchors = profile.anchors.filter(fieldId => {
+          const def = FIELD_DEFS.find(item => item.id === fieldId);
+          const colIndex = profile.fieldMap[fieldId];
+          return def && headerMatchesInColumn(matrix,colIndex,def);
+        });
+
+        if(matchedAnchors.length < profile.minAnchorMatches) return;
+
+        const result = {
+          ...profile,
+          matchedAnchors,
+          score:matchedAnchors.length
+        };
+
+        if(!best || result.score > best.score){
+          best = result;
+        }
+      });
+
+      return best;
+    }
+
+    function matrixColumnCount(matrix){
+      return Math.max(0,...matrix.map(row => row.length));
+    }
+
+    function loadFieldProfiles(){
+      try{
+        const value = localStorage.getItem(FIELD_MEMORY_KEY);
+        const profiles = value ? JSON.parse(value) : [];
+        return Array.isArray(profiles) ? profiles : [];
+      }catch(error){
+        return [];
+      }
+    }
+
+    function saveFieldProfiles(profiles){
+      try{
+        localStorage.setItem(
+          FIELD_MEMORY_KEY,
+          JSON.stringify(profiles.slice(0,12))
+        );
+      }catch(error){
+        // 無法使用瀏覽器儲存時，仍可照原方式解析。
+      }
+    }
+
+    function chooseRememberedProfile(matrix,currentMap,currentStartRow,currentDepth){
+      const columnCount = matrixColumnCount(matrix);
+      const profiles = loadFieldProfiles()
+        .filter(profile =>
+          profile &&
+          profile.columnCount === columnCount &&
+          profile.fieldMap &&
+          Number.isInteger(profile.headerStartRow) &&
+          Number.isInteger(profile.headerDepth) &&
+          profile.headerStartRow + profile.headerDepth < matrix.length
+        );
+
+      if(!profiles.length) return null;
+
+      const currentEntries = Object.entries(currentMap || {});
+      const compatible = profiles.filter(profile => {
+        if(!currentEntries.length) return true;
+
+        let shared = 0;
+        let conflicts = 0;
+
+        currentEntries.forEach(([fieldId,colIndex]) => {
+          if(profile.fieldMap[fieldId] === undefined) return;
+          shared++;
+          if(profile.fieldMap[fieldId] !== colIndex) conflicts++;
+        });
+
+        // 只要目前辨識到的共同欄位有位置衝突，就不套用舊版型。
+        return conflicts === 0 && (shared > 0 || currentEntries.length < 4);
+      });
+
+      if(!compatible.length) return null;
+
+      compatible.sort((a,b) => {
+        const aMatches = currentEntries.filter(
+          ([fieldId,colIndex]) => a.fieldMap[fieldId] === colIndex
+        ).length;
+        const bMatches = currentEntries.filter(
+          ([fieldId,colIndex]) => b.fieldMap[fieldId] === colIndex
+        ).length;
+
+        if(bMatches !== aMatches) return bMatches - aMatches;
+
+        const aHeaderDistance =
+          Math.abs(a.headerStartRow - currentStartRow) +
+          Math.abs(a.headerDepth - currentDepth);
+        const bHeaderDistance =
+          Math.abs(b.headerStartRow - currentStartRow) +
+          Math.abs(b.headerDepth - currentDepth);
+
+        if(aHeaderDistance !== bHeaderDistance){
+          return aHeaderDistance - bHeaderDistance;
+        }
+
+        return Number(b.updatedAt || 0) - Number(a.updatedAt || 0);
+      });
+
+      return compatible[0];
+    }
+
+    function rememberFieldPositions(matrix,startRow,depth,fieldMap){
+      const columnCount = matrixColumnCount(matrix);
+      const normalizedMap = {};
+
+      FIELD_DEFS.forEach(def => {
+        const colIndex = fieldMap?.[def.id];
+        if(Number.isInteger(colIndex) && colIndex >= 0 && colIndex < columnCount){
+          normalizedMap[def.id] = colIndex;
+        }
+      });
+
+      if(Object.keys(normalizedMap).length < 4) return;
+
+      const profiles = loadFieldProfiles();
+      const sameProfileIndex = profiles.findIndex(profile =>
+        profile.columnCount === columnCount &&
+        profile.headerStartRow === startRow &&
+        profile.headerDepth === depth &&
+        Object.entries(normalizedMap).every(
+          ([fieldId,colIndex]) =>
+            profile.fieldMap?.[fieldId] === undefined ||
+            profile.fieldMap[fieldId] === colIndex
+        )
+      );
+
+      const profile = {
+        columnCount,
+        headerStartRow:startRow,
+        headerDepth:depth,
+        fieldMap:normalizedMap,
+        updatedAt:Date.now()
+      };
+
+      if(sameProfileIndex >= 0){
+        profile.fieldMap = {
+          ...profiles[sameProfileIndex].fieldMap,
+          ...normalizedMap
+        };
+        profiles.splice(sameProfileIndex,1);
+      }
+
+      profiles.unshift(profile);
+      saveFieldProfiles(profiles);
     }
 
     function parseTabularClipboard(textValue){
@@ -1050,6 +1259,378 @@
       return -1;
     }
 
+    function parseCountCell(value){
+      const text = normalize(value).replace(/,/g,"");
+      if(text === "") return null;
+      const number = Number(text);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function contentRowsUntilBlank(matrix,startRow,maxRows = 250){
+      const rows = [];
+
+      for(let rowIndex=startRow; rowIndex<matrix.length; rowIndex++){
+        const row = matrix[rowIndex] || [];
+
+        if(row.every(cell => normalize(cell) === "")){
+          break;
+        }
+
+        rows.push(row);
+        if(rows.length >= maxRows) break;
+      }
+
+      return rows;
+    }
+
+    function columnProfile(rows,colIndex){
+      const rawValues = rows.map(row => normalize(row[colIndex] ?? ""));
+      const values = rawValues.filter(value => value !== "");
+      const numericValues = values
+        .map(parseCountCell)
+        .filter(value => value !== null);
+
+      return {
+        colIndex,
+        rawValues,
+        values,
+        nonEmptyCount:values.length,
+        numericRatio:values.length ? numericValues.length / values.length : 0,
+        uniqueValues:[...new Set(values)],
+        nonEmptyRatio:rows.length ? values.length / rows.length : 0
+      };
+    }
+
+    function ratioMatching(values,test){
+      if(!values.length) return 0;
+      return values.filter(test).length / values.length;
+    }
+
+    function fuzzyHeaderText(matrix,startRow,depth,colIndex){
+      if(startRow < 0) return "";
+
+      return normalizeHeader(
+        Array.from({length:depth},(_,offset) =>
+          matrix[startRow + offset]?.[colIndex] ?? ""
+        ).join("")
+      );
+    }
+
+    function inferFieldsFromContent(matrix,currentMap,preferredStartRow,preferredDepth){
+      const maxColumns = matrixColumnCount(matrix);
+      const preferredDataStart =
+        preferredStartRow >= 0
+          ? preferredStartRow + preferredDepth
+          : null;
+
+      const startCandidates = [];
+      const addStart = value => {
+        if(
+          Number.isInteger(value) &&
+          value >= 1 &&
+          value < matrix.length &&
+          !startCandidates.includes(value)
+        ){
+          startCandidates.push(value);
+        }
+      };
+
+      if(preferredDataStart !== null){
+        addStart(preferredDataStart);
+        addStart(preferredDataStart + 1);
+        addStart(preferredDataStart - 1);
+      }
+
+      for(let value=1; value<=Math.min(8,matrix.length - 1); value++){
+        addStart(value);
+      }
+
+      let bestResult = null;
+
+      startCandidates.forEach(dataStartRow => {
+        const rows = contentRowsUntilBlank(matrix,dataStartRow);
+        if(rows.length < 2) return;
+
+        const profiles = Array.from(
+          {length:maxColumns},
+          (_,colIndex) => columnProfile(rows,colIndex)
+        );
+
+        const inferredMap = {};
+        const confidenceMap = {};
+        const usedColumns = new Set(Object.values(currentMap || {}));
+
+        const assign = (fieldId,colIndex,confidence) => {
+          if(currentMap?.[fieldId] !== undefined) return false;
+          if(inferredMap[fieldId] !== undefined) return false;
+          if(usedColumns.has(colIndex)) return false;
+
+          inferredMap[fieldId] = colIndex;
+          confidenceMap[fieldId] = confidence;
+          usedColumns.add(colIndex);
+          return true;
+        };
+
+        // 年齡三欄與總數：利用「前三欄相加等於第四欄」的關係推測。
+        let bestAgeGroup = null;
+
+        for(let startCol=0; startCol<=maxColumns - 4; startCol++){
+          const fieldOrder = ["age3","age23","age02","total"];
+          const columns = fieldOrder.map((_,offset) => startCol + offset);
+
+          const conflicts = fieldOrder.some((fieldId,index) =>
+            currentMap?.[fieldId] !== undefined &&
+            currentMap[fieldId] !== columns[index]
+          );
+          if(conflicts) continue;
+
+          let checks = 0;
+          let matches = 0;
+          let numericCells = 0;
+          let relevantCells = 0;
+
+          rows.forEach(row => {
+            const raw = columns.map(colIndex => normalize(row[colIndex] ?? ""));
+            const values = raw.map(parseCountCell);
+
+            raw.forEach((value,index) => {
+              if(value !== ""){
+                relevantCells++;
+                if(values[index] !== null) numericCells++;
+              }
+            });
+
+            const hasAgeValue = raw.slice(0,3).some(value => value !== "");
+            const hasTotalValue = raw[3] !== "";
+
+            if(!hasAgeValue || !hasTotalValue || values[3] === null) return;
+
+            const ages = values.slice(0,3).map(value => value ?? 0);
+            if(values.slice(0,3).some((value,index) =>
+              raw[index] !== "" && value === null
+            )) return;
+
+            checks++;
+            if(Math.abs(ages.reduce((sum,value) => sum + value,0) - values[3]) < 0.0001){
+              matches++;
+            }
+          });
+
+          if(checks < 3 || !relevantCells) continue;
+
+          const equalityRatio = matches / checks;
+          const numericRatio = numericCells / relevantCells;
+
+          if(equalityRatio < 0.78 || numericRatio < 0.9) continue;
+
+          const headerHints = [
+            /3歲|3↑/,
+            /2.*3/,
+            /0.*2/,
+            /總|合計|加總/
+          ];
+
+          const headerMatchesCount = columns.filter((colIndex,index) =>
+            headerHints[index].test(
+              fuzzyHeaderText(
+                matrix,
+                Math.max(0,dataStartRow - Math.max(1,preferredDepth || 1)),
+                Math.max(1,preferredDepth || 1),
+                colIndex
+              )
+            )
+          ).length;
+
+          const confidence = Math.min(
+            0.99,
+            0.76 +
+            equalityRatio * 0.14 +
+            numericRatio * 0.05 +
+            headerMatchesCount * 0.01
+          );
+
+          if(!bestAgeGroup || confidence > bestAgeGroup.confidence){
+            bestAgeGroup = {
+              columns,
+              confidence
+            };
+          }
+        }
+
+        if(bestAgeGroup){
+          ["age3","age23","age02","total"].forEach((fieldId,index) => {
+            assign(fieldId,bestAgeGroup.columns[index],bestAgeGroup.confidence);
+          });
+        }
+
+        const pickBestColumn = (fieldId,scoreFunction,minScore = 0.78) => {
+          if(currentMap?.[fieldId] !== undefined) return;
+
+          let best = null;
+
+          profiles.forEach(profile => {
+            if(usedColumns.has(profile.colIndex)) return;
+            const score = scoreFunction(profile);
+
+            if(score >= minScore && (!best || score > best.score)){
+              best = {
+                colIndex:profile.colIndex,
+                score
+              };
+            }
+          });
+
+          if(best){
+            assign(fieldId,best.colIndex,Math.min(0.99,best.score));
+          }
+        };
+
+        // 性別欄：內容主要由「男、女」組成。
+        pickBestColumn("gender",profile => {
+          if(profile.nonEmptyCount < 2) return 0;
+          const ratio = ratioMatching(
+            profile.values,
+            value => /^(男|女)$/.test(value)
+          );
+          return ratio >= 0.85 ? 0.82 + ratio * 0.15 : 0;
+        });
+
+        // 準公共狀態：內容主要是已簽約／未簽約。
+        pickBestColumn("publicStatus",profile => {
+          if(profile.nonEmptyCount < 2) return 0;
+          const ratio = ratioMatching(
+            profile.values,
+            value => /^(已簽約|未簽約|已簽|未簽|準公共|非準公共|準公|非準公)$/.test(value)
+          );
+          return ratio >= 0.7 ? 0.8 + ratio * 0.17 : 0;
+        });
+
+        // 資格欄：技術證、相關科系、核心課程等。
+        pickBestColumn("qualification",profile => {
+          if(profile.nonEmptyCount < 2) return 0;
+          const ratio = ratioMatching(
+            profile.values,
+            value => /(技術證|技術士|相關科系|幼保|核心課程|結業)/.test(value)
+          );
+          return ratio >= 0.65 ? 0.79 + ratio * 0.18 : 0;
+        });
+
+        // 行政區／里別欄。
+        pickBestColumn("district",profile => {
+          if(profile.nonEmptyCount < 2) return 0;
+          const ratio = ratioMatching(
+            profile.values,
+            value =>
+              value.length <= 18 &&
+              (/(區|里)/.test(value) || value.includes("到宅"))
+          );
+          const diversityBonus = profile.uniqueValues.length >= 2 ? 0.03 : 0;
+          return ratio >= 0.65
+            ? 0.78 + ratio * 0.16 + diversityBonus
+            : 0;
+        });
+
+        // 符合準公共資格欄。
+        pickBestColumn("eligible",profile => {
+          if(profile.nonEmptyCount < 2) return 0;
+          const ratio = ratioMatching(
+            profile.values,
+            value => /(符合|不符合|可簽|不可簽)/.test(value)
+          );
+          return ratio >= 0.6 ? 0.78 + ratio * 0.18 : 0;
+        });
+
+        // 其他區來通常是稀疏的勾選或簡短標記；
+        // 只有鄰近「符合準公／準公共」欄位時才推測，避免猜錯。
+        if(currentMap?.otherArea === undefined){
+          const eligibleCol =
+            currentMap?.eligible ?? inferredMap.eligible;
+          const publicCol =
+            currentMap?.publicStatus ?? inferredMap.publicStatus;
+
+          let bestOtherArea = null;
+
+          profiles.forEach(profile => {
+            if(usedColumns.has(profile.colIndex)) return;
+            if(profile.nonEmptyCount < 1 || profile.nonEmptyRatio > 0.55) return;
+
+            const markerRatio = ratioMatching(
+              profile.values,
+              value => /^(V|Ｖ|v|✓|√|是|有|跨區|他區|1)$/.test(value)
+            );
+
+            const nearKnownColumn =
+              (Number.isInteger(eligibleCol) &&
+                profile.colIndex < eligibleCol &&
+                eligibleCol - profile.colIndex <= 5) ||
+              (Number.isInteger(publicCol) &&
+                profile.colIndex < publicCol &&
+                publicCol - profile.colIndex <= 6);
+
+            const fuzzyHeader = fuzzyHeaderText(
+              matrix,
+              Math.max(0,dataStartRow - Math.max(1,preferredDepth || 1)),
+              Math.max(1,preferredDepth || 1),
+              profile.colIndex
+            );
+            const headerSuggestsOtherArea =
+              /(他區|跨區|其他區)/.test(fuzzyHeader);
+
+            if(
+              markerRatio >= 0.7 &&
+              (nearKnownColumn || headerSuggestsOtherArea)
+            ){
+              const score =
+                0.76 +
+                markerRatio * 0.12 +
+                (headerSuggestsOtherArea ? 0.08 : 0);
+
+              if(!bestOtherArea || score > bestOtherArea.score){
+                bestOtherArea = {
+                  colIndex:profile.colIndex,
+                  score
+                };
+              }
+            }
+          });
+
+          if(bestOtherArea && bestOtherArea.score >= 0.8){
+            assign(
+              "otherArea",
+              bestOtherArea.colIndex,
+              Math.min(0.96,bestOtherArea.score)
+            );
+          }
+        }
+
+        const inferredEntries = Object.entries(inferredMap);
+        if(!inferredEntries.length) return;
+
+        const averageConfidence =
+          Object.values(confidenceMap).reduce((sum,value) => sum + value,0) /
+          Object.values(confidenceMap).length;
+
+        const score =
+          inferredEntries.length * 1.5 +
+          averageConfidence * 2 +
+          (preferredDataStart === dataStartRow ? 0.4 : 0);
+
+        const result = {
+          dataStartRow,
+          fieldMap:inferredMap,
+          confidenceMap,
+          averageConfidence,
+          score
+        };
+
+        if(!bestResult || result.score > bestResult.score){
+          bestResult = result;
+        }
+      });
+
+      return bestResult;
+    }
+
     function parseWholeSheetText(textValue){
       const matrix = parseTabularClipboard(textValue);
 
@@ -1095,12 +1676,126 @@
         }
       }
 
-      if(bestScore < 4){
-        throw new Error("找不到可辨識的標題。請確認複製範圍有包含欄位標題。");
+      let usedBuiltInProfile = false;
+      let builtInProfileName = "";
+      const builtInFieldIds = [];
+      const builtInProfile = chooseBuiltInProfile(matrix,bestMap || {});
+
+      if(builtInProfile){
+        bestMap = bestMap || {};
+
+        FIELD_DEFS.forEach(def => {
+          if(
+            bestMap[def.id] === undefined &&
+            Number.isInteger(builtInProfile.fieldMap[def.id])
+          ){
+            bestMap[def.id] = builtInProfile.fieldMap[def.id];
+            builtInFieldIds.push(def.id);
+          }
+        });
+
+        bestScore = Object.keys(bestMap).length;
+        usedBuiltInProfile = true;
+        builtInProfileName = builtInProfile.name;
+
+        // 五種版本有一列或兩列標題；原本已辨識到標題時沿用，
+        // 否則以最常見的前兩列作為標題區。
+        if(bestStartRow < 0){
+          bestStartRow = 0;
+          bestDepth = 2;
+        }
       }
 
-      const dataStartRow = bestStartRow + bestDepth;
-      const parsedRows = matrix.slice(dataStartRow).map(sourceRow => {
+      let usedRememberedPositions = false;
+      const rememberedFieldIds = [];
+      const rememberedProfile = chooseRememberedProfile(
+        matrix,
+        bestMap || {},
+        Math.max(bestStartRow,0),
+        bestDepth
+      );
+
+      if(bestScore < 4 && rememberedProfile){
+        bestStartRow = rememberedProfile.headerStartRow;
+        bestDepth = rememberedProfile.headerDepth;
+        bestMap = {...rememberedProfile.fieldMap};
+        bestScore = Object.keys(bestMap).length;
+        usedRememberedPositions = true;
+        rememberedFieldIds.push(...Object.keys(bestMap));
+      }else if(bestMap && rememberedProfile){
+        FIELD_DEFS.forEach(def => {
+          if(
+            bestMap[def.id] === undefined &&
+            Number.isInteger(rememberedProfile.fieldMap[def.id])
+          ){
+            bestMap[def.id] = rememberedProfile.fieldMap[def.id];
+            rememberedFieldIds.push(def.id);
+            usedRememberedPositions = true;
+          }
+        });
+        bestScore = Object.keys(bestMap).length;
+      }
+
+      let usedContentInference = false;
+      const inferredFieldIds = [];
+      const inferenceConfidenceMap = {};
+
+      const contentInference = inferFieldsFromContent(
+        matrix,
+        bestMap || {},
+        bestStartRow,
+        bestDepth
+      );
+
+      if(contentInference){
+        if(bestStartRow < 0){
+          bestStartRow = 0;
+          bestDepth = Math.max(1,contentInference.dataStartRow);
+          bestMap = bestMap || {};
+        }
+
+        FIELD_DEFS.forEach(def => {
+          if(
+            bestMap[def.id] === undefined &&
+            Number.isInteger(contentInference.fieldMap[def.id])
+          ){
+            bestMap[def.id] = contentInference.fieldMap[def.id];
+            inferredFieldIds.push(def.id);
+            inferenceConfidenceMap[def.id] =
+              contentInference.confidenceMap[def.id];
+            usedContentInference = true;
+          }
+        });
+
+        bestScore = Object.keys(bestMap || {}).length;
+      }
+
+      if(bestScore < 4){
+        throw new Error(
+          "找不到足夠的標題、欄位位置記憶或可高信心推測的欄位。請確認複製範圍包含標題與至少數筆資料。"
+        );
+      }
+
+      rememberFieldPositions(matrix,bestStartRow,bestDepth,bestMap);
+
+      const dataStartRow =
+        bestStartRow >= 0
+          ? bestStartRow + bestDepth
+          : contentInference.dataStartRow;
+      const parsedRows = [];
+      let stoppedAtBlankRow = false;
+      let blankRowNumber = null;
+
+      for(let sourceIndex=0; sourceIndex<matrix.slice(dataStartRow).length; sourceIndex++){
+        const sourceRow = matrix[dataStartRow + sourceIndex];
+
+        // 遇到整列空白時，視為資料結束；空白列以下的內容不再計算。
+        if(sourceRow.every(cell => normalize(cell) === "")){
+          stoppedAtBlankRow = true;
+          blankRowNumber = dataStartRow + sourceIndex + 1;
+          break;
+        }
+
         const row = {};
         FIELD_DEFS.forEach(def => {
           const colIndex = bestMap[def.id];
@@ -1109,8 +1804,8 @@
               ? ""
               : normalize(sourceRow[colIndex] ?? "");
         });
-        return row;
-      });
+        parsedRows.push(row);
+      }
 
       while(
         parsedRows.length &&
@@ -1134,19 +1829,37 @@
         dataStartRow,
         rows:parsedRows,
         found,
-        missing
+        missing,
+        stoppedAtBlankRow,
+        blankRowNumber,
+        usedBuiltInProfile,
+        builtInProfileName,
+        builtInFields:FIELD_DEFS.filter(
+          def => builtInFieldIds.includes(def.id)
+        ),
+        usedRememberedPositions,
+        rememberedFields:FIELD_DEFS.filter(
+          def => rememberedFieldIds.includes(def.id)
+        ),
+        usedContentInference,
+        inferredFields:FIELD_DEFS.filter(
+          def => inferredFieldIds.includes(def.id)
+        ),
+        inferenceConfidenceMap
       };
     }
 
-    function loadRowsIntoGrid(rows){
+    function loadRowsIntoGrid(rows,foundFields = [],parseMeta = null){
       parsedRowsStore = rows.map(row => ({...row}));
+      parsedFieldIdsStore = new Set(foundFields.map(field => field.id));
+      lastParseMeta = parseMeta;
       updateInputStatus();
     }
 
     function parseAndLoadWholeSheet(){
       try{
         const result = parseWholeSheetText($("wholeSheetPaste").value);
-        loadRowsIntoGrid(result.rows);
+        loadRowsIntoGrid(result.rows,result.found,result);
 
         const headerStart = result.headerRowIndex + 1;
         const headerEnd = result.headerRowIndex + result.headerDepth;
@@ -1162,6 +1875,26 @@
           `<br>已找到：${result.found.map(def => def.title).join("、")}。`+
           (result.missing.length
             ? `<br>未找到：<strong>${result.missing.map(def => def.title).join("、")}</strong>。`
+            : "")+
+          (result.usedBuiltInProfile
+            ? `<br>已套用內建版型：<strong>${result.builtInProfileName}</strong>`+
+              (result.builtInFields.length
+                ? `，補齊欄位：<strong>${result.builtInFields.map(def => def.title).join("、")}</strong>`
+                : "")+
+              `。`
+            : "")+
+          (result.usedRememberedPositions
+            ? `<br>已套用記住的欄位位置`+
+              (result.rememberedFields.length
+                ? `：<strong>${result.rememberedFields.map(def => def.title).join("、")}</strong>`
+                : "")+
+              `。`
+            : `<br>已記住本次欄位位置，之後相同版型可直接套用。`)+
+          (result.usedContentInference
+            ? `<br>依欄位內容高信心推測：<strong>${result.inferredFields.map(def => def.title).join("、")}</strong>，請留意一致性檢查結果。`
+            : "")+
+          (result.stoppedAtBlankRow
+            ? `<br>偵測到第 <strong>${result.blankRowNumber}</strong> 列為空白列，以下資料未納入計算。`
             : "");
 
         $("wholeSheetPaste").value = "";
@@ -1251,6 +1984,23 @@
       return parsedRowsStore.map(row => ({...row}));
     }
 
+    function isExcludedCaregiverRow(row){
+      return Object.values(row).some(value =>
+        normalize(value).includes("不計算人數")
+      );
+    }
+
+    function isCaregiverRow(row){
+      if(isExcludedCaregiverRow(row)) return false;
+
+      const meaningfulFields = [
+        "name","gender","age3","age23","age02","total",
+        "otherArea","eligible","publicStatus","qualification","district"
+      ];
+
+      return meaningfulFields.some(field => normalize(row[field]) !== "");
+    }
+
     function countWhere(rows,predicate){
       return rows.reduce((sum,row) => sum + (predicate(row) ? 1 : 0),0);
     }
@@ -1285,31 +2035,35 @@
     }
 
     function computeReport(rows){
-      const registeredCount = countWhere(rows,r => normalize(r.name) !== "");
-      const activeCount = countWhere(rows,r => toNumber(r.total) > 0);
-      const childrenTotal = sumWhere(rows,"total",() => true);
-      const eligibleActive = countWhere(rows,r => toNumber(r.total) > 0 && normalize(r.eligible) === "符合");
-      const signedActive = countWhere(rows,r => toNumber(r.total) > 0 && normalize(r.publicStatus) === "已簽約");
+      const registeredCount = countWhere(rows,r => isCaregiverRow(r));
+      const activeCount = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0);
+      const childrenTotal = sumWhere(rows,"total",r => isCaregiverRow(r));
+      const eligibleActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalize(r.eligible) === "符合");
+      const signedActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalize(r.publicStatus) === "已簽約");
 
       const maleNon = QUALS.map(q => countWhere(rows,r =>
+        isCaregiverRow(r) &&
         normalize(r.publicStatus) === "未簽約" &&
         normalize(r.gender) === "男" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
       ));
       const femaleNon = QUALS.map(q => countWhere(rows,r =>
+        isCaregiverRow(r) &&
         normalize(r.publicStatus) === "未簽約" &&
         normalize(r.gender) === "女" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
       ));
       const malePub = QUALS.map(q => countWhere(rows,r =>
+        isCaregiverRow(r) &&
         normalize(r.publicStatus) === "已簽約" &&
         normalize(r.gender) === "男" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
       ));
       const femalePub = QUALS.map(q => countWhere(rows,r =>
+        isCaregiverRow(r) &&
         normalize(r.publicStatus) === "已簽約" &&
         normalize(r.gender) === "女" &&
         normalize(r.qualification) === q &&
@@ -1322,12 +2076,12 @@
 
       // 性別統計與資格統計相同，排除「其他區來」的托育人員。
       const maleTotal = countWhere(rows,r =>
-        normalize(r.name) !== "" &&
+        isCaregiverRow(r) &&
         normalize(r.gender) === "男" &&
         normalize(r.otherArea) === ""
       );
       const femaleTotal = countWhere(rows,r =>
-        normalize(r.name) !== "" &&
+        isCaregiverRow(r) &&
         normalize(r.gender) === "女" &&
         normalize(r.otherArea) === ""
       );
@@ -1335,7 +2089,7 @@
 
       // 整體概況包含其他區來的人員；一致性檢查時改用扣除其他區後的人數。
       const localRegisteredCount = countWhere(rows,r =>
-        normalize(r.name) !== "" &&
+        isCaregiverRow(r) &&
         normalize(r.otherArea) === ""
       );
       const otherAreaCaregiverCount = registeredCount - localRegisteredCount;
@@ -1344,22 +2098,28 @@
 
       const districtRows = dynamicDistricts.map(district => {
         const signedCaregivers = countWhere(rows,r =>
+          isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
-          normalize(r.publicStatus) === "已簽約" &&
+          isCaregiverRow(r) &&
+        normalize(r.publicStatus) === "已簽約" &&
           toNumber(r.total) > 0 &&
           normalize(r.otherArea) === ""
         );
         const nonSignedCaregivers = countWhere(rows,r =>
+          isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
-          normalize(r.publicStatus) === "未簽約" &&
+          isCaregiverRow(r) &&
+        normalize(r.publicStatus) === "未簽約" &&
           toNumber(r.total) > 0 &&
           normalize(r.otherArea) === ""
         );
         const signedChildren = sumWhere(rows,"total",r =>
+          isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
           normalize(r.publicStatus) === "已簽約"
         );
         const nonSignedChildren = sumWhere(rows,"total",r =>
+          isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
           normalize(r.publicStatus) === "未簽約"
         );
@@ -1377,9 +2137,9 @@
       });
 
       const ageChildrenTotal =
-        sumWhere(rows,"age02",() => true) +
-        sumWhere(rows,"age23",() => true) +
-        sumWhere(rows,"age3",() => true);
+        sumWhere(rows,"age02",r => isCaregiverRow(r)) +
+        sumWhere(rows,"age23",r => isCaregiverRow(r)) +
+        sumWhere(rows,"age3",r => isCaregiverRow(r));
 
       const districtChildrenTotal = districtRows.reduce(
         (sum,row) => sum + row.totalChildren,
@@ -1403,12 +2163,12 @@
         ageChildrenTotal,
         districtChildrenTotal,
 
-        age02Non:sumWhere(rows,"age02",r => normalize(r.publicStatus)==="未簽約"),
-        age02Public:sumWhere(rows,"age02",r => normalize(r.publicStatus)==="已簽約"),
-        age23Non:sumWhere(rows,"age23",r => normalize(r.publicStatus)==="未簽約"),
-        age23Public:sumWhere(rows,"age23",r => normalize(r.publicStatus)==="已簽約"),
-        age3Non:sumWhere(rows,"age3",r => normalize(r.publicStatus)==="未簽約"),
-        age3Public:sumWhere(rows,"age3",r => normalize(r.publicStatus)==="已簽約"),
+        age02Non:sumWhere(rows,"age02",r => isCaregiverRow(r) && normalize(r.publicStatus)==="未簽約"),
+        age02Public:sumWhere(rows,"age02",r => isCaregiverRow(r) && normalize(r.publicStatus)==="已簽約"),
+        age23Non:sumWhere(rows,"age23",r => isCaregiverRow(r) && normalize(r.publicStatus)==="未簽約"),
+        age23Public:sumWhere(rows,"age23",r => isCaregiverRow(r) && normalize(r.publicStatus)==="已簽約"),
+        age3Non:sumWhere(rows,"age3",r => isCaregiverRow(r) && normalize(r.publicStatus)==="未簽約"),
+        age3Public:sumWhere(rows,"age3",r => isCaregiverRow(r) && normalize(r.publicStatus)==="已簽約"),
 
         districtRows,
         districtSignedSubtotal:districtRows.reduce((sum,r)=>sum+r.signedCaregivers,0),
@@ -1655,6 +2415,8 @@
         try{
           const result = parseWholeSheetText($("wholeSheetPaste").value);
           parsedRowsStore = result.rows.map(row => ({...row}));
+          parsedFieldIdsStore = new Set(result.found.map(field => field.id));
+          lastParseMeta = result;
           $("wholeSheetPaste").value = "";
         }catch(error){
           $("statusBox").className = "status error";
@@ -1680,17 +2442,23 @@
       const consistency = renderConsistencyCheck(report);
 
       const missing = FIELD_DEFS
-        .filter(def => !columns[def.id].some(value => normalize(value) !== ""))
+        .filter(def => !parsedFieldIdsStore.has(def.id))
         .map(def => def.title);
+
+      const inferredTitles =
+        lastParseMeta?.inferredFields?.map(def => def.title) || [];
 
       $("reportMeta").innerHTML =
         `產生時間：${rocTimestamp()}<br>`+
         `資料列數：${rows.length}列`+
-        (missing.length ? `<br>未貼欄位：${missing.join("、")}` : "");
+        (missing.length ? `<br>未貼欄位：${missing.join("、")}` : "")+
+        (inferredTitles.length
+          ? `<br>內容推測欄位：${inferredTitles.join("、")}`
+          : "");
 
       $("reportCard").classList.add("show");
 
-      if(missing.length || consistency.hasMismatch){
+      if(missing.length || consistency.hasMismatch || inferredTitles.length){
         $("statusBox").className = "status warn";
 
         const messages = [];
@@ -1702,6 +2470,11 @@
         if(consistency.hasMismatch){
           messages.push(
             `發現統計數字不一致，請查看「資料一致性檢查」及紅框區塊。`
+          );
+        }
+        if(inferredTitles.length){
+          messages.push(
+            `系統依內容推測欄位：<strong>${inferredTitles.join("、")}</strong>；若一致性檢查正常，通常可直接使用。`
           );
         }
 
@@ -1719,6 +2492,8 @@
     function clearAll(){
       if(!confirm("確定要清除全部已貼上的資料與報表嗎？")) return;
       parsedRowsStore = [];
+      parsedFieldIdsStore = new Set();
+      lastParseMeta = null;
       $("wholeSheetPaste").value = "";
       $("reportCard").classList.remove("show");
       $("validationPanel").className = "validation-panel";

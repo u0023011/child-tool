@@ -1,4 +1,4 @@
-const CACHE_NAME = "toolbox-home-v20260714-4";
+const CACHE_NAME = "toolbox-home-v20260714-9";
 const HOME_PAGE = "./index.html";
 
 self.addEventListener("install", event => {
