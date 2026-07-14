@@ -858,10 +858,10 @@
       {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3"]},
       {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2"]},
       {id:"total", title:"總人數", aliases:["總人數","總數"]},
-      {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托"]},
-      {id:"eligible", title:"符合簽準公", aliases:["符合簽準公"]},
-      {id:"publicStatus", title:"準公共", aliases:["準公共"]},
-      {id:"qualification", title:"證照／相關／結業", aliases:["證照／相關／結業","證照/相關/結業"]},
+      {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托","他區跨本區收托"]},
+      {id:"eligible", title:"符合簽準公", aliases:["符合簽準公","符合簽準公共","符合準公"]},
+      {id:"publicStatus", title:"準公共", aliases:["準公共","準公"]},
+      {id:"qualification", title:"證照／相關／結業", aliases:["證照／相關／結業","證照/相關/結業","證照相關結業"]},
       {id:"district", title:"區", aliases:["區","里"]}
     ];
 
@@ -888,11 +888,55 @@
       return def.aliases.some(alias => normalizeHeader(alias) === target);
     }
 
+    function parseTabularClipboard(textValue){
+      const source = String(textValue ?? "").replace(/\r\n?/g,"\n");
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let quoted = false;
+
+      for(let index=0; index<source.length; index++){
+        const char = source[index];
+
+        if(char === '"'){
+          if(quoted && source[index + 1] === '"'){
+            cell += '"';
+            index++;
+          }else{
+            quoted = !quoted;
+          }
+          continue;
+        }
+
+        if(char === "\t" && !quoted){
+          row.push(cell);
+          cell = "";
+          continue;
+        }
+
+        if(char === "\n" && !quoted){
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+          continue;
+        }
+
+        cell += char;
+      }
+
+      row.push(cell);
+      rows.push(row);
+
+      while(rows.length && rows[rows.length - 1].every(value => normalize(value) === "")){
+        rows.pop();
+      }
+
+      return rows;
+    }
+
     function parseWholeSheetText(textValue){
-      const matrix = String(textValue ?? "")
-        .replace(/\r\n?/g,"\n")
-        .split("\n")
-        .map(line => line.split("\t"));
+      const matrix = parseTabularClipboard(textValue);
 
       while(matrix.length && matrix[matrix.length-1].every(cell => normalize(cell) === "")){
         matrix.pop();
