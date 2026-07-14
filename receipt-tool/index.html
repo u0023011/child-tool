@@ -2347,7 +2347,7 @@
         card.querySelectorAll(".child-toggles .toggle.active").forEach(btn=>items.push(btn.dataset.label));
 
         const ages=[...card.querySelectorAll(".age-toggle.active")].map(x=>x.textContent.trim());
-        if(ages.length) items.push(`發展檢核表${ages.join("、")}`);
+        if(ages.length) items.push(`檢核表${ages.join("、")}`);
 
         if(items.length){
           const prefix=name?`${name}的`:"";
