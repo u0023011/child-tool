@@ -870,7 +870,7 @@
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">資格與性別統計</h3>
-                <p class="report-section-desc">左側為資格統計，右側為全部登記的性別人數，兩份報表可分別複製。</p>
+                <p class="report-section-desc">資格與性別統計皆排除「其他區來」的托育人員，兩份報表可分別複製。</p>
               </div>
               <div class="report-copy-actions">
                 <button type="button" class="copy-data-btn" data-copy-report="qualification">複製資格數據</button>
@@ -893,7 +893,7 @@
                 <th></th>
                 <th colspan="3">非準公共托育人員</th>
                 <th colspan="3">準公共托育人員</th>
-                <th colspan="2" class="cyan">負責人數（全部登記）</th>
+                <th colspan="2" class="cyan">本區人數（扣除其他區）</th>
               </tr>
               <tr>
                 <th></th>
@@ -1269,14 +1269,25 @@
       const qualificationFemaleTotal = [...femaleNon,...femalePub].reduce((a,b)=>a+b,0);
       const qualificationTotal = qualificationMaleTotal + qualificationFemaleTotal;
 
-      // 「負責人數（全部登記）」獨立依性別欄統計，避免和資格分類互相綁定。
+      // 性別統計與資格統計相同，排除「其他區來」的托育人員。
       const maleTotal = countWhere(rows,r =>
-        normalize(r.name) !== "" && normalize(r.gender) === "男"
+        normalize(r.name) !== "" &&
+        normalize(r.gender) === "男" &&
+        normalize(r.otherArea) === ""
       );
       const femaleTotal = countWhere(rows,r =>
-        normalize(r.name) !== "" && normalize(r.gender) === "女"
+        normalize(r.name) !== "" &&
+        normalize(r.gender) === "女" &&
+        normalize(r.otherArea) === ""
       );
       const genderTotal = maleTotal + femaleTotal;
+
+      // 整體概況包含其他區來的人員；一致性檢查時改用扣除其他區後的人數。
+      const localRegisteredCount = countWhere(rows,r =>
+        normalize(r.name) !== "" &&
+        normalize(r.otherArea) === ""
+      );
+      const otherAreaCaregiverCount = registeredCount - localRegisteredCount;
 
       const dynamicDistricts = getDynamicDistricts(rows);
 
@@ -1330,12 +1341,14 @@
         childrenTotal,
         eligibleActive,
         signedActive,
-        noChildCount:maleTotal+femaleTotal-activeCount,
+        noChildCount:genderTotal-activeCount,
         generalCaregiverCount:activeCount-signedActive,
         publicCaregiverCount:signedActive,
 
         qualificationTotal,
         genderTotal,
+        localRegisteredCount,
+        otherAreaCaregiverCount,
         ageChildrenTotal,
         districtChildrenTotal,
 
@@ -1381,7 +1394,7 @@
 
     function renderConsistencyCheck(report){
       const caregiverValues = [
-        report.registeredCount,
+        report.localRegisteredCount,
         report.qualificationTotal,
         report.genderTotal
       ];
@@ -1408,8 +1421,9 @@
       list.innerHTML = `
         <div class="validation-item">
           <div>
-            <strong>托育人員總數</strong><br>
-            整體概況：${displayNumber(report.registeredCount)}｜
+            <strong>本區托育人員總數（排除其他區來）</strong><br>
+            整體概況可比數：${displayNumber(report.localRegisteredCount)}
+            （原總數 ${displayNumber(report.registeredCount)}－其他區來 ${displayNumber(report.otherAreaCaregiverCount)}）｜
             資格統計：${displayNumber(report.qualificationTotal)}｜
             性別統計：${displayNumber(report.genderTotal)}
           </div>
