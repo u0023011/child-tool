@@ -717,6 +717,13 @@
               <div class="tool-desc">產生收件、托育媒合及在職通知訊息。</div>
               <div class="tool-count">已有 <strong id="count-receipt-tool">讀取中</strong> 人次使用</div>
             </button>
+
+            <button type="button" class="tool-card admin-only" onclick="openTool('report-generator/')">
+              <div class="tool-title">📊 報表生成器</div>
+              <div class="tool-desc">貼上 Excel 工作頁資料，自動整理並產生統計報表。</div>
+              <div class="tool-count">已有 <strong id="count-report-generator">讀取中</strong> 人次使用</div>
+            </button>
+
           </div>
 
 
@@ -754,7 +761,8 @@
       "age-tool/": ["basic", "admin"],
       "childcare-law/": ["admin"],
       "report-date-tool/": ["admin"],
-      "receipt-tool/": ["admin"]
+      "receipt-tool/": ["admin"],
+      "report-generator/": ["admin"]
     };
 
     const counterMap = {
@@ -777,6 +785,11 @@
         counter: "receipt_tool",
         name: "訊息生成器",
         cardId: "count-receipt-tool"
+      },
+      "report-generator/": {
+        counter: "report_generator",
+        name: "報表生成器",
+        cardId: "count-report-generator"
       }
     };
 

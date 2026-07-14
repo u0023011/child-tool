@@ -1,0 +1,1422 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#7d5930">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="報表生成器">
+  <title>報表生成器</title>
+  <style>
+    :root{
+      --bg:#f5ecdf;
+      --shell:#f8f2e9;
+      --card:#ffffff;
+      --text:#3c2f23;
+      --muted:#705d49;
+      --line:#d7bd97;
+      --primary:#7d5930;
+      --primary-dark:#654521;
+      --green:#dcebd5;
+      --blue:#d7e5f7;
+      --orange:#f7d5b8;
+      --yellow:#fff600;
+      --gray:#d1d1d1;
+      --peach:#f6ddc8;
+      --cyan:#bee1eb;
+      --pink:#e6b8b7;
+      --danger:#b6463e;
+      --shadow:0 6px 18px rgba(75,48,24,.12);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+      color:var(--text);
+      background:var(--bg);
+    }
+
+    button,textarea{font:inherit}
+    button{cursor:pointer}
+
+    .page{
+      width:min(1440px,100%);
+      margin:0 auto;
+      min-height:100vh;
+      padding:18px 16px 50px;
+      background:var(--shell);
+    }
+
+    .hero{
+      padding:22px;
+      border:1px solid #eadcc6;
+      border-radius:22px;
+      background:#fff;
+      box-shadow:var(--shadow);
+    }
+
+    .hero-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+    }
+
+    h1{
+      margin:0;
+      color:#4e321b;
+      font-size:clamp(28px,4vw,40px);
+    }
+
+    .hero p{
+      margin:8px 0 0;
+      color:var(--muted);
+      line-height:1.75;
+    }
+
+    .privacy{
+      flex:0 0 auto;
+      padding:10px 14px;
+      border:1.5px solid #cfb188;
+      border-radius:999px;
+      background:#fffaf3;
+      color:#6f5030;
+      font-size:14px;
+      font-weight:800;
+    }
+
+    .card{
+      margin-top:18px;
+      padding:20px;
+      border:1.5px solid var(--line);
+      border-radius:var(--radius);
+      background:var(--card);
+      box-shadow:var(--shadow);
+    }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0 0 8px;
+      color:#3f2d1c;
+      font-size:22px;
+    }
+
+    .badge{
+      display:inline-grid;
+      place-items:center;
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      background:#eadbc5;
+      color:var(--primary);
+      box-shadow:inset 0 0 0 1px #d3b78e;
+      font-weight:950;
+    }
+
+    .hint{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
+    }
+
+
+
+    .sheet-paste-card{
+      margin-bottom:16px;
+      padding:16px;
+      border:1.5px solid #d1b184;
+      border-radius:16px;
+      background:linear-gradient(180deg,#fffaf3 0%,#fff 100%);
+    }
+
+    .sheet-paste-title{
+      margin:0 0 6px;
+      color:#4e321b;
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .sheet-paste-desc{
+      margin:0 0 10px;
+      color:#725c46;
+      font-size:14px;
+      line-height:1.7;
+    }
+
+    .sheet-paste-area{
+      width:100%;
+      min-height:120px;
+      padding:14px;
+      border:1.5px dashed #b89260;
+      border-radius:13px;
+      background:#fff;
+      color:#3c2f23;
+      resize:vertical;
+      outline:none;
+      line-height:1.6;
+    }
+
+    .sheet-paste-area:focus{
+      border-style:solid;
+      border-color:#7d5930;
+      box-shadow:0 0 0 4px rgba(125,89,48,.13);
+    }
+
+    .sheet-paste-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    .action{
+      min-height:48px;
+      padding:12px 20px;
+      border:1px solid transparent;
+      border-radius:12px;
+      font-weight:950;
+    }
+
+    .primary{
+      color:#fff;
+      background:var(--primary);
+      box-shadow:0 3px 9px rgba(75,48,24,.2);
+    }
+
+    .primary:hover{background:var(--primary-dark)}
+
+    .secondary{
+      color:#694720;
+      border-color:#cfaf80;
+      background:#eadbc5;
+    }
+
+    .ghost{
+      color:#5a4430;
+      border-color:#d2b992;
+      background:#eee3d3;
+    }
+
+    .danger{
+      color:var(--danger);
+      border-color:#e4b5ae;
+      background:#fff0ed;
+    }
+
+    .status{
+      margin-top:14px;
+      padding:12px 14px;
+      border:1px dashed #c9ad85;
+      border-radius:12px;
+      background:#fffaf3;
+      color:#654b33;
+      line-height:1.7;
+    }
+
+    .status.warn{
+      border-color:#ddae65;
+      background:#fff8df;
+      color:#75520f;
+    }
+
+    .status.error{
+      border-color:#dca49d;
+      background:#fff3f1;
+      color:#9c382d;
+    }
+
+    .report-card{display:none}
+    .report-card.show{display:block}
+
+    .report-generatorbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:18px;
+      padding-bottom:14px;
+      border-bottom:1px solid #eadcc6;
+    }
+
+    .report-meta{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.7;
+      text-align:right;
+    }
+
+    .report-wrap{
+      overflow-x:auto;
+      padding-bottom:5px;
+    }
+
+    .report{
+      min-width:1120px;
+      color:#2f261d;
+      background:transparent;
+    }
+
+    .report table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      table-layout:fixed;
+      overflow:hidden;
+      border:1px solid #d8c6aa;
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 8px 20px rgba(75,48,24,.06);
+    }
+
+    .report th,
+    .report td{
+      padding:10px 8px;
+      border-right:1px solid #decfb7;
+      border-bottom:1px solid #eadfce;
+      text-align:center;
+      vertical-align:middle;
+      font-weight:600;
+      line-height:1.45;
+      color:#3c2f23;
+      background:#fff;
+    }
+
+    .report tr:last-child > *{
+      border-bottom:0;
+    }
+
+    .report tr > *:last-child{
+      border-right:0;
+    }
+
+    .report thead th{
+      font-weight:950;
+    }
+
+    .report tbody tr:nth-child(even) td,
+    .report tbody tr:nth-child(even) th{
+      background:#fffcf7;
+    }
+
+    .report .value{
+      font-size:22px;
+      font-weight:950;
+      color:#4f321c;
+    }
+
+    .report .top-green{
+      background:linear-gradient(180deg,#eff6ea 0%,#f8fbf5 100%);
+    }
+    .report .top-blue{
+      background:linear-gradient(180deg,#eef4fb 0%,#f8fbff 100%);
+    }
+    .report .top-orange{
+      background:linear-gradient(180deg,#fbefe4 0%,#fff8f3 100%);
+    }
+    .report .age-head{
+      background:#f6e5d4;
+      color:#5c3b1d;
+      font-weight:950;
+    }
+    .report .yellow{
+      background:#fff4bf;
+      font-weight:900;
+    }
+    .report .gray{
+      background:#efefef;
+    }
+    .report .peach{
+      background:#f8e8da;
+    }
+    .report .cyan{
+      background:#e3f1f5;
+    }
+    .report .pink{
+      background:#f7e2e5;
+    }
+    .report .red-text{
+      color:#c43d2f;
+      font-weight:950;
+    }
+    .report .left{text-align:left}
+    .report .nowrap{white-space:nowrap}
+
+    .report-section{
+      margin-top:24px;
+      padding:18px;
+      border:1.5px solid #e3d1b6;
+      border-radius:20px;
+      background:linear-gradient(180deg,#fffdf9 0%,#fffaf3 100%);
+      box-shadow:0 10px 22px rgba(75,48,24,.06);
+    }
+    .report-section:first-child{margin-top:0}
+
+    .report-section-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .report-section-title{
+      margin:0;
+      color:#4e321b;
+      font-size:20px;
+      font-weight:950;
+      letter-spacing:.3px;
+    }
+
+    .report-section-desc{
+      margin:4px 0 0;
+      color:#7a6551;
+      font-size:13px;
+      line-height:1.65;
+    }
+
+
+    .report-copy-actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      gap:8px;
+      flex:0 0 auto;
+    }
+
+    .copy-data-btn{
+      min-height:40px;
+      padding:9px 14px;
+      border:1px solid #cfae7b;
+      border-radius:11px;
+      background:#f3e7d5;
+      color:#65441f;
+      font-weight:950;
+      white-space:nowrap;
+    }
+
+    .copy-data-btn:hover{
+      background:#ead7ba;
+      border-color:#b98d52;
+    }
+
+    .copy-data-btn:active{
+      transform:translateY(1px);
+    }
+
+    .overview-table th,
+    .overview-table td{
+      padding:12px 10px;
+    }
+
+    .overview-table th{
+      font-size:16px;
+      font-weight:950;
+      color:#4e321b;
+    }
+
+    .overview-table td{
+      min-height:76px;
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .overview-table .value{
+      padding:12px 8px;
+      font-size:22px;
+    }
+
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+    }
+
+    .summary-item{
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      min-height:182px;
+      border:1px solid #ddd0bc;
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 6px 16px rgba(75,48,24,.05);
+    }
+
+    .summary-item .group{
+      min-height:42px;
+      padding:10px 12px;
+      border-bottom:1px solid #dfd1bb;
+      font-size:15px;
+      color:#5a3a1e;
+      font-weight:950;
+      text-align:center;
+    }
+
+    .summary-item .label{
+      display:grid;
+      place-items:center;
+      padding:14px 12px;
+      font-size:14px;
+      line-height:1.6;
+      text-align:center;
+    }
+
+    .summary-item .value{
+      display:grid;
+      place-items:center;
+      min-height:52px;
+      padding:10px 12px;
+      border-top:1px solid #dfd1bb;
+      background:rgba(255,255,255,.62);
+    }
+
+    .empty-group{color:transparent}
+
+    .district-note{
+      margin-bottom:12px;
+      padding:12px 14px;
+      border:1px solid #f0d56f;
+      border-radius:14px;
+      background:linear-gradient(180deg,#fff8ca 0%,#fffdf0 100%);
+      text-align:center;
+      color:#6d5315;
+      font-weight:900;
+      line-height:1.65;
+    }
+
+    .small-note{
+      margin-top:10px;
+      color:#6a5a49;
+      font-size:12px;
+      line-height:1.75;
+    }
+
+    @media(max-width:1050px){
+  
+    .actions{display:grid;grid-template-columns:1fr 1fr}
+      .actions .wide{grid-column:1/-1}
+      .report-generatorbar{align-items:flex-start;flex-direction:column}
+      .report-meta{text-align:left}
+      .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .report-section{padding:14px}
+      .report-section-head{display:block}
+    }
+
+    @media print{
+      @page{size:A4 landscape;margin:8mm}
+      body{background:#fff}
+      .page{width:100%;padding:0;background:#fff}
+      .hero,.input-card,.report-generatorbar .actions,.report-copy-actions,.status{display:none !important}
+      .card{margin:0;padding:0;border:0;box-shadow:none}
+      .report-card{display:block !important}
+      .report-generatorbar{margin:0 0 6px;padding-bottom:6px;border-bottom:1px solid #ddd}
+      .report-generatorbar .section-title{font-size:18px}
+      .report-meta{font-size:10px}
+      .report-wrap{overflow:visible}
+      .report{min-width:0}
+      .report-section{
+        margin-top:10px;
+        padding:10px;
+        border:1px solid #ddd;
+        border-radius:10px;
+        box-shadow:none;
+        background:#fff;
+      }
+      .report-section-head{margin-bottom:8px}
+      .report-section-title{font-size:13px}
+      .report-section-desc{font-size:9px}
+      .overview-table th{font-size:10px;padding:4px 3px}
+      .overview-table td{font-size:8px;padding:4px 3px}
+      .overview-table .value{font-size:14px;padding:5px 3px}
+      .summary-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+      .summary-item{
+        min-height:110px;
+        border-radius:10px;
+        box-shadow:none;
+      }
+      .summary-item .group{min-height:26px;font-size:11px;padding:4px}
+      .summary-item .label{font-size:10px;padding:6px 4px}
+      .report .value{font-size:14px}
+      .report th,.report td{padding:4px 3px;font-size:9px}
+      .district-note{padding:6px;font-size:10px;margin-bottom:8px}
+      .small-note{display:none}
+    }
+  </style>
+
+  <script>
+    (function () {
+      if (location.protocol === "file:") return;
+
+      const loggedIn = sessionStorage.getItem("toolLogin") === "ok";
+      const role = sessionStorage.getItem("toolRole");
+
+      // 報表生成器僅限管理者。
+      // 未經首頁後端登入、一般帳號或直接輸入工具網址時，回到首頁。
+      if (!loggedIn || role !== "admin") {
+        location.replace("../");
+      }
+    })();
+  </script>
+
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="hero-row">
+        <div>
+          <h1>報表生成器</h1>
+          <p></p>
+        </div>
+        <div class="privacy">資料只在本機瀏覽器運算</div>
+      </div>
+    </header>
+
+    <section class="card input-card">
+      <h2 class="section-title"><span class="badge">1</span>資料來源</h2>
+      <p class="hint">請直接複製整個 Excel 工作頁並貼上，系統會依標題自動抓取需要的欄位，再產生統計報表。</p>
+
+      <div class="sheet-paste-card">
+        <h3 class="sheet-paste-title">整張工作頁貼上</h3>
+        <p class="sheet-paste-desc">在 Excel 工作頁按「全選」後複製，回到這裡貼上。</p>
+        <textarea id="wholeSheetPaste" class="sheet-paste-area" spellcheck="false" placeholder="請在此貼上整張 Excel 工作頁資料"></textarea>
+        <div class="sheet-paste-actions">
+          <button class="mini-action" id="parseWholeSheetBtn" type="button">解析資料</button>
+          <button class="mini-action" id="clearWholeSheetBtn" type="button">清除貼上內容</button>
+        </div>
+      </div>
+
+
+      <div class="actions">
+        <button class="action primary wide" id="generateBtn" type="button">產生報表</button>
+        <button class="action secondary" id="scrollReportBtn" type="button">前往報表</button>
+        <button class="action danger" id="clearBtn" type="button">全部清除</button>
+      </div>
+
+      <div class="status" id="statusBox">尚未貼上資料。</div>
+    </section>
+
+    <section class="card report-card" id="reportCard">
+      <div class="report-generatorbar">
+        <h2 class="section-title"><span class="badge">2</span>統計報表</h2>
+        <div class="report-meta" id="reportMeta"></div>
+        <div class="actions" style="margin-top:0">
+          <button class="action secondary" id="printBtn" type="button">列印／存成 PDF</button>
+        </div>
+      </div>
+
+      <div class="report-wrap">
+        <div class="report" id="reportArea">
+          <section class="report-section">
+            <div class="report-section-head">
+              <div>
+                <h3 class="report-section-title">整體概況</h3>
+                <p class="report-section-desc">維持原報表的合併欄位結構，方便整塊選取與複製。</p>
+              </div>
+              <div class="report-copy-actions">
+                <button type="button" class="copy-data-btn" data-copy-report="overview">複製數據</button>
+              </div>
+            </div>
+
+            <table class="overview-table">
+              <colgroup>
+                <col style="width:12.5%"><col style="width:12.5%"><col style="width:12.5%">
+                <col style="width:12.5%"><col style="width:12.5%">
+                <col style="width:12.5%"><col style="width:12.5%"><col style="width:12.5%">
+              </colgroup>
+              <tr>
+                <th class="top-green" colspan="2">托育人員數</th>
+                <th class="top-green">收托兒童數</th>
+                <th class="top-blue" colspan="2">有收托小孩之托育人員數當中</th>
+                <th class="top-orange" colspan="3">有托育人員數</th>
+              </tr>
+              <tr>
+                <td class="top-green">登記在案保母數<br>（包含跨區至本區收托<br>扣除本區到他區收托）</td>
+                <td class="top-green">有收托之托育人員數<br>（包含跨區至本區收托<br>扣除本區到他區收托）</td>
+                <td class="top-green">收托兒童數<br>（包含跨區保母到本區<br>收托的幼兒數）</td>
+                <td class="top-blue">符合簽準公的人員數</td>
+                <td class="top-blue">已完成簽準公的人員數</td>
+                <td class="top-orange">無收托人數</td>
+                <td class="top-orange">一般托育人員</td>
+                <td class="top-orange">準公共托育人員數</td>
+              </tr>
+              <tr>
+                <td class="top-green value" data-out="registeredCount">0</td>
+                <td class="top-green value" data-out="activeCount">0</td>
+                <td class="top-green value" data-out="childrenTotal">0</td>
+                <td class="top-blue value" data-out="eligibleActive">0</td>
+                <td class="top-blue value" data-out="signedActive">0</td>
+                <td class="top-orange value" data-out="noChildCount">0</td>
+                <td class="top-orange value" data-out="generalCaregiverCount">0</td>
+                <td class="top-orange value" data-out="publicCaregiverCount">0</td>
+              </tr>
+            </table>
+          </section>
+
+          <section class="report-section">
+            <div class="report-section-head">
+              <div>
+                <h3 class="report-section-title">收托兒童年齡分布</h3>
+                <p class="report-section-desc">依年齡區間與準公共身分呈現收托兒童數。</p>
+              </div>
+              <div class="report-copy-actions">
+                <button type="button" class="copy-data-btn" data-copy-report="age">複製數據</button>
+              </div>
+            </div>
+            <table>
+              <colgroup>
+                <col style="width:14%">
+                <col style="width:14.33%"><col style="width:14.33%">
+                <col style="width:14.33%"><col style="width:14.33%">
+                <col style="width:14.33%"><col style="width:14.33%">
+              </colgroup>
+              <tr>
+                <th style="border:0;background:#fff"></th>
+                <th class="age-head" colspan="2">0～2歲</th>
+                <th class="age-head" colspan="2">2～3歲</th>
+                <th class="age-head" colspan="2">3歲以上</th>
+              </tr>
+              <tr>
+                <th style="border:0;background:#fff"></th>
+                <th class="age-head">非準公</th>
+                <th class="age-head">準公</th>
+                <th class="age-head">非準公</th>
+                <th class="age-head">準公</th>
+                <th class="age-head">非準公</th>
+                <th class="age-head">準公</th>
+              </tr>
+              <tr>
+                <th>合計</th>
+                <td class="value" data-out="age02Non">0</td>
+                <td class="value" data-out="age02Public">0</td>
+                <td class="value" data-out="age23Non">0</td>
+                <td class="value" data-out="age23Public">0</td>
+                <td class="value" data-out="age3Non">0</td>
+                <td class="value" data-out="age3Public">0</td>
+              </tr>
+            </table>
+          </section>
+
+          <section class="report-section">
+            <div class="report-section-head">
+              <div>
+                <h3 class="report-section-title">各區收托統計</h3>
+                <p class="report-section-desc">只統計屬於第四區的托育人員，並分列準公共與未加入準公共之收托狀況。</p>
+              </div>
+              <div class="report-copy-actions">
+                <button type="button" class="copy-data-btn" data-copy-report="district">複製數據</button>
+              </div>
+            </div>
+            <div class="district-note">只算屬於第四區保母；跨區至本區收托時，保母不重複計算，但托兒人數仍納入。</div>
+            <table id="districtTable">
+              <colgroup>
+                <col style="width:12%">
+                <col style="width:11%"><col style="width:11%"><col style="width:11%">
+                <col style="width:11%"><col style="width:11%"><col style="width:11%">
+                <col style="width:11%"><col style="width:11%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th rowspan="2" class="red-text">有收托中的托育人員</th>
+                  <th class="yellow">準公保母數</th>
+                  <th class="gray">可收托兒童數<br>（J）</th>
+                  <th class="peach">實際收托人數<br>（K）</th>
+                  <th class="yellow">未加入準公共保母數</th>
+                  <th class="gray">可收托兒童數<br>（L）</th>
+                  <th class="peach">實際收托人數<br>（M）</th>
+                  <th class="gray">可收托兒童數總計<br>N（J＋L）</th>
+                  <th class="peach">實際收托人數總計<br>O（K＋M）</th>
+                </tr>
+              </thead>
+              <tbody id="districtBody"></tbody>
+            </table>
+            <div class="small-note">此區塊會依「資料來源」中的「區」欄，自動抓取不重複的行政區並產生列。</div>
+          </section>
+
+          <section class="report-section">
+            <div class="report-section-head">
+              <div>
+                <h3 class="report-section-title">資格與性別統計</h3>
+                <p class="report-section-desc">左側為資格統計，右側為全部登記的性別人數，兩份報表可分別複製。</p>
+              </div>
+              <div class="report-copy-actions">
+                <button type="button" class="copy-data-btn" data-copy-report="qualification">複製資格數據</button>
+                <button type="button" class="copy-data-btn" data-copy-report="gender">複製性別數據</button>
+              </div>
+            </div>
+            <table>
+              <colgroup>
+                <col style="width:12%">
+                <col style="width:11%"><col style="width:11%"><col style="width:11%">
+                <col style="width:11%"><col style="width:11%"><col style="width:11%">
+                <col style="width:11%"><col style="width:11%">
+              </colgroup>
+              <tr>
+                <th style="border-right:0"></th>
+                <th colspan="6" class="yellow">扣掉其他區的人員</th>
+                <th colspan="2" style="border-left:0"></th>
+              </tr>
+              <tr>
+                <th></th>
+                <th colspan="3">非準公共托育人員</th>
+                <th colspan="3">準公共托育人員</th>
+                <th colspan="2" class="cyan">負責人數（全部登記）</th>
+              </tr>
+              <tr>
+                <th></th>
+                <th>技術證</th>
+                <th>相關科系</th>
+                <th>核心課程</th>
+                <th>技術證</th>
+                <th>相關科系</th>
+                <th>核心課程</th>
+                <th class="cyan">男</th>
+                <th class="cyan">女</th>
+              </tr>
+              <tr>
+                <th>男</th>
+                <td data-out="maleNonTech">0</td>
+                <td data-out="maleNonRelated">0</td>
+                <td data-out="maleNonCore">0</td>
+                <td data-out="malePubTech">0</td>
+                <td data-out="malePubRelated">0</td>
+                <td data-out="malePubCore">0</td>
+                <td class="cyan value" data-out="maleTotal">0</td>
+                <td class="cyan value" data-out="femaleTotal">0</td>
+              </tr>
+              <tr>
+                <th>女</th>
+                <td data-out="femaleNonTech">0</td>
+                <td data-out="femaleNonRelated">0</td>
+                <td data-out="femaleNonCore">0</td>
+                <td data-out="femalePubTech">0</td>
+                <td data-out="femalePubRelated">0</td>
+                <td data-out="femalePubCore">0</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <th>加總</th>
+                <td class="pink value" data-out="sumNonTech">0</td>
+                <td class="pink value" data-out="sumNonRelated">0</td>
+                <td class="pink value" data-out="sumNonCore">0</td>
+                <td class="pink value" data-out="sumPubTech">0</td>
+                <td class="pink value" data-out="sumPubRelated">0</td>
+                <td class="pink value" data-out="sumPubCore">0</td>
+                <td colspan="2" style="border:0;background:#fff"></td>
+              </tr>
+            </table>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const FIELD_DEFS = [
+      {id:"name", title:"姓名", aliases:["姓名"]},
+      {id:"gender", title:"性別", aliases:["性別"]},
+      {id:"age3", title:"3歲以上", aliases:["3歲以上","3歲↑","3歲↑人數"]},
+      {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3"]},
+      {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2"]},
+      {id:"total", title:"總人數", aliases:["總人數"]},
+      {id:"otherArea", title:"其他區來", aliases:["其他區來"]},
+      {id:"eligible", title:"符合簽準公", aliases:["符合簽準公"]},
+      {id:"publicStatus", title:"準公共", aliases:["準公共"]},
+      {id:"qualification", title:"證照／相關／結業", aliases:["證照／相關／結業","證照/相關/結業"]},
+      {id:"district", title:"區", aliases:["區"]}
+    ];
+
+    const QUALS = ["技術證","相關科系","核心課程"];
+
+    const $ = id => document.getElementById(id);
+    let parsedRowsStore = [];
+
+    function normalize(value){
+      return String(value ?? "").normalize("NFKC").trim();
+    }
+
+
+    function normalizeHeader(value){
+      return normalize(value)
+        .replace(/\s+/g,"")
+        .replace(/[（）()]/g,"")
+        .replace(/[／/]/g,"／")
+        .replace(/[～~－—–-]/g,"～");
+    }
+
+    function headerMatches(value,def){
+      const target = normalizeHeader(value);
+      return def.aliases.some(alias => normalizeHeader(alias) === target);
+    }
+
+    function parseWholeSheetText(textValue){
+      const matrix = String(textValue ?? "")
+        .replace(/\r\n?/g,"\n")
+        .split("\n")
+        .map(line => line.split("\t"));
+
+      while(matrix.length && matrix[matrix.length-1].every(cell => normalize(cell) === "")){
+        matrix.pop();
+      }
+
+      if(!matrix.length){
+        throw new Error("尚未貼上工作頁資料。");
+      }
+
+      let bestRowIndex = -1;
+      let bestMap = null;
+      let bestScore = 0;
+      const scanLimit = Math.min(matrix.length,30);
+
+      for(let rowIndex=0; rowIndex<scanLimit; rowIndex++){
+        const row = matrix[rowIndex];
+        const fieldMap = {};
+        let score = 0;
+
+        FIELD_DEFS.forEach(def => {
+          const colIndex = row.findIndex(cell => headerMatches(cell,def));
+          if(colIndex >= 0){
+            fieldMap[def.id] = colIndex;
+            score++;
+          }
+        });
+
+        if(score > bestScore){
+          bestScore = score;
+          bestRowIndex = rowIndex;
+          bestMap = fieldMap;
+        }
+      }
+
+      if(bestScore < 4){
+        throw new Error("找不到可辨識的標題列。請確認複製範圍有包含欄位標題。");
+      }
+
+      const parsedRows = matrix.slice(bestRowIndex + 1).map(sourceRow => {
+        const row = {};
+        FIELD_DEFS.forEach(def => {
+          const colIndex = bestMap[def.id];
+          row[def.id] = colIndex === undefined ? "" : normalize(sourceRow[colIndex] ?? "");
+        });
+        return row;
+      });
+
+      while(parsedRows.length && FIELD_DEFS.every(def => parsedRows[parsedRows.length-1][def.id] === "")){
+        parsedRows.pop();
+      }
+
+      const found = FIELD_DEFS.filter(def => bestMap[def.id] !== undefined);
+      const missing = FIELD_DEFS.filter(def => bestMap[def.id] === undefined);
+
+      return {
+        headerRowIndex:bestRowIndex,
+        rows:parsedRows,
+        found,
+        missing
+      };
+    }
+
+    function loadRowsIntoGrid(rows){
+      parsedRowsStore = rows.map(row => ({...row}));
+      updateInputStatus();
+    }
+
+    function parseAndLoadWholeSheet(){
+      try{
+        const result = parseWholeSheetText($("wholeSheetPaste").value);
+        loadRowsIntoGrid(result.rows);
+
+        $("statusBox").className = result.missing.length ? "status warn" : "status";
+        $("statusBox").innerHTML =
+          `已從工作頁第 <strong>${result.headerRowIndex + 1}</strong> 列辨識標題，`+
+          `帶入 <strong>${result.rows.length}</strong> 筆資料。`+
+          `<br>已找到：${result.found.map(def => def.title).join("、")}。`+
+          (result.missing.length
+            ? `<br>未找到：<strong>${result.missing.map(def => def.title).join("、")}</strong>。`
+            : "");
+
+        $("wholeSheetPaste").value = "";
+      }catch(error){
+        $("statusBox").className = "status error";
+        $("statusBox").textContent = error.message || "解析失敗。";
+      }
+    }
+
+    function splitColumn(text, aliases){
+      let lines = String(text ?? "")
+        .replace(/\r\n?/g,"\n")
+        .split("\n")
+        .map(v => v.replace(/\t+$/g,""));
+
+      while(lines.length && lines[lines.length-1] === "") lines.pop();
+
+      const firstNonEmpty = lines.findIndex(v => normalize(v) !== "");
+      if(firstNonEmpty >= 0){
+        const first = normalize(lines[firstNonEmpty]);
+        if(aliases.some(a => normalize(a) === first)){
+          lines.splice(firstNonEmpty,1);
+        }
+      }
+      return lines.map(v => normalize(v));
+    }
+
+    function toNumber(value){
+      const cleaned = normalize(value)
+        .replace(/,/g,"")
+        .replace(/[－—–]/g,"-");
+      if(cleaned === "" || cleaned === "-") return 0;
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function displayNumber(value){
+      const n = Number(value) || 0;
+      return Number.isInteger(n)
+        ? String(n)
+        : n.toLocaleString("zh-TW",{maximumFractionDigits:2});
+    }
+
+    const INITIAL_ROW_NUMBER = 1;
+    const INITIAL_ROW_COUNT = 81;
+
+
+
+
+
+
+
+
+
+
+    function getColumns(){
+      const result = {};
+      FIELD_DEFS.forEach(def => {
+        result[def.id] = parsedRowsStore.map(row => row[def.id] ?? "");
+      });
+      return result;
+    }
+
+    function updateInputStatus(){
+      const rows = parsedRowsStore;
+
+      if(!rows.length){
+        $("statusBox").className = "status";
+        $("statusBox").textContent = "尚未解析資料。";
+        return;
+      }
+
+      const missingFields = FIELD_DEFS.filter(def =>
+        !rows.some(row => normalize(row[def.id]) !== "")
+      );
+
+      $("statusBox").className = missingFields.length ? "status warn" : "status";
+      $("statusBox").innerHTML =
+        `已解析 <strong>${rows.length}</strong> 筆資料。`+
+        (missingFields.length
+          ? ` 尚未找到：${missingFields.map(def => def.title).join("、")}。`
+          : " 所需欄位皆已找到。");
+    }
+
+    function buildRows(columns){
+      return parsedRowsStore.map(row => ({...row}));
+    }
+
+    function countWhere(rows,predicate){
+      return rows.reduce((sum,row) => sum + (predicate(row) ? 1 : 0),0);
+    }
+
+    function sumWhere(rows,key,predicate){
+      return rows.reduce((sum,row) => sum + (predicate(row) ? toNumber(row[key]) : 0),0);
+    }
+
+    function getDynamicDistricts(rows){
+      const districts = [];
+      rows.forEach(row => {
+        const district = normalize(row.district);
+        if(district && !districts.includes(district)){
+          districts.push(district);
+        }
+      });
+      return districts;
+    }
+
+    function computeReport(rows){
+      const registeredCount = countWhere(rows,r => normalize(r.name) !== "");
+      const activeCount = countWhere(rows,r => toNumber(r.total) > 0);
+      const childrenTotal = sumWhere(rows,"total",() => true);
+      const eligibleActive = countWhere(rows,r => toNumber(r.total) > 0 && normalize(r.eligible) === "符合");
+      const signedActive = countWhere(rows,r => toNumber(r.total) > 0 && normalize(r.publicStatus) === "已簽約");
+
+      const maleNon = QUALS.map(q => countWhere(rows,r =>
+        normalize(r.publicStatus) === "未簽約" &&
+        normalize(r.gender) === "男" &&
+        normalize(r.qualification) === q &&
+        normalize(r.otherArea) === ""
+      ));
+      const femaleNon = QUALS.map(q => countWhere(rows,r =>
+        normalize(r.publicStatus) === "未簽約" &&
+        normalize(r.gender) === "女" &&
+        normalize(r.qualification) === q &&
+        normalize(r.otherArea) === ""
+      ));
+      const malePub = QUALS.map(q => countWhere(rows,r =>
+        normalize(r.publicStatus) === "已簽約" &&
+        normalize(r.gender) === "男" &&
+        normalize(r.qualification) === q &&
+        normalize(r.otherArea) === ""
+      ));
+      const femalePub = QUALS.map(q => countWhere(rows,r =>
+        normalize(r.publicStatus) === "已簽約" &&
+        normalize(r.gender) === "女" &&
+        normalize(r.qualification) === q &&
+        normalize(r.otherArea) === ""
+      ));
+
+      const maleTotal = [...maleNon,...malePub].reduce((a,b)=>a+b,0);
+      const femaleTotal = [...femaleNon,...femalePub].reduce((a,b)=>a+b,0);
+
+      const dynamicDistricts = getDynamicDistricts(rows);
+
+      const districtRows = dynamicDistricts.map(district => {
+        const signedCaregivers = countWhere(rows,r =>
+          normalize(r.district) === district &&
+          normalize(r.publicStatus) === "已簽約" &&
+          toNumber(r.total) > 0 &&
+          normalize(r.otherArea) === ""
+        );
+        const nonSignedCaregivers = countWhere(rows,r =>
+          normalize(r.district) === district &&
+          normalize(r.publicStatus) === "未簽約" &&
+          toNumber(r.total) > 0 &&
+          normalize(r.otherArea) === ""
+        );
+        const signedChildren = sumWhere(rows,"total",r =>
+          normalize(r.district) === district &&
+          normalize(r.publicStatus) === "已簽約"
+        );
+        const nonSignedChildren = sumWhere(rows,"total",r =>
+          normalize(r.district) === district &&
+          normalize(r.publicStatus) === "未簽約"
+        );
+        return {
+          district,
+          signedCaregivers,
+          signedCapacity:signedCaregivers*4,
+          signedChildren,
+          nonSignedCaregivers,
+          nonSignedCapacity:nonSignedCaregivers*4,
+          nonSignedChildren,
+          totalCapacity:(signedCaregivers+nonSignedCaregivers)*4,
+          totalChildren:signedChildren+nonSignedChildren
+        };
+      });
+
+
+      return {
+        registeredCount,
+        activeCount,
+        childrenTotal,
+        eligibleActive,
+        signedActive,
+        noChildCount:maleTotal+femaleTotal-activeCount,
+        generalCaregiverCount:activeCount-signedActive,
+        publicCaregiverCount:signedActive,
+
+        age02Non:sumWhere(rows,"age02",r => normalize(r.publicStatus)==="未簽約"),
+        age02Public:sumWhere(rows,"age02",r => normalize(r.publicStatus)==="已簽約"),
+        age23Non:sumWhere(rows,"age23",r => normalize(r.publicStatus)==="未簽約"),
+        age23Public:sumWhere(rows,"age23",r => normalize(r.publicStatus)==="已簽約"),
+        age3Non:sumWhere(rows,"age3",r => normalize(r.publicStatus)==="未簽約"),
+        age3Public:sumWhere(rows,"age3",r => normalize(r.publicStatus)==="已簽約"),
+
+        districtRows,
+        districtSignedSubtotal:districtRows.reduce((sum,r)=>sum+r.signedCaregivers,0),
+        districtNonSubtotal:districtRows.reduce((sum,r)=>sum+r.nonSignedCaregivers,0),
+
+        maleNonTech:maleNon[0],
+        maleNonRelated:maleNon[1],
+        maleNonCore:maleNon[2],
+        femaleNonTech:femaleNon[0],
+        femaleNonRelated:femaleNon[1],
+        femaleNonCore:femaleNon[2],
+        malePubTech:malePub[0],
+        malePubRelated:malePub[1],
+        malePubCore:malePub[2],
+        femalePubTech:femalePub[0],
+        femalePubRelated:femalePub[1],
+        femalePubCore:femalePub[2],
+        maleTotal,
+        femaleTotal,
+        sumNonTech:maleNon[0]+femaleNon[0],
+        sumNonRelated:maleNon[1]+femaleNon[1],
+        sumNonCore:maleNon[2]+femaleNon[2],
+        sumPubTech:malePub[0]+femalePub[0],
+        sumPubRelated:malePub[1]+femalePub[1],
+        sumPubCore:malePub[2]+femalePub[2]
+      };
+    }
+
+    function setOutput(key,value){
+      document.querySelectorAll(`[data-out="${key}"]`).forEach(el => {
+        el.textContent = displayNumber(value);
+      });
+    }
+
+
+    function outputText(key){
+      const element = document.querySelector(`[data-out="${key}"]`);
+      return element ? normalize(element.textContent) : "0";
+    }
+
+    async function copyPlainText(textValue,button){
+      try{
+        await navigator.clipboard.writeText(textValue);
+      }catch(error){
+        const area = document.createElement("textarea");
+        area.value = textValue;
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+      }
+
+      const original = button.textContent;
+      button.textContent = "已複製";
+      setTimeout(() => button.textContent = original,1200);
+    }
+
+    function reportDataText(type){
+      if(type === "overview"){
+        return [
+          [
+            outputText("registeredCount"),
+            outputText("activeCount"),
+            outputText("childrenTotal"),
+            outputText("eligibleActive"),
+            outputText("signedActive"),
+            outputText("noChildCount"),
+            outputText("generalCaregiverCount"),
+            outputText("publicCaregiverCount")
+          ].join("\t")
+        ].join("\n");
+      }
+
+      if(type === "age"){
+        return [
+          [
+            outputText("age02Non"),
+            outputText("age02Public"),
+            outputText("age23Non"),
+            outputText("age23Public"),
+            outputText("age3Non"),
+            outputText("age3Public")
+          ].join("\t")
+        ].join("\n");
+      }
+
+      if(type === "district"){
+        const rows = Array.from(document.querySelectorAll("#districtBody tr"));
+        return rows.map(row => {
+          const cells = Array.from(row.querySelectorAll("th,td"));
+          return cells.slice(1).map(cell => normalize(cell.textContent)).join("\t");
+        }).filter(Boolean).join("\n");
+      }
+
+      if(type === "qualification"){
+        return [
+          [
+            outputText("maleNonTech"),
+            outputText("maleNonRelated"),
+            outputText("maleNonCore"),
+            outputText("malePubTech"),
+            outputText("malePubRelated"),
+            outputText("malePubCore")
+          ].join("\t"),
+          [
+            outputText("femaleNonTech"),
+            outputText("femaleNonRelated"),
+            outputText("femaleNonCore"),
+            outputText("femalePubTech"),
+            outputText("femalePubRelated"),
+            outputText("femalePubCore")
+          ].join("\t"),
+          [
+            outputText("sumNonTech"),
+            outputText("sumNonRelated"),
+            outputText("sumNonCore"),
+            outputText("sumPubTech"),
+            outputText("sumPubRelated"),
+            outputText("sumPubCore")
+          ].join("\t")
+        ].join("\n");
+      }
+
+      if(type === "gender"){
+        return [
+          [outputText("maleTotal"),outputText("femaleTotal")].join("\t")
+        ].join("\n");
+      }
+
+      return "";
+    }
+
+    function renderDistrictRows(rows){
+      if(!rows.length){
+        $("districtBody").innerHTML = `
+          <tr>
+            <td colspan="9" style="padding:18px 12px;color:#7a6551;background:#fffdf8;">
+              尚未偵測到行政區資料。
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      $("districtBody").innerHTML = rows.map(r => `
+        <tr>
+          <th>${r.district}</th>
+          <td class="yellow value">${displayNumber(r.signedCaregivers)}</td>
+          <td class="gray value">${displayNumber(r.signedCapacity)}</td>
+          <td class="peach value">${displayNumber(r.signedChildren)}</td>
+          <td class="yellow value">${displayNumber(r.nonSignedCaregivers)}</td>
+          <td class="gray value">${displayNumber(r.nonSignedCapacity)}</td>
+          <td class="peach value">${displayNumber(r.nonSignedChildren)}</td>
+          <td class="gray value">${displayNumber(r.totalCapacity)}</td>
+          <td class="peach value">${displayNumber(r.totalChildren)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function rocTimestamp(){
+      const d = new Date();
+      const roc = d.getFullYear()-1911;
+      const pad = n => String(n).padStart(2,"0");
+      return `民國${roc}年${pad(d.getMonth()+1)}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function generateReport(){
+      if(!parsedRowsStore.length && normalize($("wholeSheetPaste").value) !== ""){
+        try{
+          const result = parseWholeSheetText($("wholeSheetPaste").value);
+          parsedRowsStore = result.rows.map(row => ({...row}));
+          $("wholeSheetPaste").value = "";
+        }catch(error){
+          $("statusBox").className = "status error";
+          $("statusBox").textContent = error.message || "解析失敗。";
+          return;
+        }
+      }
+
+      const columns = getColumns();
+      const rows = buildRows(columns);
+
+      if(!rows.length){
+        $("statusBox").className = "status error";
+        $("statusBox").textContent = "請先貼上並解析資料，再產生報表。";
+        return;
+      }
+
+      const report = computeReport(rows);
+      Object.entries(report).forEach(([key,value]) => {
+        if(key !== "districtRows") setOutput(key,value);
+      });
+      renderDistrictRows(report.districtRows);
+
+      const missing = FIELD_DEFS
+        .filter(def => !columns[def.id].some(value => normalize(value) !== ""))
+        .map(def => def.title);
+
+      $("reportMeta").innerHTML =
+        `產生時間：${rocTimestamp()}<br>`+
+        `資料列數：${rows.length}列`+
+        (missing.length ? `<br>未貼欄位：${missing.join("、")}` : "");
+
+      $("reportCard").classList.add("show");
+
+      if(missing.length){
+        $("statusBox").className = "status warn";
+        $("statusBox").innerHTML =
+          `報表已產生，但以下欄位尚未貼上：<strong>${missing.join("、")}</strong>。相關統計會以空白或0計算。`;
+      }else{
+        $("statusBox").className = "status";
+        $("statusBox").innerHTML = `報表已產生，共使用 <strong>${rows.length}</strong> 列資料。`;
+      }
+
+      $("reportCard").scrollIntoView({behavior:"smooth",block:"start"});
+    }
+
+    function clearAll(){
+      if(!confirm("確定要清除全部已貼上的資料與報表嗎？")) return;
+      parsedRowsStore = [];
+      $("wholeSheetPaste").value = "";
+      $("reportCard").classList.remove("show");
+      $("statusBox").className = "status";
+      $("statusBox").textContent = "尚未貼上資料。";
+    }
+
+    updateInputStatus();
+
+    $("parseWholeSheetBtn").addEventListener("click",parseAndLoadWholeSheet);
+    $("wholeSheetPaste").addEventListener("paste",()=>{
+      setTimeout(parseAndLoadWholeSheet,0);
+    });
+    $("clearWholeSheetBtn").addEventListener("click",()=>{
+      $("wholeSheetPaste").value = "";
+    });
+
+    document.addEventListener("click",event => {
+      const button = event.target.closest("[data-copy-report]");
+      if(!button) return;
+
+      const textValue = reportDataText(button.dataset.copyReport);
+      if(!textValue){
+        $("statusBox").className = "status error";
+        $("statusBox").textContent = "目前沒有可複製的數據。";
+        return;
+      }
+      copyPlainText(textValue,button);
+    });
+
+    $("generateBtn").addEventListener("click",generateReport);
+    $("clearBtn").addEventListener("click",clearAll);
+    $("printBtn").addEventListener("click",()=>window.print());
+    $("scrollReportBtn").addEventListener("click",()=>{
+      if(!$("reportCard").classList.contains("show")){
+        generateReport();
+      }else{
+        $("reportCard").scrollIntoView({behavior:"smooth",block:"start"});
+      }
+    });
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./service-worker.js").catch(function () {});
+      });
+    }
+  </script>
+
+</body>
+</html>
