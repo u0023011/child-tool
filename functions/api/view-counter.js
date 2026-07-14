@@ -3,79 +3,87 @@ const COUNTER_KEYS = {
   childcare_law: "tool_childcare_law_views",
   age_tool: "tool_age_tool_views",
   report_date_tool: "tool_report_date_tool_views",
-  receipt_tool: "tool_receipt_tool_views"
+  receipt_tool: "tool_receipt_tool_views",
+  report_generator: "tool_report_generator_views"
 };
 
-function getCounterKey(request) {
-  const url = new URL(request.url);
-  const queryCounter = url.searchParams.get("counter");
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=UTF-8",
+      "Cache-Control": "no-store"
+    }
+  });
+}
 
-  return queryCounter && COUNTER_KEYS[queryCounter]
-    ? COUNTER_KEYS[queryCounter]
-    : COUNTER_KEYS.home;
+function resolveCounterName(request) {
+  const url = new URL(request.url);
+  return url.searchParams.get("counter") || "home";
+}
+
+function resolveCounterKey(counterName) {
+  return COUNTER_KEYS[counterName] || null;
 }
 
 async function readCount(env, key) {
-  let current = await env.VISITOR_COUNTER.get(key);
-  let count = current ? parseInt(current, 10) : 0;
-
-  if (Number.isNaN(count)) {
-    count = 0;
-  }
-
-  return count;
+  const current = await env.VISITOR_COUNTER.get(key);
+  const count = current ? parseInt(current, 10) : 0;
+  return Number.isNaN(count) ? 0 : count;
 }
 
-function jsonResponse(data) {
-  return new Response(
-    JSON.stringify(data),
-    {
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        "Cache-Control": "no-store"
-      }
-    }
-  );
+export async function onRequestGet(context) {
+  const { request, env } = context;
+  const counterName = resolveCounterName(request);
+  const key = resolveCounterKey(counterName);
+
+  if (!key) {
+    return jsonResponse({
+      ok: false,
+      message: "未知的人次計數器",
+      counter: counterName
+    }, 400);
+  }
+
+  const count = await readCount(env, key);
+
+  return jsonResponse({
+    ok: true,
+    counter: counterName,
+    count
+  });
 }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  let counterName = "home";
+  let counterName = resolveCounterName(request);
 
   try {
     const body = await request.json();
-
-    if (body && body.counter && COUNTER_KEYS[body.counter]) {
-      counterName = body.counter;
+    if (body && body.counter) {
+      counterName = String(body.counter);
     }
   } catch (error) {
-    // 沒有 JSON 內容時，預設計算首頁瀏覽人次
+    // 沒有 JSON 內容時，使用網址參數；若也沒有，則計算首頁。
   }
 
-  const key = COUNTER_KEYS[counterName];
-  let count = await readCount(env, key);
+  const key = resolveCounterKey(counterName);
 
+  if (!key) {
+    return jsonResponse({
+      ok: false,
+      message: "未知的人次計數器",
+      counter: counterName
+    }, 400);
+  }
+
+  let count = await readCount(env, key);
   count += 1;
   await env.VISITOR_COUNTER.put(key, String(count));
 
   return jsonResponse({
     ok: true,
     counter: counterName,
-    count: count
-  });
-}
-
-export async function onRequestGet(context) {
-  const { request, env } = context;
-
-  const url = new URL(request.url);
-  const counterName = url.searchParams.get("counter") || "home";
-  const key = COUNTER_KEYS[counterName] || COUNTER_KEYS.home;
-  const count = await readCount(env, key);
-
-  return jsonResponse({
-    ok: true,
-    counter: COUNTER_KEYS[counterName] ? counterName : "home",
-    count: count
+    count
   });
 }
