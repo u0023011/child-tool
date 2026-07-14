@@ -952,7 +952,7 @@
       {id:"age3", title:"3歲以上", aliases:["3歲以上","3歲↑","3歲↑人數"]},
       {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3"]},
       {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2"]},
-      {id:"total", title:"總人數", aliases:["總人數","總數"]},
+      {id:"total", title:"總人數", aliases:["總人數","總數","加總","合計"]},
       {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托","他區跨本區收托"]},
       {id:"eligible", title:"符合簽準公", aliases:["符合簽準公","符合簽準公共","符合準公"]},
       {id:"publicStatus", title:"準公共", aliases:["準公共","準公"]},
@@ -1030,6 +1030,26 @@
       return rows;
     }
 
+    function findHeaderColumn(matrix,startRow,depth,def){
+      const maxColumns = Math.max(
+        0,
+        ...matrix
+          .slice(startRow,startRow + depth)
+          .map(row => row.length)
+      );
+
+      for(let colIndex=0; colIndex<maxColumns; colIndex++){
+        for(let rowOffset=0; rowOffset<depth; rowOffset++){
+          const value = matrix[startRow + rowOffset]?.[colIndex] ?? "";
+          if(headerMatches(value,def)){
+            return colIndex;
+          }
+        }
+      }
+
+      return -1;
+    }
+
     function parseWholeSheetText(textValue){
       const matrix = parseTabularClipboard(textValue);
 
@@ -1041,53 +1061,77 @@
         throw new Error("尚未貼上工作頁資料。");
       }
 
-      let bestRowIndex = -1;
+      let bestStartRow = -1;
+      let bestDepth = 1;
       let bestMap = null;
       let bestScore = 0;
       const scanLimit = Math.min(matrix.length,30);
+      const maxHeaderDepth = 3;
 
-      for(let rowIndex=0; rowIndex<scanLimit; rowIndex++){
-        const row = matrix[rowIndex];
-        const fieldMap = {};
-        let score = 0;
+      for(let startRow=0; startRow<scanLimit; startRow++){
+        for(let depth=1; depth<=maxHeaderDepth; depth++){
+          if(startRow + depth > matrix.length) break;
 
-        FIELD_DEFS.forEach(def => {
-          const colIndex = row.findIndex(cell => headerMatches(cell,def));
-          if(colIndex >= 0){
-            fieldMap[def.id] = colIndex;
-            score++;
+          const fieldMap = {};
+          let score = 0;
+
+          FIELD_DEFS.forEach(def => {
+            const colIndex = findHeaderColumn(matrix,startRow,depth,def);
+            if(colIndex >= 0){
+              fieldMap[def.id] = colIndex;
+              score++;
+            }
+          });
+
+          if(
+            score > bestScore ||
+            (score === bestScore && score > 0 && depth < bestDepth)
+          ){
+            bestScore = score;
+            bestStartRow = startRow;
+            bestDepth = depth;
+            bestMap = fieldMap;
           }
-        });
-
-        if(score > bestScore){
-          bestScore = score;
-          bestRowIndex = rowIndex;
-          bestMap = fieldMap;
         }
       }
 
       if(bestScore < 4){
-        throw new Error("找不到可辨識的標題列。請確認複製範圍有包含欄位標題。");
+        throw new Error("找不到可辨識的標題。請確認複製範圍有包含欄位標題。");
       }
 
-      const parsedRows = matrix.slice(bestRowIndex + 1).map(sourceRow => {
+      const dataStartRow = bestStartRow + bestDepth;
+      const parsedRows = matrix.slice(dataStartRow).map(sourceRow => {
         const row = {};
         FIELD_DEFS.forEach(def => {
           const colIndex = bestMap[def.id];
-          row[def.id] = colIndex === undefined ? "" : normalize(sourceRow[colIndex] ?? "");
+          row[def.id] =
+            colIndex === undefined
+              ? ""
+              : normalize(sourceRow[colIndex] ?? "");
         });
         return row;
       });
 
-      while(parsedRows.length && FIELD_DEFS.every(def => parsedRows[parsedRows.length-1][def.id] === "")){
+      while(
+        parsedRows.length &&
+        FIELD_DEFS.every(
+          def => parsedRows[parsedRows.length - 1][def.id] === ""
+        )
+      ){
         parsedRows.pop();
       }
 
-      const found = FIELD_DEFS.filter(def => bestMap[def.id] !== undefined);
-      const missing = FIELD_DEFS.filter(def => bestMap[def.id] === undefined);
+      const found = FIELD_DEFS.filter(
+        def => bestMap[def.id] !== undefined
+      );
+      const missing = FIELD_DEFS.filter(
+        def => bestMap[def.id] === undefined
+      );
 
       return {
-        headerRowIndex:bestRowIndex,
+        headerRowIndex:bestStartRow,
+        headerDepth:bestDepth,
+        dataStartRow,
         rows:parsedRows,
         found,
         missing
@@ -1104,9 +1148,16 @@
         const result = parseWholeSheetText($("wholeSheetPaste").value);
         loadRowsIntoGrid(result.rows);
 
+        const headerStart = result.headerRowIndex + 1;
+        const headerEnd = result.headerRowIndex + result.headerDepth;
+        const headerText =
+          headerStart === headerEnd
+            ? `第 ${headerStart} 列`
+            : `第 ${headerStart}～${headerEnd} 列`;
+
         $("statusBox").className = result.missing.length ? "status warn" : "status";
         $("statusBox").innerHTML =
-          `已從工作頁第 <strong>${result.headerRowIndex + 1}</strong> 列辨識標題，`+
+          `已從工作頁 <strong>${headerText}</strong> 辨識複合標題，`+
           `帶入 <strong>${result.rows.length}</strong> 筆資料。`+
           `<br>已找到：${result.found.map(def => def.title).join("、")}。`+
           (result.missing.length

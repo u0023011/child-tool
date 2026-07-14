@@ -1,4 +1,4 @@
-const CACHE_NAME = "report-generator-v12";
+const CACHE_NAME = "report-generator-v13";
 const APP_SHELL = [
   "./",
   "./index.html",
