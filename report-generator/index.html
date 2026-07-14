@@ -289,6 +289,89 @@
       padding-bottom:5px;
     }
 
+
+    .validation-panel{
+      margin:0 0 18px;
+      padding:15px 16px;
+      border:1.5px solid #d7c3a3;
+      border-radius:16px;
+      background:#fffdf8;
+      box-shadow:0 5px 14px rgba(75,48,24,.05);
+    }
+
+    .validation-panel.ok{
+      border-color:#9bc49a;
+      background:#f4fbf2;
+    }
+
+    .validation-panel.warn{
+      border-color:#dc8c78;
+      background:#fff4f1;
+    }
+
+    .validation-title{
+      margin:0 0 10px;
+      color:#4e321b;
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .validation-list{
+      display:grid;
+      gap:9px;
+    }
+
+    .validation-item{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      padding:10px 12px;
+      border:1px solid #e5d7c1;
+      border-radius:12px;
+      background:rgba(255,255,255,.72);
+      line-height:1.65;
+    }
+
+    .validation-item strong{
+      color:#53361c;
+    }
+
+    .validation-result{
+      flex:0 0 auto;
+      min-width:74px;
+      padding:4px 10px;
+      border-radius:999px;
+      text-align:center;
+      font-weight:950;
+    }
+
+    .validation-result.ok{
+      color:#2d7134;
+      background:#dff2df;
+    }
+
+    .validation-result.warn{
+      color:#a43125;
+      background:#f9d9d3;
+    }
+
+    .report-section.validation-mismatch{
+      border-color:#d86c5c;
+      box-shadow:0 0 0 3px rgba(197,67,49,.12),0 10px 22px rgba(75,48,24,.06);
+    }
+
+    @media(max-width:700px){
+      .validation-item{
+        display:block;
+      }
+
+      .validation-result{
+        display:inline-block;
+        margin-top:7px;
+      }
+    }
+
     .report{
       min-width:1120px;
       color:#2f261d;
@@ -552,6 +635,11 @@
       .report-generatorbar .section-title{font-size:18px}
       .report-meta{font-size:10px}
       .report-wrap{overflow:visible}
+      .validation-panel{padding:7px;margin-bottom:8px;box-shadow:none}
+      .validation-title{font-size:11px;margin-bottom:5px}
+      .validation-list{gap:4px}
+      .validation-item{padding:4px 6px;font-size:8px}
+      .validation-result{font-size:8px;min-width:48px;padding:2px 5px}
       .report{min-width:0}
       .report-section{
         margin-top:10px;
@@ -643,9 +731,16 @@
         </div>
       </div>
 
+      <div class="validation-panel" id="validationPanel" aria-live="polite">
+        <h3 class="validation-title">資料一致性檢查</h3>
+        <div class="validation-list" id="validationList">
+          <div class="validation-item">產生報表後，系統會自動核對托育人員與托兒人數。</div>
+        </div>
+      </div>
+
       <div class="report-wrap">
         <div class="report" id="reportArea">
-          <section class="report-section">
+          <section class="report-section" id="overviewSection">
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">整體概況</h3>
@@ -691,7 +786,7 @@
             </table>
           </section>
 
-          <section class="report-section">
+          <section class="report-section" id="ageSection">
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">收托兒童年齡分布</h3>
@@ -735,7 +830,7 @@
             </table>
           </section>
 
-          <section class="report-section">
+          <section class="report-section" id="districtSection">
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">各區收托統計</h3>
@@ -771,7 +866,7 @@
             <div class="small-note">此區塊會依「區」或「里」欄自動彙整行政區；例如「新營區南紙里」會計入「新營區」，「到宅」不列入。</div>
           </section>
 
-          <section class="report-section">
+          <section class="report-section" id="qualificationSection">
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">資格與性別統計</h3>
@@ -1170,8 +1265,18 @@
         normalize(r.otherArea) === ""
       ));
 
-      const maleTotal = [...maleNon,...malePub].reduce((a,b)=>a+b,0);
-      const femaleTotal = [...femaleNon,...femalePub].reduce((a,b)=>a+b,0);
+      const qualificationMaleTotal = [...maleNon,...malePub].reduce((a,b)=>a+b,0);
+      const qualificationFemaleTotal = [...femaleNon,...femalePub].reduce((a,b)=>a+b,0);
+      const qualificationTotal = qualificationMaleTotal + qualificationFemaleTotal;
+
+      // 「負責人數（全部登記）」獨立依性別欄統計，避免和資格分類互相綁定。
+      const maleTotal = countWhere(rows,r =>
+        normalize(r.name) !== "" && normalize(r.gender) === "男"
+      );
+      const femaleTotal = countWhere(rows,r =>
+        normalize(r.name) !== "" && normalize(r.gender) === "女"
+      );
+      const genderTotal = maleTotal + femaleTotal;
 
       const dynamicDistricts = getDynamicDistricts(rows);
 
@@ -1209,6 +1314,15 @@
         };
       });
 
+      const ageChildrenTotal =
+        sumWhere(rows,"age02",() => true) +
+        sumWhere(rows,"age23",() => true) +
+        sumWhere(rows,"age3",() => true);
+
+      const districtChildrenTotal = districtRows.reduce(
+        (sum,row) => sum + row.totalChildren,
+        0
+      );
 
       return {
         registeredCount,
@@ -1219,6 +1333,11 @@
         noChildCount:maleTotal+femaleTotal-activeCount,
         generalCaregiverCount:activeCount-signedActive,
         publicCaregiverCount:signedActive,
+
+        qualificationTotal,
+        genderTotal,
+        ageChildrenTotal,
+        districtChildrenTotal,
 
         age02Non:sumWhere(rows,"age02",r => normalize(r.publicStatus)==="未簽約"),
         age02Public:sumWhere(rows,"age02",r => normalize(r.publicStatus)==="已簽約"),
@@ -1258,6 +1377,78 @@
       document.querySelectorAll(`[data-out="${key}"]`).forEach(el => {
         el.textContent = displayNumber(value);
       });
+    }
+
+    function renderConsistencyCheck(report){
+      const caregiverValues = [
+        report.registeredCount,
+        report.qualificationTotal,
+        report.genderTotal
+      ];
+      const childValues = [
+        report.childrenTotal,
+        report.ageChildrenTotal,
+        report.districtChildrenTotal
+      ];
+
+      const caregiverConsistent = caregiverValues.every(
+        value => value === caregiverValues[0]
+      );
+      const childConsistent = childValues.every(
+        value => value === childValues[0]
+      );
+
+      const panel = $("validationPanel");
+      const list = $("validationList");
+
+      panel.className =
+        "validation-panel " +
+        (caregiverConsistent && childConsistent ? "ok" : "warn");
+
+      list.innerHTML = `
+        <div class="validation-item">
+          <div>
+            <strong>托育人員總數</strong><br>
+            整體概況：${displayNumber(report.registeredCount)}｜
+            資格統計：${displayNumber(report.qualificationTotal)}｜
+            性別統計：${displayNumber(report.genderTotal)}
+          </div>
+          <span class="validation-result ${caregiverConsistent ? "ok" : "warn"}">
+            ${caregiverConsistent ? "一致" : "不一致"}
+          </span>
+        </div>
+        <div class="validation-item">
+          <div>
+            <strong>托兒人數</strong><br>
+            整體概況：${displayNumber(report.childrenTotal)}｜
+            年齡分布：${displayNumber(report.ageChildrenTotal)}｜
+            各區統計：${displayNumber(report.districtChildrenTotal)}
+          </div>
+          <span class="validation-result ${childConsistent ? "ok" : "warn"}">
+            ${childConsistent ? "一致" : "不一致"}
+          </span>
+        </div>
+      `;
+
+      ["overviewSection","ageSection","districtSection","qualificationSection"]
+        .forEach(id => $(id)?.classList.remove("validation-mismatch"));
+
+      if(!caregiverConsistent){
+        $("overviewSection")?.classList.add("validation-mismatch");
+        $("qualificationSection")?.classList.add("validation-mismatch");
+      }
+
+      if(!childConsistent){
+        $("overviewSection")?.classList.add("validation-mismatch");
+        $("ageSection")?.classList.add("validation-mismatch");
+        $("districtSection")?.classList.add("validation-mismatch");
+      }
+
+      return {
+        caregiverConsistent,
+        childConsistent,
+        hasMismatch:!caregiverConsistent || !childConsistent
+      };
     }
 
 
@@ -1421,6 +1612,7 @@
         if(key !== "districtRows") setOutput(key,value);
       });
       renderDistrictRows(report.districtRows);
+      const consistency = renderConsistencyCheck(report);
 
       const missing = FIELD_DEFS
         .filter(def => !columns[def.id].some(value => normalize(value) !== ""))
@@ -1433,13 +1625,27 @@
 
       $("reportCard").classList.add("show");
 
-      if(missing.length){
+      if(missing.length || consistency.hasMismatch){
         $("statusBox").className = "status warn";
+
+        const messages = [];
+        if(missing.length){
+          messages.push(
+            `以下欄位尚未貼上：<strong>${missing.join("、")}</strong>。`
+          );
+        }
+        if(consistency.hasMismatch){
+          messages.push(
+            `發現統計數字不一致，請查看「資料一致性檢查」及紅框區塊。`
+          );
+        }
+
         $("statusBox").innerHTML =
-          `報表已產生，但以下欄位尚未貼上：<strong>${missing.join("、")}</strong>。相關統計會以空白或0計算。`;
+          `報表已產生。${messages.join("<br>")}`;
       }else{
         $("statusBox").className = "status";
-        $("statusBox").innerHTML = `報表已產生，共使用 <strong>${rows.length}</strong> 列資料。`;
+        $("statusBox").innerHTML =
+          `報表已產生，共使用 <strong>${rows.length}</strong> 列資料；托育人員與托兒人數核對一致。`;
       }
 
       $("reportCard").scrollIntoView({behavior:"smooth",block:"start"});
@@ -1450,6 +1656,11 @@
       parsedRowsStore = [];
       $("wholeSheetPaste").value = "";
       $("reportCard").classList.remove("show");
+      $("validationPanel").className = "validation-panel";
+      $("validationList").innerHTML =
+        '<div class="validation-item">產生報表後，系統會自動核對托育人員與托兒人數。</div>';
+      ["overviewSection","ageSection","districtSection","qualificationSection"]
+        .forEach(id => $(id)?.classList.remove("validation-mismatch"));
       $("statusBox").className = "status";
       $("statusBox").textContent = "尚未貼上資料。";
     }
