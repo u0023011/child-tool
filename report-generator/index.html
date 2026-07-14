@@ -738,8 +738,8 @@
           <section class="report-section">
             <div class="report-section-head">
               <div>
-                <h3 class="report-section-title">各區／里收托統計</h3>
-                <p class="report-section-desc">只統計屬於第四區的托育人員，並分列準公共與未加入準公共之收托狀況。</p>
+                <h3 class="report-section-title">各區收托統計</h3>
+                <p class="report-section-desc">依行政區彙整托育人員，里別會自動合併至所屬行政區，並排除「到宅」。</p>
               </div>
               <div class="report-copy-actions">
                 <button type="button" class="copy-data-btn" data-copy-report="district">複製數據</button>
@@ -768,7 +768,7 @@
               </thead>
               <tbody id="districtBody"></tbody>
             </table>
-            <div class="small-note">此區塊會依「資料來源」中的「區」或「里」欄，自動抓取不重複的地區並產生列。</div>
+            <div class="small-note">此區塊會依「區」或「里」欄自動彙整行政區；例如「新營區南紙里」會計入「新營區」，「到宅」不列入。</div>
           </section>
 
           <section class="report-section">
@@ -1113,10 +1113,24 @@
       return rows.reduce((sum,row) => sum + (predicate(row) ? toNumber(row[key]) : 0),0);
     }
 
+    function normalizeDistrict(value){
+      let district = normalize(value);
+
+      // 「到宅」不是行政區，不納入各區統計。
+      if(!district || district.includes("到宅")) return "";
+
+      // 若資料是「新營區南紙里」或「臺南市新營區南紙里」，
+      // 只保留行政區名稱「新營區」。
+      district = district.replace(/^.*?[市縣]/,"");
+      const match = district.match(/^(.+?區)/);
+
+      return match ? match[1] : district;
+    }
+
     function getDynamicDistricts(rows){
       const districts = [];
       rows.forEach(row => {
-        const district = normalize(row.district);
+        const district = normalizeDistrict(row.district);
         if(district && !districts.includes(district)){
           districts.push(district);
         }
@@ -1163,23 +1177,23 @@
 
       const districtRows = dynamicDistricts.map(district => {
         const signedCaregivers = countWhere(rows,r =>
-          normalize(r.district) === district &&
+          normalizeDistrict(r.district) === district &&
           normalize(r.publicStatus) === "已簽約" &&
           toNumber(r.total) > 0 &&
           normalize(r.otherArea) === ""
         );
         const nonSignedCaregivers = countWhere(rows,r =>
-          normalize(r.district) === district &&
+          normalizeDistrict(r.district) === district &&
           normalize(r.publicStatus) === "未簽約" &&
           toNumber(r.total) > 0 &&
           normalize(r.otherArea) === ""
         );
         const signedChildren = sumWhere(rows,"total",r =>
-          normalize(r.district) === district &&
+          normalizeDistrict(r.district) === district &&
           normalize(r.publicStatus) === "已簽約"
         );
         const nonSignedChildren = sumWhere(rows,"total",r =>
-          normalize(r.district) === district &&
+          normalizeDistrict(r.district) === district &&
           normalize(r.publicStatus) === "未簽約"
         );
         return {
