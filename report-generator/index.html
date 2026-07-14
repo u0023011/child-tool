@@ -181,6 +181,26 @@
       margin-top:10px;
     }
 
+    .mini-action{
+      min-height:38px;
+      padding:8px 13px;
+      border:1px solid #cfaf80;
+      border-radius:10px;
+      background:#f3e7d5;
+      color:#684720;
+      font-weight:900;
+      box-shadow:0 2px 6px rgba(75,48,24,.08);
+    }
+
+    .mini-action:hover{
+      background:#eadbc5;
+      border-color:#b98d52;
+    }
+
+    .mini-action:active{
+      transform:translateY(1px);
+    }
+
     .actions{
       display:flex;
       flex-wrap:wrap;
@@ -718,7 +738,7 @@
           <section class="report-section">
             <div class="report-section-head">
               <div>
-                <h3 class="report-section-title">各區收托統計</h3>
+                <h3 class="report-section-title">各區／里收托統計</h3>
                 <p class="report-section-desc">只統計屬於第四區的托育人員，並分列準公共與未加入準公共之收托狀況。</p>
               </div>
               <div class="report-copy-actions">
@@ -748,7 +768,7 @@
               </thead>
               <tbody id="districtBody"></tbody>
             </table>
-            <div class="small-note">此區塊會依「資料來源」中的「區」欄，自動抓取不重複的行政區並產生列。</div>
+            <div class="small-note">此區塊會依「資料來源」中的「區」或「里」欄，自動抓取不重複的地區並產生列。</div>
           </section>
 
           <section class="report-section">
@@ -837,12 +857,12 @@
       {id:"age3", title:"3歲以上", aliases:["3歲以上","3歲↑","3歲↑人數"]},
       {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3"]},
       {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2"]},
-      {id:"total", title:"總人數", aliases:["總人數"]},
-      {id:"otherArea", title:"其他區來", aliases:["其他區來"]},
+      {id:"total", title:"總人數", aliases:["總人數","總數"]},
+      {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托"]},
       {id:"eligible", title:"符合簽準公", aliases:["符合簽準公"]},
       {id:"publicStatus", title:"準公共", aliases:["準公共"]},
       {id:"qualification", title:"證照／相關／結業", aliases:["證照／相關／結業","證照/相關/結業"]},
-      {id:"district", title:"區", aliases:["區"]}
+      {id:"district", title:"區", aliases:["區","里"]}
     ];
 
     const QUALS = ["技術證","相關科系","核心課程"];
@@ -955,6 +975,7 @@
             : "");
 
         $("wholeSheetPaste").value = "";
+        generateReport();
       }catch(error){
         $("statusBox").className = "status error";
         $("statusBox").textContent = error.message || "解析失敗。";
