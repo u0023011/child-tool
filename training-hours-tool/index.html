@@ -3115,14 +3115,15 @@
             `、身分證字號：${organizedData.idNumber || ""}` +
             `        時數核計期程：${period}`;
 
-          applyCellStyle(
-            sheet.getCell("A3"),
-            {
-              size: 11,
-              horizontal: "left",
-              border: false
-            }
-          );
+applyCellStyle(
+  sheet.getCell("A3"),
+  {
+    size: 11,
+    horizontal: "center",
+    vertical: "middle",
+    border: false
+  }
+);
 
           const today =
             new Date();
@@ -3139,37 +3140,49 @@
             }
           );
 
-          const headers = [
-            "課程名稱",
-            "課程表名稱",
-            "專業領域",
-            "課程日期",
-            "登錄時數",
-            "備註",
-            ""
-          ];
+const headers = [
+  "課程名稱",
+  "課程表名稱",
+  "專業領域",
+  "課程日期",
+  "登錄時數"
+];
 
-          headers.forEach(
-            (header, index) => {
-              const cell =
-                sheet
-                  .getRow(6)
-                  .getCell(index + 1);
+// A6～E6 一般表頭
+headers.forEach((header, index) => {
+  const cell = sheet
+    .getRow(6)
+    .getCell(index + 1);
 
-              cell.value = header;
+  cell.value = header;
 
-              applyCellStyle(
-                cell,
-                {
-                  size: 12,
-                  bold: true,
-                  italic: true,
-                  horizontal: "center",
-                  fill: "FFF5EDE1"
-                }
-              );
-            }
-          );
+  applyCellStyle(cell, {
+    size: 12,
+    bold: true,
+    italic: true,
+    horizontal: "center",
+    vertical: "middle",
+    fill: "FFF5EDE1"
+  });
+});
+
+// 備註表頭合併 F6:G6
+sheet.mergeCells("F6:G6");
+
+const noteHeaderCell = sheet.getCell("F6");
+noteHeaderCell.value = "備註";
+
+applyCellStyle(noteHeaderCell, {
+  size: 12,
+  bold: true,
+  italic: true,
+  horizontal: "center",
+  vertical: "middle",
+  fill: "FFF5EDE1"
+});
+
+// 補上合併範圍右側框線
+sheet.getCell("G6").border = createThinBorder();
 
           const startRow = 7;
 
