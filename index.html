@@ -40,8 +40,10 @@
     .login-wrap {
       min-height: calc(100vh - 36px);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 14px;
     }
 
     .login-card {
@@ -152,6 +154,52 @@
       text-align: center;
       font-size: 14px;
       font-weight: 700;
+    }
+
+    .manual-update-box {
+      width: 100%;
+      max-width: 430px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(154, 123, 79, .24);
+      border-radius: 15px;
+      background: rgba(255, 250, 242, .94);
+      box-shadow: 0 5px 16px rgba(80, 55, 30, .08);
+      color: #6f5b43;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .manual-update-box button {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 104px;
+      height: 40px;
+      margin: 0;
+      padding: 0 13px;
+      border-radius: 10px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .manual-update-box button:disabled {
+      cursor: wait;
+      opacity: .68;
+    }
+
+    @media(max-width:480px) {
+      .manual-update-box {
+        align-items: stretch;
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .manual-update-box button {
+        width: 100%;
+      }
     }
 
     .shake {
@@ -716,6 +764,11 @@
         <div class="error" id="errorMsg">密碼錯誤，請重新輸入</div>
 
       </div>
+
+      <div class="manual-update-box" id="manualUpdateBox">
+        <span id="manualUpdateStatus">可隨時檢查網站是否有新版</span>
+        <button type="button" id="manualUpdateBtn" onclick="manualCheckForUpdate()">檢查更新</button>
+      </div>
     </section>
 
     <section id="appView">
@@ -808,6 +861,22 @@
     const toolUsageCounter = document.getElementById("toolUsageCounter");
     const toolUsageName = document.getElementById("toolUsageName");
     const toolUsageCount = document.getElementById("toolUsageCount");
+    const manualUpdateStatus = document.getElementById("manualUpdateStatus");
+    const manualUpdateBtn = document.getElementById("manualUpdateBtn");
+
+    let currentPwaRegistration = null;
+    const watchedPwaWorkers = new WeakSet();
+
+    function setManualUpdateState(message, buttonText, disabled = false) {
+      if (manualUpdateStatus) {
+        manualUpdateStatus.textContent = message;
+      }
+
+      if (manualUpdateBtn) {
+        manualUpdateBtn.textContent = buttonText;
+        manualUpdateBtn.disabled = disabled;
+      }
+    }
 
     const toolPermissions = {
       "age-tool/": ["basic", "admin"],
@@ -1029,7 +1098,135 @@
       passwordInput.focus();
     });
 
+    function activatePwaUpdate(registration) {
+      const waitingWorker =
+        registration?.waiting;
+
+      if (waitingWorker) {
+        setManualUpdateState(
+          "正在套用新版本…",
+          "更新中…",
+          true
+        );
+
+        waitingWorker.postMessage({
+          type: "SKIP_WAITING"
+        });
+      } else {
+        location.reload();
+      }
+    }
+
+    function watchInstallingWorker(registration) {
+      const worker =
+        registration.installing;
+
+      if (!worker) {
+        return false;
+      }
+
+      if (watchedPwaWorkers.has(worker)) {
+        return true;
+      }
+
+      watchedPwaWorkers.add(worker);
+
+      setManualUpdateState(
+        "已找到新版，正在準備更新…",
+        "準備中…",
+        true
+      );
+
+      worker.addEventListener("statechange", function () {
+        if (
+          worker.state === "installed"
+        ) {
+          if (navigator.serviceWorker.controller) {
+            showPwaUpdateNotice(registration);
+          } else {
+            setManualUpdateState(
+              "更新功能已準備完成",
+              "檢查更新",
+              false
+            );
+          }
+        } else if (worker.state === "redundant") {
+          setManualUpdateState(
+            "更新未完成，請重新檢查",
+            "重新檢查",
+            false
+          );
+        }
+      });
+
+      return true;
+    }
+
+    async function manualCheckForUpdate() {
+      if (!("serviceWorker" in navigator)) {
+        setManualUpdateState(
+          "此瀏覽器不支援自動更新",
+          "無法檢查",
+          true
+        );
+        return;
+      }
+
+      try {
+        const registration =
+          currentPwaRegistration ||
+          await navigator.serviceWorker.getRegistration();
+
+        if (!registration) {
+          setManualUpdateState(
+            "更新功能尚未就緒，請稍後再試",
+            "重新檢查",
+            false
+          );
+          return;
+        }
+
+        currentPwaRegistration = registration;
+
+        if (registration.waiting) {
+          activatePwaUpdate(registration);
+          return;
+        }
+
+        setManualUpdateState(
+          "正在檢查網站版本…",
+          "檢查中…",
+          true
+        );
+
+        await registration.update();
+
+        if (registration.waiting) {
+          showPwaUpdateNotice(registration);
+        } else if (!watchInstallingWorker(registration)) {
+          setManualUpdateState(
+            "目前已是最新版本",
+            "再次檢查",
+            false
+          );
+        }
+      } catch (error) {
+        setManualUpdateState(
+          "檢查失敗，請確認網路後再試",
+          "重新檢查",
+          false
+        );
+      }
+    }
+
     function showPwaUpdateNotice(registration) {
+      currentPwaRegistration = registration;
+      setManualUpdateState(
+        "網站有新版本可更新",
+        "立即更新",
+        false
+      );
+
       if (document.getElementById("pwaUpdateNotice")) return;
 
       const notice = document.createElement("div");
@@ -1046,11 +1243,7 @@
         button.disabled = true;
         button.textContent = "更新中…";
 
-        if (registration.waiting) {
-          registration.waiting.postMessage({ type: "SKIP_WAITING" });
-        } else {
-          location.reload();
-        }
+        activatePwaUpdate(registration);
       });
     }
 
@@ -1067,6 +1260,7 @@
         navigator.serviceWorker.register("service-worker.js", {
           updateViaCache: "none"
         }).then(function (registration) {
+          currentPwaRegistration = registration;
           registration.update();
 
           if (registration.waiting && navigator.serviceWorker.controller) {
@@ -1074,19 +1268,15 @@
           }
 
           registration.addEventListener("updatefound", function () {
-            const worker = registration.installing;
-            if (!worker) return;
-
-            worker.addEventListener("statechange", function () {
-              if (
-                worker.state === "installed" &&
-                navigator.serviceWorker.controller
-              ) {
-                showPwaUpdateNotice(registration);
-              }
-            });
+            watchInstallingWorker(registration);
           });
-        }).catch(function () {});
+        }).catch(function () {
+          setManualUpdateState(
+            "更新功能載入失敗",
+            "重新檢查",
+            false
+          );
+        });
       });
     }
   </script>

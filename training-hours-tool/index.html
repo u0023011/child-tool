@@ -2777,9 +2777,7 @@
                 );
 
               const adjustmentSummary =
-                hasAdjustment
-                  ? courseAdjustmentSummary(course)
-                  : "不調整";
+                courseAdjustmentSummary(course);
 
               const note = [
                 isFirst
@@ -2801,9 +2799,6 @@
 
                   <td>
                     <div class="adjustment-summary">
-                      <span class="adjustment-state ${hasAdjustment ? "active" : ""}">
-                        ${escapeHtml(adjustmentSummary)}
-                      </span>
                       <button
                         type="button"
                         class="adjust-toggle-button"
@@ -2811,6 +2806,11 @@
                       >
                         ${course.adjustmentOpen ? "收合" : "調整"}
                       </button>
+                      ${hasAdjustment ? `
+                        <span class="adjustment-state active">
+                          ${escapeHtml(adjustmentSummary)}
+                        </span>
+                      ` : ""}
                     </div>
 
                     <div class="adjustment-panel ${course.adjustmentOpen ? "open" : ""}">
