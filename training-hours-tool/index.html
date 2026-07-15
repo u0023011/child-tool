@@ -586,16 +586,21 @@
 
     .adjustment-summary {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 260px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      width: 190px;
+      min-width: 190px;
     }
 
     .adjustment-state {
-      flex: 1;
+      width: 100%;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
+      line-height: 1.5;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
     }
 
     .adjustment-state.active {
@@ -2983,6 +2988,16 @@
 
         coursePreview.innerHTML = `
           <table>
+            <colgroup>
+              <col style="width:60px">
+              <col style="width:200px">
+              <col style="width:200px">
+              <col style="width:220px">
+              <col style="width:210px">
+              <col style="width:160px">
+              <col style="width:110px">
+              <col style="width:210px">
+            </colgroup>
             <thead>
               <tr>
                 <th>序號</th>
@@ -3016,24 +3031,23 @@
       }
 
       function courseAdjustmentSummary(course) {
-        const parts = [];
+        const settingParts = [];
 
         if (course.includeInHours === false) {
-          parts.push("不列入時數計算");
+          settingParts.push("不列入時數計算");
         }
 
         if (
           course.assignedIntervalIndex !==
           course.naturalIntervalIndex
         ) {
-          parts.push("併入前一區間");
+          settingParts.push("併入前一區間");
         }
 
-        if (course.adjustmentReason) {
-          parts.push(course.adjustmentReason);
-        }
-
-        return parts.join("／") || "不調整";
+        return [
+          settingParts.join("／"),
+          course.adjustmentReason || ""
+        ].filter(Boolean).join("\n") || "不調整";
       }
 
       function groupHoursText(group) {
