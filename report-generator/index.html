@@ -834,7 +834,7 @@
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">各區收托統計</h3>
-                <p class="report-section-desc">依行政區彙整托育人員，里別會自動合併至所屬行政區，並排除「到宅」。</p>
+                <p class="report-section-desc">依行政區彙整托育人員；單獨寫「到宅」會排除，「到宅－行政區」則歸入該行政區。</p>
               </div>
               <div class="report-copy-actions">
                 <button type="button" class="copy-data-btn" data-copy-report="district">複製數據</button>
@@ -863,7 +863,7 @@
               </thead>
               <tbody id="districtBody"></tbody>
             </table>
-            <div class="small-note">此區塊會依「區」或「里」欄自動彙整行政區；例如「新營區南紙里」會計入「新營區」，「到宅」不列入。</div>
+            <div class="small-note">此區塊會自動彙整行政區；例如「新營區南紙里」及「到宅－新營」都會計入「新營區」，只有單獨寫「到宅」才排除。</div>
           </section>
 
           <section class="report-section" id="qualificationSection">
@@ -2073,16 +2073,62 @@
 
     function normalizeDistrict(value){
       let district = normalize(value);
+      if(!district) return "";
 
-      // 「到宅」不是行政區，不納入各區統計。
-      if(!district || district.includes("到宅")) return "";
+      district = district
+        .replace(/[－–—]/g,"-")
+        .replace(/\s+/g,"");
 
-      // 若資料是「新營區南紙里」或「臺南市新營區南紙里」，
-      // 只保留行政區名稱「新營區」。
+      // 單獨寫「到宅」時沒有行政區，維持排除。
+      if(/^到宅$/.test(district)) return "";
+
+      // 「到宅-白河區」、「到宅：善化」等格式，
+      // 取分隔符號後面的行政區納入統計。
+      district = district.replace(
+        /^到宅(?:[-:：／/]+)?/,
+        ""
+      );
+
+      if(!district) return "";
+
+      // 臺南市行政區名稱。部分表格只寫「善化、新營」，
+      // 系統會補成「善化區、新營區」。
+      const tainanDistricts = [
+        "新營","鹽水","白河","柳營","後壁","東山",
+        "麻豆","下營","六甲","官田","大內","佳里",
+        "學甲","西港","七股","將軍","北門","新化",
+        "善化","新市","安定","山上","玉井","楠西",
+        "南化","左鎮","仁德","歸仁","關廟","龍崎",
+        "永康","東區","南區","北區","安南","安平","中西"
+      ];
+
+      // 若原值帶有「臺南市／某縣市」，先移除縣市名稱。
       district = district.replace(/^.*?[市縣]/,"");
-      const match = district.match(/^(.+?區)/);
 
-      return match ? match[1] : district;
+      // 已有「○○區」時直接取行政區，忽略後面的里別。
+      const districtMatch = district.match(/^(.+?區)/);
+      if(districtMatch){
+        return districtMatch[1];
+      }
+
+      // 沒寫「區」時，依臺南行政區名稱補上。
+      const knownDistrict = tainanDistricts.find(name =>
+        district === name ||
+        district.startsWith(name + "里") ||
+        district.startsWith(name + "-") ||
+        district.startsWith(name + "／")
+      );
+
+      if(knownDistrict){
+        return knownDistrict.endsWith("區")
+          ? knownDistrict
+          : knownDistrict + "區";
+      }
+
+      // 純里別無法可靠判斷隸屬行政區，不自行猜測。
+      if(/里$/.test(district)) return "";
+
+      return district;
     }
 
     function getDynamicDistricts(rows){
