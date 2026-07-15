@@ -466,7 +466,7 @@ if (window.top !== window.self && !(role === "admin")) {
 <div class="wrap">
   <div class="hero">
     <h1>日期計算工具</h1>
-    <div class="sub">計算新收托回報、結束收托回報、托育補助申請，以及準公共退出日期。（可輸入民國或西元，旁邊有民國日期選擇器）</div>
+    <div class="sub">計算新收托回報、結束收托回報、訪視紀錄、托育補助申請，以及準公共退出日期。（可輸入民國或西元，旁邊有民國日期選擇器）</div>
   </div>
 
   <div class="tabs">
@@ -476,7 +476,7 @@ if (window.top !== window.self && !(role === "admin")) {
   </div>
 
   <section class="panel" id="panelDeadline">
-    <div class="title">收托、停托與補助送件期限計算</div>
+    <div class="title">收托、停托、訪視與補助送件期限計算</div>
 
     <div class="grid">
       <div>
@@ -484,15 +484,16 @@ if (window.top !== window.self && !(role === "admin")) {
         <select id="caseType" onchange="changeCaseType()">
           <option value="new">新收托回報（7日內）</option>
           <option value="stop">結束收托回報（7日內）</option>
+          <option value="visit">訪視紀錄（14日內）</option>
           <option value="subsidy">托育補助申請（15日內）</option>
         </select>
       </div>
 
       <div id="noticeBox">
         <label for="noticeType">通訊情境</label>
-        <input type="hidden" id="noticeType" value="none">
+        <input type="hidden" id="noticeType" value="same">
         <div class="custom-select" id="noticeDropdown">
-          <button type="button" class="custom-select-button" id="noticeButton" onclick="toggleNoticeMenu()">依新收托日計算</button>
+          <button type="button" class="custom-select-button" id="noticeButton" onclick="toggleNoticeMenu()"><span class="notice-red">當日</span>即行通訊告知</button>
           <div class="custom-menu" id="noticeMenu"></div>
         </div>
         <div class="hint" id="noticeHint"></div>
@@ -873,7 +874,6 @@ function switchTab(t){
 
 const noticeOptions = {
   new:[
-    ["none","依新收托日計算","依新收托日計算"],
     ["same","當日即行通訊告知",'<span class="notice-red">當日</span>即行通訊告知'],
     ["early","日前提前通訊告知",'日前<span class="notice-red">提前</span>通訊告知'],
     ["during","期間始行通訊告知",'<span class="notice-red">期間</span>始行通訊告知']
@@ -897,9 +897,9 @@ document.addEventListener("click", function(e){
 });
 
 function setNoticeOptions(type){
-  const current=qs("noticeType").value || "none";
+  const current=qs("noticeType").value;
   const opts=noticeOptions[type]||[];
-  let value = opts.some(o=>o[0]===current) ? current : "none";
+  let value = opts.some(o=>o[0]===current) ? current : (opts[0]?.[0] || "");
   qs("noticeType").value = value;
   const menu=qs("noticeMenu");
   menu.innerHTML="";
@@ -927,6 +927,13 @@ function changeCaseType(){
     noticeBox.classList.add("hidden");
     qs("eventDateLabel").textContent="新收托日";
     qs("eventHint").textContent="新收托日不算入，隔天算第1日，計算托育補助15日內申請期限。";
+    return;
+  }
+
+  if(t==="visit"){
+    noticeBox.classList.add("hidden");
+    qs("eventDateLabel").textContent="訪視日";
+    qs("eventHint").textContent="訪視日不算入，隔天算第1日，計算訪視紀錄14日內送件期限。";
     return;
   }
 
@@ -960,6 +967,9 @@ function caseInfo(){
   const t=qs("caseType").value;
   if(t==="subsidy"){
     return {name:"托育補助申請",days:15,rule:"家長應自托育事實發生日起15日內備齊文件提出申請。",dateName:"新收托日"};
+  }
+  if(t==="visit"){
+    return {name:"訪視紀錄",days:14,rule:"訪視紀錄應自訪視日起14日內完成送件。",dateName:"訪視日"};
   }
 
   const nt=qs("noticeType").value;
