@@ -57,7 +57,7 @@
     }
 
     .page {
-      width: min(1080px, calc(100% - 28px));
+      width: min(1400px, calc(100% - 20px));
       margin: 0 auto;
       padding: 34px 0 44px;
     }
@@ -663,7 +663,7 @@
     @media (max-width:700px){ .identity-grid{grid-template-columns:1fr;} .course-head,.course-body{padding-left:18px;padding-right:18px;} }
 
     @media (max-width: 700px) {
-      .page { width: min(100% - 20px, 1080px); padding-top: 22px; }
+      .page { width: min(100% - 20px, 1400px); padding-top: 22px; }
       .form-card { padding: 18px; }
       .result-head { align-items: flex-start; padding: 18px; }
       .badge { display: none; }
@@ -1746,7 +1746,7 @@
           sheet.getCell('A3').value = `姓名：${organizedData.name || ''}、身分證字號：${organizedData.idNumber || ''}        時數核計期程：${period}`;
           const today = new Date();
           sheet.getCell('E5').value = `統計日期：${formatRocLoose(today)}`;
-          sheet.pageSetup = { ...sheet.pageSetup, printArea: `A1:G${Math.max(7, startRow + organizedData.courses.length - 1)}`, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+          sheet.pageSetup = { ...sheet.pageSetup, printArea: `A1:G${Math.max(7, startRow + organizedData.courses.length - 1)}`, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
 
           const safeName = (organizedData.name || '托育人員').replace(/[\\/:*?"<>|]/g, '_');
           const buffer = await workbook.xlsx.writeBuffer();
