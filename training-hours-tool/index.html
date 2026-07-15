@@ -1692,8 +1692,25 @@
             row.getCell(5).value = course.hoursText;
             row.getCell(6).value = null;
             row.getCell(7).value = null;
-            for (let col = 1; col <= 7; col++) row.getCell(col).style = deepClone(bodyStyle[col]);
-          });
+for (let col = 1; col <= 7; col++) {
+  row.getCell(col).style = deepClone(bodyStyle[col]);
+}
+
+// 併入前一區間的特殊課程，匯出時將課程資料改為紅字。
+// 備註欄 F、G 不跟著變紅。
+const isAdjusted =
+  course.assignedIntervalIndex !== course.naturalIntervalIndex;
+
+if (isAdjusted) {
+  for (let col = 1; col <= 5; col++) {
+    const cell = row.getCell(col);
+
+    cell.font = {
+      ...deepClone(cell.font || {}),
+      color: { argb: 'FFFF0000' }
+    };
+  }
+}
 
           for (const group of organizedData.intervalGroups) {
             if (!group.courses.length) continue;
