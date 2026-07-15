@@ -1984,21 +1984,83 @@
       return parsedRowsStore.map(row => ({...row}));
     }
 
+    function rowText(row){
+      return Object.values(row)
+        .map(value => normalize(value))
+        .filter(Boolean)
+        .join("｜");
+    }
+
+    function isAggregateSummaryRow(row){
+      const text = rowText(row);
+      const total = toNumber(row.total);
+      const age3 = toNumber(row.age3);
+      const age23 = toNumber(row.age23);
+      const age02 = toNumber(row.age02);
+      const ageSum = age3 + age23 + age02;
+
+      // 報表底部常見的總計、加總、說明列，不是個別托育人員。
+      if(
+        /(總計|合計|小計|加總|彙總|統計列|不計算人數|不列入計算|以下不計算|遇標不計算)/.test(text)
+      ){
+        return true;
+      }
+
+      // 單一托育人員最多以4名托兒計算。
+      // 大於4的數字一定是整份表格的加總，不可再納入。
+      if(total > 4 || ageSum > 4){
+        return true;
+      }
+
+      const validGender = /^(男|女)$/.test(normalize(row.gender));
+      const validPublicStatus =
+        /^(已簽約|未簽約|已簽|未簽|準公共|非準公共|準公|非準公)$/
+          .test(normalize(row.publicStatus));
+      const validQualification =
+        QUALS.includes(normalize(row.qualification)) ||
+        /(技術證|技術士|相關科系|核心課程|結業)/
+          .test(normalize(row.qualification));
+      const validDistrict = normalizeDistrict(row.district) !== "";
+      const validEligible =
+        /^(符合|不符合|可簽|不可簽)$/.test(normalize(row.eligible));
+      const validOtherArea = normalize(row.otherArea) !== "";
+
+      const hasCaregiverSignal =
+        validGender ||
+        validPublicStatus ||
+        validQualification ||
+        validDistrict ||
+        validEligible ||
+        validOtherArea;
+
+      const hasCareNumbers =
+        normalize(row.age3) !== "" ||
+        normalize(row.age23) !== "" ||
+        normalize(row.age02) !== "" ||
+        normalize(row.total) !== "";
+
+      // 只有數字、卻完全沒有性別／準公共／資格／區里等個人資料，
+      // 通常是底部彙總列，而不是去識別化的托育人員資料。
+      if(hasCareNumbers && !hasCaregiverSignal){
+        return true;
+      }
+
+      return false;
+    }
+
     function isExcludedCaregiverRow(row){
-      return Object.values(row).some(value =>
-        normalize(value).includes("不計算人數")
-      );
+      return isAggregateSummaryRow(row);
     }
 
     function isCaregiverRow(row){
       if(isExcludedCaregiverRow(row)) return false;
 
-      const meaningfulFields = [
-        "name","gender","age3","age23","age02","total",
-        "otherArea","eligible","publicStatus","qualification","district"
+      const personFields = [
+        "name","gender","otherArea","eligible",
+        "publicStatus","qualification","district"
       ];
 
-      return meaningfulFields.some(field => normalize(row[field]) !== "");
+      return personFields.some(field => normalize(row[field]) !== "");
     }
 
     function countWhere(rows,predicate){
@@ -2026,6 +2088,8 @@
     function getDynamicDistricts(rows){
       const districts = [];
       rows.forEach(row => {
+        if(!isCaregiverRow(row)) return;
+
         const district = normalizeDistrict(row.district);
         if(district && !districts.includes(district)){
           districts.push(district);
@@ -2035,6 +2099,11 @@
     }
 
     function computeReport(rows){
+      const excludedAggregateRows = countWhere(
+        rows,
+        row => isAggregateSummaryRow(row)
+      );
+
       const registeredCount = countWhere(rows,r => isCaregiverRow(r));
       const activeCount = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0);
       const childrenTotal = sumWhere(rows,"total",r => isCaregiverRow(r));
@@ -2147,6 +2216,7 @@
       );
 
       return {
+        excludedAggregateRows,
         registeredCount,
         activeCount,
         childrenTotal,
@@ -2450,7 +2520,10 @@
 
       $("reportMeta").innerHTML =
         `產生時間：${rocTimestamp()}<br>`+
-        `資料列數：${rows.length}列`+
+        `讀取列數：${rows.length}列`+
+        (report.excludedAggregateRows
+          ? `<br>已排除彙總／說明列：${report.excludedAggregateRows}列`
+          : "")+
         (missing.length ? `<br>未貼欄位：${missing.join("、")}` : "")+
         (inferredTitles.length
           ? `<br>內容推測欄位：${inferredTitles.join("、")}`
@@ -2477,13 +2550,21 @@
             `系統依內容推測欄位：<strong>${inferredTitles.join("、")}</strong>；若一致性檢查正常，通常可直接使用。`
           );
         }
+        if(report.excludedAggregateRows){
+          messages.push(
+            `已自動排除 <strong>${report.excludedAggregateRows}</strong> 列總計、加總或說明資料，避免重複計算。`
+          );
+        }
 
         $("statusBox").innerHTML =
           `報表已產生。${messages.join("<br>")}`;
       }else{
         $("statusBox").className = "status";
         $("statusBox").innerHTML =
-          `報表已產生，共使用 <strong>${rows.length}</strong> 列資料；托育人員與托兒人數核對一致。`;
+          `報表已產生，托育人員與托兒人數核對一致。`+
+          (report.excludedAggregateRows
+            ? ` 已排除 <strong>${report.excludedAggregateRows}</strong> 列總計、加總或說明資料。`
+            : "");
       }
 
       $("reportCard").scrollIntoView({behavior:"smooth",block:"start"});
