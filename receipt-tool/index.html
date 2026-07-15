@@ -2329,7 +2329,7 @@
     $("addChild").addEventListener("click",addChild);
 
     function generateReceipt(){
-      const opening=$("opening").value.trim() || "您好，今日已收到";
+      const opening=$("opening").value.trim() || "今日收件：";
       const general=[];
       const childLines=[];
 
@@ -2373,7 +2373,7 @@
       copyTextArea("receiptResult");
     });
     $("receiptReset").addEventListener("click",()=>{
-      $("opening").value="您好，今日已收到";
+      $("opening").value="今日收件：";
       document.querySelectorAll('#section-receipt .toggle.active').forEach(x=>x.classList.remove("active"));
       $("receiptResult").value="";
       $("registrationDetails").open=false;
