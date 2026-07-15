@@ -576,13 +576,79 @@
       background: #fff5e5;
     }
 
-    .interval-adjust-select {
-      min-width: 220px;
-      height: 42px;
-      padding: 0 34px 0 11px;
-      border-radius: 10px;
-      font-size: 14px;
+    .course-preview tr.eight-to-five-row td {
+      background: #fff1a8;
+    }
+
+    .course-preview tr.eight-to-five-row:hover td {
+      background: #ffe88a;
+    }
+
+    .adjustment-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 260px;
+    }
+
+    .adjustment-state {
+      flex: 1;
+      color: var(--muted);
+      font-size: 13px;
       font-weight: 800;
+    }
+
+    .adjustment-state.active {
+      color: #a04c00;
+    }
+
+    .adjust-toggle-button,
+    .adjust-reset-button {
+      border: 1px solid #d9b98d;
+      border-radius: 9px;
+      background: #fffaf2;
+      color: var(--primary-dark);
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .adjustment-panel {
+      display: none;
+      margin-top: 9px;
+      padding: 10px;
+      border: 1px solid #ead4b4;
+      border-radius: 10px;
+      background: #fffdf8;
+    }
+
+    .adjustment-panel.open {
+      display: grid;
+      gap: 8px;
+    }
+
+    .adjustment-field span {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .adjustment-field select {
+      width: 100%;
+      min-width: 235px;
+      height: 38px;
+      padding: 0 32px 0 9px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .course-note {
+      white-space: pre-line;
     }
 
     .interval-detail {
@@ -1097,12 +1163,12 @@
         </div>
 
         <div
-          id="adjustHint"
+        id="adjustHint"
           class="course-adjust-hint"
           hidden
         >
-          限期改善課程、颱風假延期等特殊課程，可在「計入區間」選擇併入前一區間。
-          併入前一區間的課程，匯出 Excel 時會以紅字顯示。
+          課程預設為「不調整」。需要時按下「調整」，可設定是否列入時數計算、
+          是否併入前一區間及調整原因；併入前一區間的課程，匯出 Excel 時會以紅字顯示。
         </div>
 
         <div
@@ -2398,8 +2464,10 @@
           }
 
           group.courses.push(course);
-          group.totalHours +=
-            course.hours;
+          if (course.includeInHours !== false) {
+            group.totalHours +=
+              course.hours;
+          }
         }
 
         return groups;
@@ -2443,8 +2511,15 @@
           ) {
             previousAdjustments.set(
               oldCourse.sourceOrder,
-              oldCourse.assignedIntervalIndex !==
-                oldCourse.naturalIntervalIndex
+              {
+                mergePrevious:
+                  oldCourse.assignedIntervalIndex !==
+                    oldCourse.naturalIntervalIndex,
+                includeInHours:
+                  oldCourse.includeInHours !== false,
+                adjustmentReason:
+                  oldCourse.adjustmentReason || ""
+              }
             );
           }
         }
@@ -2471,16 +2546,25 @@
             continue;
           }
 
-          const wasAdjusted =
+          const previousAdjustment =
             previousAdjustments.get(
               originalCourse.sourceOrder
-            ) === true;
+            );
+
+          const mergePrevious =
+            previousAdjustment?.mergePrevious === true;
+
+          const includeInHours =
+            previousAdjustment?.includeInHours !== false;
+
+          const adjustmentReason =
+            previousAdjustment?.adjustmentReason || "";
 
           let assignedIntervalIndex =
             naturalIntervalIndex;
 
           if (
-            wasAdjusted &&
+            mergePrevious &&
             naturalIntervalIndex > 0
           ) {
             assignedIntervalIndex =
@@ -2490,7 +2574,10 @@
           courses.push({
             ...originalCourse,
             naturalIntervalIndex,
-            assignedIntervalIndex
+            assignedIntervalIndex,
+            includeInHours,
+            adjustmentReason,
+            adjustmentOpen: false
           });
         }
 
@@ -2675,73 +2762,88 @@
                 group &&
                 group.courses[0] === course;
 
-              const note =
-                isFirst
-                  ? (
-                      `${formatRocLoose(group.start)}-` +
-                      `${formatRocLoose(group.end)}` +
-                      `在職時數核計` +
-                      `${formatHours(group.totalHours)}小時`
-                    )
-                  : "";
-
-              const adjusted =
+              const mergedPrevious =
                 course.assignedIntervalIndex !==
                 course.naturalIntervalIndex;
 
-              const normalLabel =
-                `第 ${course.naturalIntervalIndex + 1} 區間（依課程日期）`;
+              const hasAdjustment =
+                mergedPrevious ||
+                course.includeInHours === false ||
+                Boolean(course.adjustmentReason);
 
-              const previousOption =
-                course.naturalIntervalIndex > 0
-                  ? `
-                    <option
-                      value="${course.naturalIntervalIndex - 1}"
-                      ${adjusted ? "selected" : ""}
-                    >
-                      第 ${course.naturalIntervalIndex} 區間（併入前一區間）
-                    </option>
-                  `
-                  : "";
+              const eightToFive =
+                isEightToFiveCourse(
+                  course.dateText
+                );
 
-              const detail =
-                adjusted
-                  ? (
-                      `已改計：` +
-                      intervalRangeText(
-                        course.assignedIntervalIndex
-                      )
-                    )
-                  : (
-                      `原區間：` +
-                      intervalRangeText(
-                        course.naturalIntervalIndex
-                      )
-                    );
+              const adjustmentSummary =
+                hasAdjustment
+                  ? courseAdjustmentSummary(course)
+                  : "不調整";
+
+              const note = [
+                isFirst
+                  ? groupHoursText(group)
+                  : "",
+                hasAdjustment
+                  ? `調整：${adjustmentSummary}`
+                  : ""
+              ].filter(Boolean).join("\n");
+
+              const rowClasses = [
+                hasAdjustment ? "adjusted-row" : "",
+                eightToFive ? "eight-to-five-row" : ""
+              ].filter(Boolean).join(" ");
 
               return `
-                <tr class="${adjusted ? "adjusted-row" : ""}">
+                <tr class="${rowClasses}">
                   <td>${index + 1}</td>
 
                   <td>
-                    <select
-                      class="interval-adjust-select"
-                      data-course-id="${escapeHtml(course.id)}"
-                      aria-label="調整課程計入區間"
-                    >
-                      <option
-                        value="${course.naturalIntervalIndex}"
-                        ${adjusted ? "" : "selected"}
+                    <div class="adjustment-summary">
+                      <span class="adjustment-state ${hasAdjustment ? "active" : ""}">
+                        ${escapeHtml(adjustmentSummary)}
+                      </span>
+                      <button
+                        type="button"
+                        class="adjust-toggle-button"
+                        data-course-id="${escapeHtml(course.id)}"
                       >
-                        ${escapeHtml(normalLabel)}
-                      </option>
+                        ${course.adjustmentOpen ? "收合" : "調整"}
+                      </button>
+                    </div>
 
-                      ${previousOption}
-                    </select>
+                    <div class="adjustment-panel ${course.adjustmentOpen ? "open" : ""}">
+                      <label class="adjustment-field">
+                        <span>是否列入時數計算</span>
+                        <select class="include-hours-select" data-course-id="${escapeHtml(course.id)}">
+                          <option value="yes" ${course.includeInHours !== false ? "selected" : ""}>是，列入時數計算</option>
+                          <option value="no" ${course.includeInHours === false ? "selected" : ""}>否，不列入時數計算</option>
+                        </select>
+                      </label>
 
-                    <span class="interval-detail ${adjusted ? "adjusted" : ""}">
-                      ${escapeHtml(detail)}
-                    </span>
+                      <label class="adjustment-field">
+                        <span>是否併入前一區間</span>
+                        <select class="merge-previous-select" data-course-id="${escapeHtml(course.id)}">
+                          <option value="no" ${!mergedPrevious ? "selected" : ""}>否，依課程日期計算</option>
+                          <option value="yes" ${mergedPrevious ? "selected" : ""} ${course.naturalIntervalIndex === 0 ? "disabled" : ""}>是，併入前一區間</option>
+                        </select>
+                      </label>
+
+                      <label class="adjustment-field">
+                        <span>調整原因</span>
+                        <select class="adjustment-reason-select" data-course-id="${escapeHtml(course.id)}">
+                          <option value="" ${!course.adjustmentReason ? "selected" : ""}>請選擇原因</option>
+                          <option value="限改" ${course.adjustmentReason === "限改" ? "selected" : ""}>限改</option>
+                          <option value="災防假導致延期" ${course.adjustmentReason === "災防假導致延期" ? "selected" : ""}>災防假導致延期</option>
+                          <option value="加強托育人員在職訓練課程時數" ${course.adjustmentReason === "加強托育人員在職訓練課程時數" ? "selected" : ""}>加強托育人員在職訓練課程時數</option>
+                        </select>
+                      </label>
+
+                      <button type="button" class="adjust-reset-button" data-course-id="${escapeHtml(course.id)}">
+                        恢復不調整
+                      </button>
+                    </div>
                   </td>
 
                   <td>
@@ -2764,7 +2866,7 @@
                     ${escapeHtml(course.hoursText)}
                   </td>
 
-                  <td>
+                  <td class="course-note">
                     ${escapeHtml(note)}
                   </td>
                 </tr>
@@ -2777,7 +2879,7 @@
             <thead>
               <tr>
                 <th>序號</th>
-                <th>計入區間</th>
+                <th>調整設定</th>
                 <th>上課日期</th>
                 <th>課程名稱</th>
                 <th>課程表名稱</th>
@@ -2798,9 +2900,51 @@
         );
       }
 
-      function updateCourseInterval(
+      function isEightToFiveCourse(value) {
+        const text =
+          cleanCell(value)
+            .normalize("NFKC");
+
+        return /08\s*[:：]\s*00\s*(?:[~～\-－–—_＿]|至)\s*17\s*[:：]\s*00/.test(text);
+      }
+
+      function courseAdjustmentSummary(course) {
+        const parts = [];
+
+        if (course.includeInHours === false) {
+          parts.push("不列入時數計算");
+        }
+
+        if (
+          course.assignedIntervalIndex !==
+          course.naturalIntervalIndex
+        ) {
+          parts.push("併入前一區間");
+        }
+
+        if (course.adjustmentReason) {
+          parts.push(course.adjustmentReason);
+        }
+
+        return parts.join("／") || "不調整";
+      }
+
+      function groupHoursText(group) {
+        return (
+          `${formatRocLoose(group.start)}-` +
+          `${formatRocLoose(group.end)}` +
+          `在職時數核計` +
+          `${formatHours(group.totalHours)}小時`
+        );
+      }
+
+      function groupNoteText(group) {
+        return groupHoursText(group);
+      }
+
+      function updateCourseAdjustment(
         courseId,
-        assignedIntervalIndex
+        changes = {}
       ) {
         if (!organizedData) {
           return;
@@ -2816,28 +2960,28 @@
           return;
         }
 
-        const allowed = [
-          course.naturalIntervalIndex
-        ];
-
-        if (
-          course.naturalIntervalIndex > 0
-        ) {
-          allowed.push(
-            course.naturalIntervalIndex - 1
-          );
+        if ("includeInHours" in changes) {
+          course.includeInHours =
+            changes.includeInHours !== false;
         }
 
-        if (
-          !allowed.includes(
-            assignedIntervalIndex
-          )
-        ) {
-          return;
+        if ("adjustmentReason" in changes) {
+          course.adjustmentReason =
+            changes.adjustmentReason || "";
         }
 
-        course.assignedIntervalIndex =
-          assignedIntervalIndex;
+        if ("mergePrevious" in changes) {
+          course.assignedIntervalIndex =
+            changes.mergePrevious === true &&
+            course.naturalIntervalIndex > 0
+              ? course.naturalIntervalIndex - 1
+              : course.naturalIntervalIndex;
+        }
+
+        if ("adjustmentOpen" in changes) {
+          course.adjustmentOpen =
+            changes.adjustmentOpen === true;
+        }
 
         sortCoursesForOutput(
           organizedData.courses
@@ -2849,72 +2993,12 @@
           );
 
         renderCoursePreview();
-
-        const adjusted =
-          course.assignedIntervalIndex !==
-          course.naturalIntervalIndex;
-
-        showCourseStatus(
-          adjusted
-            ? (
-                `已將「${course.courseName || "此課程"}」` +
-                `併入第 ${course.assignedIntervalIndex + 1} 區間。` +
-                "匯出 Excel 時該筆會以紅字顯示。"
-              )
-            : (
-                `「${course.courseName || "此課程"}」` +
-                `已恢復依課程日期計入第 ${course.naturalIntervalIndex + 1} 區間。`
-              ),
-          "success"
-        );
       }
 
       function syncCourseSelectionsBeforeExport() {
         if (!organizedData) {
           return;
         }
-
-        const selects =
-          coursePreview.querySelectorAll(
-            ".interval-adjust-select"
-          );
-
-        selects.forEach(select => {
-          const course =
-            organizedData.courses.find(
-              item =>
-                item.id ===
-                select.dataset.courseId
-            );
-
-          if (!course) {
-            return;
-          }
-
-          const selectedIndex =
-            Number(select.value);
-
-          const allowed = [
-            course.naturalIntervalIndex
-          ];
-
-          if (
-            course.naturalIntervalIndex > 0
-          ) {
-            allowed.push(
-              course.naturalIntervalIndex - 1
-            );
-          }
-
-          if (
-            allowed.includes(
-              selectedIndex
-            )
-          ) {
-            course.assignedIntervalIndex =
-              selectedIndex;
-          }
-        });
 
         sortCoursesForOutput(
           organizedData.courses
@@ -3196,7 +3280,10 @@ sheet.getCell("G6").border = createThinBorder();
                   rowNumber
                 );
 
-              row.height = 48;
+              row.height =
+                course.adjustmentReason
+                  ? 72
+                  : 48;
 
               row.getCell(1).value =
                 course.courseName;
@@ -3223,6 +3310,11 @@ sheet.getCell("G6").border = createThinBorder();
                 course.assignedIntervalIndex !==
                 course.naturalIntervalIndex;
 
+              const eightToFive =
+                isEightToFiveCourse(
+                  course.dateText
+                );
+
               for (
                 let column = 1;
                 column <= 7;
@@ -3239,6 +3331,11 @@ sheet.getCell("G6").border = createThinBorder();
                   cell,
                   {
                     size: 11,
+                    fill:
+                      eightToFive &&
+                      column <= 5
+                        ? "FFFFF2CC"
+                        : undefined,
                     color:
                       useRed
                         ? "FFFF0000"
@@ -3250,6 +3347,43 @@ sheet.getCell("G6").border = createThinBorder();
                         : "left"
                   }
                 );
+              }
+
+              if (course.adjustmentReason) {
+                row.getCell(5).value = {
+                  richText: [
+                    {
+                      text: course.hoursText,
+                      font: {
+                        name: "標楷體",
+                        size: 11,
+                        color: {
+                          argb:
+                            adjusted
+                              ? "FFFF0000"
+                              : "FF000000"
+                        }
+                      }
+                    },
+                    {
+                      text:
+                        `\n（${course.adjustmentReason}）`,
+                      font: {
+                        name: "標楷體",
+                        size: 9,
+                        color: {
+                          argb: "FFFF0000"
+                        }
+                      }
+                    }
+                  ]
+                };
+
+                row.getCell(5).alignment = {
+                  vertical: "middle",
+                  horizontal: "center",
+                  wrapText: true
+                };
               }
             }
           );
@@ -3316,10 +3450,7 @@ sheet.getCell("G6").border = createThinBorder();
               );
 
             noteCell.value =
-              `${formatRocLoose(group.start)}-` +
-              `${formatRocLoose(group.end)}` +
-              `在職時數核計` +
-              `${formatHours(group.totalHours)}小時`;
+              groupNoteText(group);
 
             applyCellStyle(
               noteCell,
@@ -3420,7 +3551,7 @@ sheet.getCell("G6").border = createThinBorder();
           }, 1000);
 
           showCourseStatus(
-            `Excel 已匯出，共 ${organizedData.courses.length} 筆課程；併入前一區間的課程已標示紅字。`,
+            `Excel 已匯出，共 ${organizedData.courses.length} 筆課程；調整原因已顯示在登錄時數下方，併入前一區間的課程已標示紅字。`,
             "success"
           );
         } catch (error) {
@@ -4164,19 +4295,90 @@ sheet.getCell("G6").border = createThinBorder();
       coursePreview.addEventListener(
         "change",
         event => {
-          const select =
-            event.target.closest(
-              ".interval-adjust-select"
-            );
+          const select = event.target;
 
-          if (!select) {
+          if (!(select instanceof HTMLSelectElement)) {
             return;
           }
 
-          updateCourseInterval(
-            select.dataset.courseId,
-            Number(select.value)
-          );
+          if (select.classList.contains("include-hours-select")) {
+            updateCourseAdjustment(
+              select.dataset.courseId,
+              {
+                includeInHours:
+                  select.value !== "no"
+              }
+            );
+          } else if (select.classList.contains("merge-previous-select")) {
+            updateCourseAdjustment(
+              select.dataset.courseId,
+              {
+                mergePrevious:
+                  select.value === "yes"
+              }
+            );
+          } else if (select.classList.contains("adjustment-reason-select")) {
+            updateCourseAdjustment(
+              select.dataset.courseId,
+              {
+                adjustmentReason:
+                  select.value
+              }
+            );
+          }
+        }
+      );
+
+      coursePreview.addEventListener(
+        "click",
+        event => {
+          const toggleButton =
+            event.target.closest(
+              ".adjust-toggle-button"
+            );
+
+          if (toggleButton) {
+            const course =
+              organizedData?.courses.find(
+                item =>
+                  item.id ===
+                  toggleButton.dataset.courseId
+              );
+
+            if (course) {
+              updateCourseAdjustment(
+                course.id,
+                {
+                  adjustmentOpen:
+                    !course.adjustmentOpen
+                }
+              );
+            }
+
+            return;
+          }
+
+          const resetButton =
+            event.target.closest(
+              ".adjust-reset-button"
+            );
+
+          if (resetButton) {
+            updateCourseAdjustment(
+              resetButton.dataset.courseId,
+              {
+                includeInHours: true,
+                mergePrevious: false,
+                adjustmentReason: "",
+                adjustmentOpen: false
+              }
+            );
+
+            showCourseStatus(
+              "該筆課程已恢復為不調整。",
+              "success"
+            );
+          }
         }
       );
 
