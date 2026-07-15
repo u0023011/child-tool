@@ -2317,6 +2317,27 @@
           .trim();
       }
 
+      function maskIdNumber(value) {
+        const idNumber =
+          cleanCell(value)
+            .toUpperCase();
+
+        if (!idNumber) {
+          return "";
+        }
+
+        if (idNumber.length <= 5) {
+          return "*".repeat(
+            idNumber.length
+          );
+        }
+
+        return (
+          idNumber.slice(0, -5) +
+          "*****"
+        );
+      }
+
       function parseCourseDate(value) {
         const text =
           cleanCell(value);
@@ -3385,7 +3406,7 @@
 
           sheet.getCell("A3").value =
             `姓名：${organizedData.name || ""}` +
-            `、身分證字號：${organizedData.idNumber || ""}` +
+            `、身分證字號：${maskIdNumber(organizedData.idNumber)}` +
             `        時數核計期程：${period}`;
 
 applyCellStyle(
