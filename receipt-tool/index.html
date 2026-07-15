@@ -1373,6 +1373,11 @@
       font-size:17px;
     }
 
+    .roster-x{
+      color:#c43b31;
+      font-weight:950;
+    }
+
     .roster-images{
       display:grid;
       gap:18px;
@@ -2264,7 +2269,7 @@
     // 收件紀錄
     const childOptions = [
       "異動申請書","契約書","臨托契約書","補助申報表","戶口名簿",
-      "戶籍謄本","身分證影本","郵局影本","中低收入證明","低收入證明",
+      "戶籍謄本","身分證影本","健保卡","郵局影本","中低收入證明","低收入證明",
       "特境證明","身障證明","發緩證明","停止補助申報表"
     ];
 
@@ -3424,8 +3429,8 @@
             <td>${escapeHtml(person.number)}</td>
             <td>${escapeHtml(person.name)}</td>
             <td>${escapeHtml(person.area)}</td>
-            <td class="roster-v">${person.morning ? "V" : ""}</td>
-            <td class="roster-v">${person.afternoon ? "V" : ""}</td>
+            <td class="roster-v ${person.morning ? "" : "roster-x"}">${person.morning ? "✓" : "✕"}</td>
+            <td class="roster-v ${person.afternoon ? "" : "roster-x"}">${person.afternoon ? "✓" : "✕"}</td>
           </tr>
         `).join("");
 
@@ -3665,9 +3670,10 @@
         drawCanvasTextFit(ctx,person.number,145,y+(rowHeight/2),120,25,"700","center");
         drawCanvasTextFit(ctx,maskRosterName(person.name),470,y+(rowHeight/2),440,28,"800","center");
 
-        ctx.fillStyle=colors.greenDark;
-        drawCanvasTextFit(ctx,person.morning ? "✓" : "",822,y+(rowHeight/2),150,32,"900","center");
-        drawCanvasTextFit(ctx,person.afternoon ? "✓" : "",1027,y+(rowHeight/2),150,32,"900","center");
+        ctx.fillStyle=person.morning ? colors.greenDark : colors.accentRed;
+        drawCanvasTextFit(ctx,person.morning ? "✓" : "✕",822,y+(rowHeight/2),150,32,"900","center");
+        ctx.fillStyle=person.afternoon ? colors.greenDark : colors.accentRed;
+        drawCanvasTextFit(ctx,person.afternoon ? "✓" : "✕",1027,y+(rowHeight/2),150,32,"900","center");
       });
 
       ctx.fillStyle=colors.accentRed;
