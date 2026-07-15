@@ -834,7 +834,7 @@
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">各區收托統計</h3>
-                <p class="report-section-desc">依行政區彙整托育人員；單獨寫「到宅」會排除，「到宅－行政區」則歸入該行政區。</p>
+                <p class="report-section-desc">依行政區彙整托育人員；行政區單獨寫「到宅」或「跨區」時不納入計算，「到宅－行政區」則歸入該行政區。</p>
               </div>
               <div class="report-copy-actions">
                 <button type="button" class="copy-data-btn" data-copy-report="district">複製數據</button>
@@ -863,7 +863,7 @@
               </thead>
               <tbody id="districtBody"></tbody>
             </table>
-            <div class="small-note">此區塊會自動彙整行政區；例如「新營區南紙里」及「到宅－新營」都會計入「新營區」，只有單獨寫「到宅」才排除。</div>
+            <div class="small-note">此區塊會自動彙整行政區；例如「新營區南紙里」及「到宅－新營」都會計入「新營區」，單獨寫「到宅」或「跨區」時不納入計算。</div>
           </section>
 
           <section class="report-section" id="qualificationSection">
@@ -998,6 +998,16 @@
 
     function normalize(value){
       return String(value ?? "").normalize("NFKC").trim();
+    }
+
+    function normalizeEligible(value){
+      const normalized = normalize(value);
+      return normalized.toUpperCase() === "X" ? "不符合" : normalized;
+    }
+
+    function normalizePublicStatus(value){
+      const normalized = normalize(value);
+      return normalized.toUpperCase() === "X" ? "未簽約" : normalized;
     }
 
 
@@ -1500,7 +1510,7 @@
           if(profile.nonEmptyCount < 2) return 0;
           const ratio = ratioMatching(
             profile.values,
-            value => /^(已簽約|未簽約|已簽|未簽|準公共|非準公共|準公|非準公)$/.test(value)
+            value => /^(已簽約|未簽約|已簽|未簽|準公共|非準公共|準公|非準公|X)$/i.test(value)
           );
           return ratio >= 0.7 ? 0.8 + ratio * 0.17 : 0;
         });
@@ -1535,7 +1545,7 @@
           if(profile.nonEmptyCount < 2) return 0;
           const ratio = ratioMatching(
             profile.values,
-            value => /(符合|不符合|可簽|不可簽)/.test(value)
+            value => /^(符合|不符合|可簽|不可簽|X)$/i.test(value)
           );
           return ratio >= 0.6 ? 0.78 + ratio * 0.18 : 0;
         });
@@ -2015,14 +2025,14 @@
       const validGender = /^(男|女)$/.test(normalize(row.gender));
       const validPublicStatus =
         /^(已簽約|未簽約|已簽|未簽|準公共|非準公共|準公|非準公)$/
-          .test(normalize(row.publicStatus));
+          .test(normalizePublicStatus(row.publicStatus));
       const validQualification =
         QUALS.includes(normalize(row.qualification)) ||
         /(技術證|技術士|相關科系|核心課程|結業)/
           .test(normalize(row.qualification));
       const validDistrict = normalizeDistrict(row.district) !== "";
       const validEligible =
-        /^(符合|不符合|可簽|不可簽)$/.test(normalize(row.eligible));
+        /^(符合|不符合|可簽|不可簽)$/.test(normalizeEligible(row.eligible));
       const validOtherArea = normalize(row.otherArea) !== "";
 
       const hasCaregiverSignal =
@@ -2076,16 +2086,23 @@
       if(!district) return "";
 
       district = district
-        .replace(/[－–—]/g,"-")
+        .replace(/[－–—_＿]/g,"-")
         .replace(/\s+/g,"");
 
-      // 單獨寫「到宅」時沒有行政區，維持排除。
-      if(/^到宅$/.test(district)) return "";
+      // 單獨寫「到宅」或「跨區」時不是行政區，不納入各區統計。
+      if(/^(到宅|跨區)$/.test(district)) return "";
 
       // 「到宅-白河區」、「到宅：善化」等格式，
       // 取分隔符號後面的行政區納入統計。
       district = district.replace(
         /^到宅(?:[-:：／/]+)?/,
+        ""
+      );
+
+      // 「白河區-到宅」、「白河區_到宅」等格式，
+      // 移除行政區後方的到宅註記後，再依行政區統計。
+      district = district.replace(
+        /(?:[-:：／/]+)?到宅$/,
         ""
       );
 
@@ -2153,33 +2170,33 @@
       const registeredCount = countWhere(rows,r => isCaregiverRow(r));
       const activeCount = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0);
       const childrenTotal = sumWhere(rows,"total",r => isCaregiverRow(r));
-      const eligibleActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalize(r.eligible) === "符合");
-      const signedActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalize(r.publicStatus) === "已簽約");
+      const eligibleActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizeEligible(r.eligible) === "符合");
+      const signedActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizePublicStatus(r.publicStatus) === "已簽約");
 
       const maleNon = QUALS.map(q => countWhere(rows,r =>
         isCaregiverRow(r) &&
-        normalize(r.publicStatus) === "未簽約" &&
+        normalizePublicStatus(r.publicStatus) === "未簽約" &&
         normalize(r.gender) === "男" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
       ));
       const femaleNon = QUALS.map(q => countWhere(rows,r =>
         isCaregiverRow(r) &&
-        normalize(r.publicStatus) === "未簽約" &&
+        normalizePublicStatus(r.publicStatus) === "未簽約" &&
         normalize(r.gender) === "女" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
       ));
       const malePub = QUALS.map(q => countWhere(rows,r =>
         isCaregiverRow(r) &&
-        normalize(r.publicStatus) === "已簽約" &&
+        normalizePublicStatus(r.publicStatus) === "已簽約" &&
         normalize(r.gender) === "男" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
       ));
       const femalePub = QUALS.map(q => countWhere(rows,r =>
         isCaregiverRow(r) &&
-        normalize(r.publicStatus) === "已簽約" &&
+        normalizePublicStatus(r.publicStatus) === "已簽約" &&
         normalize(r.gender) === "女" &&
         normalize(r.qualification) === q &&
         normalize(r.otherArea) === ""
@@ -2216,7 +2233,7 @@
           isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
           isCaregiverRow(r) &&
-        normalize(r.publicStatus) === "已簽約" &&
+        normalizePublicStatus(r.publicStatus) === "已簽約" &&
           toNumber(r.total) > 0 &&
           normalize(r.otherArea) === ""
         );
@@ -2224,19 +2241,19 @@
           isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
           isCaregiverRow(r) &&
-        normalize(r.publicStatus) === "未簽約" &&
+        normalizePublicStatus(r.publicStatus) === "未簽約" &&
           toNumber(r.total) > 0 &&
           normalize(r.otherArea) === ""
         );
         const signedChildren = sumWhere(rows,"total",r =>
           isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
-          normalize(r.publicStatus) === "已簽約"
+          normalizePublicStatus(r.publicStatus) === "已簽約"
         );
         const nonSignedChildren = sumWhere(rows,"total",r =>
           isCaregiverRow(r) &&
           normalizeDistrict(r.district) === district &&
-          normalize(r.publicStatus) === "未簽約"
+          normalizePublicStatus(r.publicStatus) === "未簽約"
         );
         return {
           district,
@@ -2279,12 +2296,12 @@
         ageChildrenTotal,
         districtChildrenTotal,
 
-        age02Non:sumWhere(rows,"age02",r => isCaregiverRow(r) && normalize(r.publicStatus)==="未簽約"),
-        age02Public:sumWhere(rows,"age02",r => isCaregiverRow(r) && normalize(r.publicStatus)==="已簽約"),
-        age23Non:sumWhere(rows,"age23",r => isCaregiverRow(r) && normalize(r.publicStatus)==="未簽約"),
-        age23Public:sumWhere(rows,"age23",r => isCaregiverRow(r) && normalize(r.publicStatus)==="已簽約"),
-        age3Non:sumWhere(rows,"age3",r => isCaregiverRow(r) && normalize(r.publicStatus)==="未簽約"),
-        age3Public:sumWhere(rows,"age3",r => isCaregiverRow(r) && normalize(r.publicStatus)==="已簽約"),
+        age02Non:sumWhere(rows,"age02",r => isCaregiverRow(r) && normalizePublicStatus(r.publicStatus)==="未簽約"),
+        age02Public:sumWhere(rows,"age02",r => isCaregiverRow(r) && normalizePublicStatus(r.publicStatus)==="已簽約"),
+        age23Non:sumWhere(rows,"age23",r => isCaregiverRow(r) && normalizePublicStatus(r.publicStatus)==="未簽約"),
+        age23Public:sumWhere(rows,"age23",r => isCaregiverRow(r) && normalizePublicStatus(r.publicStatus)==="已簽約"),
+        age3Non:sumWhere(rows,"age3",r => isCaregiverRow(r) && normalizePublicStatus(r.publicStatus)==="未簽約"),
+        age3Public:sumWhere(rows,"age3",r => isCaregiverRow(r) && normalizePublicStatus(r.publicStatus)==="已簽約"),
 
         districtRows,
         districtSignedSubtotal:districtRows.reduce((sum,r)=>sum+r.signedCaregivers,0),
