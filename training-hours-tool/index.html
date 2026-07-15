@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#9a7b4f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="在職時數">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="icon" href="../icons/icon-192.png">
+  <link rel="apple-touch-icon" href="../icons/icon-192.png">
+  <title>在職課程年度區間產生工具</title>
+  <style>
+    :root {
+      --bg: #f4ecdf;
+      --card: #fffdf8;
+      --text: #4e321b;
+      --muted: #7a6042;
+      --line: #e3d4bd;
+      --primary: #8b6f47;
+      --primary-dark: #6f512f;
+      --primary-soft: #efe6d7;
+      --success: #3f7654;
+      --success-soft: #edf6ee;
+      --danger: #b42318;
+      --danger-soft: #fff1ed;
+      --warning: #8a6331;
+      --shadow: 0 16px 40px rgba(78, 50, 27, 0.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    ::selection {
+      color: #fff;
+      background: rgba(139, 111, 71, 0.88);
+    }
+
+    html { scrollbar-color: #b89a70 #f4ecdf; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(139, 111, 71, 0.14), transparent 34%),
+        linear-gradient(180deg, #faf6ef 0%, var(--bg) 100%);
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+    }
+
+    .page {
+      width: min(1080px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 34px 0 44px;
+    }
+
+    .hero {
+      padding: 4px 4px 22px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(227, 212, 189, 0.96);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .form-card {
+      padding: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .date-field {
+      width: min(720px, 100%);
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .required { color: var(--danger); }
+
+    .date-input-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 54px;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 50px;
+      padding: 0 14px;
+      border: 1.5px solid #d8c6a8;
+      border-radius: 12px;
+      color: var(--text);
+      background: #fff;
+      font-size: 17px;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    input:hover,
+    select:hover { border-color: #b59669; }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(139, 111, 71, 0.16);
+    }
+
+    .calendar-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 54px;
+      min-width: 54px;
+      height: 50px;
+      border: 1.5px solid #d8c6a8;
+      border-radius: 12px;
+      color: var(--primary-dark);
+      background: #fffaf2;
+      font-size: 24px;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+
+    .calendar-btn:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateY(-1px);
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .example-btn {
+      appearance: none;
+      border: 1px solid #eadcc6;
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: var(--primary-dark);
+      background: #fffaf2;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .example-btn:hover { background: var(--primary-soft); }
+
+    /* 民國日期選擇器：年份 → 月份 → 日期 */
+    .roc-picker-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(35, 31, 27, 0.38);
+      backdrop-filter: blur(1px);
+    }
+
+    .roc-picker-backdrop.open {
+      display: flex;
+    }
+
+    .roc-picker {
+      width: min(360px, 100%);
+      padding: 14px;
+      border: 1px solid #d8c6a8;
+      border-radius: 18px;
+      background: #fffdf8;
+      box-shadow: 0 18px 48px rgba(35, 31, 27, 0.25);
+    }
+
+    .roc-picker-head {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) 44px;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .roc-nav {
+      min-width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 0;
+      border-radius: 12px;
+      color: #4e321b;
+      background: #efe6d7;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      transition: background-color .12s ease;
+    }
+
+    .roc-nav:hover { background: #e3d4bd; }
+
+    .roc-title-button {
+      min-width: 0;
+      min-height: 44px;
+      padding: 7px 5px;
+      border: 0;
+      border-radius: 12px;
+      color: #4e321b;
+      background: transparent;
+      font-size: 20px;
+      font-weight: 950;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color .12s ease;
+    }
+
+    .roc-title-button:hover { background: #fff3df; }
+    .roc-month-view.hidden-view { display: none; }
+
+    .roc-week,
+    .roc-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .roc-week span {
+      padding: 4px 0;
+      color: #7a6042;
+      font-size: 15px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .roc-day {
+      min-width: 0;
+      min-height: 38px;
+      padding: 7px 0;
+      border: 1px solid #eadcc6;
+      border-radius: 10px;
+      color: #2d2923;
+      background: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+    }
+
+    .roc-day:hover {
+      border-color: #8b6f47;
+      color: #4e321b;
+      background: #efe6d7;
+    }
+
+    .roc-day.muted {
+      color: #b2a99e;
+      background: #fbf7ef;
+    }
+
+    .roc-day.muted:hover {
+      border-color: #d3b98f;
+      color: #7b5b32;
+      background: #f1e7d8;
+    }
+
+    .roc-day.today {
+      border-color: #8b6f47;
+      box-shadow: inset 0 0 0 2px rgba(139, 111, 71, 0.18);
+    }
+
+    .roc-day.selected {
+      border-color: #8b6f47;
+      color: #fff;
+      background: #8b6f47;
+      font-weight: 950;
+    }
+
+    .roc-day.selected:hover {
+      border-color: #7b5c35;
+      color: #fff;
+      background: #7b5c35;
+    }
+
+    .roc-year-grid,
+    .roc-month-grid {
+      display: none;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .roc-year-grid.open,
+    .roc-month-grid.open { display: grid; }
+
+    .roc-year-btn,
+    .roc-month-btn {
+      min-height: 42px;
+      padding: 9px 4px;
+      border: 1px solid #eadcc6;
+      border-radius: 12px;
+      color: #4e321b;
+      background: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+    }
+
+    .roc-year-btn:hover,
+    .roc-month-btn:hover {
+      border-color: #8b6f47;
+      color: #4e321b;
+      background: #efe6d7;
+    }
+
+    .roc-year-btn.selected,
+    .roc-month-btn.selected {
+      border-color: #8b6f47;
+      color: #fff;
+      background: #8b6f47;
+    }
+
+    .roc-picker-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .roc-action {
+      min-height: 40px;
+      padding: 8px;
+      border: 0;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background-color .12s ease;
+    }
+
+    .roc-action.light {
+      color: #4e321b;
+      background: #efe6d7;
+    }
+
+    .roc-action.light:hover { background: #e3d4bd; }
+
+    .roc-action.main {
+      color: #fff;
+      background: #8b6f47;
+    }
+
+    .roc-action.main:hover { background: #7b5c35; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    button.action {
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    button.action:hover { transform: translateY(-1px); }
+    button.action:active { transform: translateY(0); }
+
+    .primary {
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 8px 18px rgba(139, 111, 71, 0.24);
+    }
+
+    .primary:hover { background: var(--primary-dark); }
+
+    .secondary {
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+    }
+
+    .ghost {
+      color: #6e5941;
+      background: #f1eadf;
+    }
+
+    .message {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .message.show { display: block; }
+    .message.error { color: var(--danger); background: var(--danger-soft); }
+    .message.success { color: var(--success); background: var(--success-soft); }
+
+    .result-card {
+      margin-top: 22px;
+      overflow: hidden;
+    }
+
+    .result-card.collapsed #resultArea { display: none; }
+    .result-card.collapsed .result-head { border-bottom: 0; }
+    .result-head { cursor: pointer; }
+    .result-head:focus-visible {
+      outline: 4px solid rgba(139, 111, 71, 0.20);
+      outline-offset: -4px;
+    }
+    .result-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .result-chevron {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid #e3d4bd;
+      border-radius: 50%;
+      background: #fff;
+      color: var(--primary-dark);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+      transition: transform .18s ease;
+    }
+    .result-card.collapsed .result-chevron { transform: rotate(-90deg); }
+
+    .result-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, #fffdf8, #f6eee2);
+    }
+
+    .result-head h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .result-summary {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--success);
+      background: var(--success-soft);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th, td {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #5c432b;
+      background: #f5ede1;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    td { font-size: 15px; }
+
+    tbody tr:hover { background: #fff9f0; }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .interval-no {
+      color: var(--primary-dark);
+      font-weight: 900;
+    }
+
+    .interval-text {
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .empty {
+      padding: 42px 22px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    details {
+      margin-top: 22px;
+      padding: 18px 20px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .rules {
+      margin: 14px 0 0;
+      padding-left: 22px;
+      color: #6e5941;
+      line-height: 1.9;
+    }
+
+    .notice {
+      margin: 18px 2px 0;
+      color: var(--warning);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+
+
+    /* 課程資料整理與 Excel 匯出 */
+    .course-card { margin-top: 22px; overflow: hidden; }
+    .course-head { padding: 22px 24px 8px; }
+    .course-head h2 { margin: 0; font-size: 22px; }
+    .course-head p { margin: 8px 0 0; color: var(--muted); line-height: 1.7; }
+    .course-body { padding: 16px 24px 24px; }
+    .paste-box {
+      width: 100%; min-height: 230px; resize: vertical; padding: 16px;
+      border: 1.5px solid #d8c6a8; border-radius: 14px; outline: none;
+      color: var(--text); background: #fff; font: 15px/1.65 "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    .paste-box:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(139,111,71,.16); }
+    .course-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .course-status { display:none; margin-top:14px; padding:12px 14px; border-radius:12px; font-weight:800; line-height:1.6; }
+    .course-status.show { display:block; }
+    .course-status.success { color:var(--success); background:var(--success-soft); }
+    .course-status.error { color:var(--danger); background:var(--danger-soft); }
+    .course-status.info { color:var(--primary-dark); background:var(--primary-soft); }
+    .course-preview { display:none; margin-top:18px; border:1px solid var(--line); border-radius:14px; overflow:auto; }
+    .course-preview.show { display:block; }
+    .course-preview table { min-width: 1240px; }
+    .course-preview th { position:sticky; top:0; z-index:1; }
+    .course-preview td { vertical-align: middle; }
+    .course-preview tr.adjusted-row td { background: #fff8ea; }
+    .course-auto-hint,
+    .course-adjust-hint {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+    .course-adjust-hint {
+      padding: 11px 13px;
+      border: 1px dashed #cfb78f;
+      border-radius: 12px;
+      background: #fffaf1;
+    }
+    .interval-adjust-select {
+      min-width: 210px;
+      height: 42px;
+      padding: 0 34px 0 11px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .interval-detail {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: nowrap;
+    }
+    .interval-detail.adjusted {
+      color: #8a5c20;
+      font-weight: 900;
+    }
+    .identity-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0 0; }
+    .identity-box { padding:12px 14px; border-radius:12px; background:#fbf7ef; border:1px solid var(--line); }
+    .identity-box span { display:block; color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .identity-box strong { font-size:16px; word-break:break-all; }
+    @media (max-width:700px){ .identity-grid{grid-template-columns:1fr;} .course-head,.course-body{padding-left:18px;padding-right:18px;} }
+
+    @media (max-width: 700px) {
+      .page { width: min(100% - 20px, 1080px); padding-top: 22px; }
+      .form-card { padding: 18px; }
+      .result-head { align-items: flex-start; padding: 18px; }
+      .badge { display: none; }
+      button.action { flex: 1 1 135px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .page { width: 100%; padding: 0; }
+      .hero, .form-card, details, .notice { display: none !important; }
+      .result-card { margin: 0; border: 0; box-shadow: none; }
+      .table-wrap { overflow: visible; }
+      table { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">📅 在職課程區間計算</div>
+      <h1>年度區間產生工具</h1>
+      <p class="subtitle">輸入證書生效日，即可依制度轉換規則產生完整有效期間內的年度區間。輸出日期統一使用民國格式。</p>
+    </section>
+
+    <section class="card form-card" aria-labelledby="form-title">
+      <div class="form-grid">
+        <div class="date-field">
+          <label for="effectiveDate">證書生效日 <span class="required">＊</span></label>
+          <div class="date-input-row">
+            <input id="effectiveDate" type="text" inputmode="numeric" autocomplete="off"
+                   placeholder="例如：1091201、109/12/01、2020/12/01"
+                   aria-describedby="dateHint">
+            <button id="calendarBtn" class="calendar-btn" type="button"
+                    aria-label="開啟民國日期選擇器" aria-expanded="false">📅</button>
+          </div>
+          <p id="dateHint" class="hint">支援民國 7 碼、民國斜線日期、西元斜線日期，也可使用「－」分隔；亦可按右側日曆選擇民國年、月、日。</p>
+          <div class="examples" aria-label="範例日期">
+            <button class="example-btn" type="button" data-date="109/12/01">套用 109/12/01</button>
+          </div>
+
+
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="generateBtn" class="action primary" type="button">產生年度區間</button>
+        <button id="copyBtn" class="action secondary" type="button">複製全部結果</button>
+        <button id="clearBtn" class="action ghost" type="button">清除</button>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+    </section>
+
+    <section id="resultCard" class="card result-card collapsed" aria-labelledby="result-title">
+      <div id="resultHead" class="result-head" role="button" tabindex="0" aria-expanded="false" aria-controls="resultArea">
+        <div>
+          <h2 id="result-title">計算結果</h2>
+          <div id="resultSummary" class="result-summary">尚未產生區間</div>
+        </div>
+        <div class="result-head-actions">
+          <div id="resultBadge" class="badge">等待輸入</div>
+          <span class="result-chevron" aria-hidden="true">⌄</span>
+        </div>
+      </div>
+
+      <div id="resultArea" class="empty">請先輸入證書生效日，再按下「產生年度區間」。</div>
+    </section>
+
+
+
+    <section class="card course-card" aria-labelledby="course-title">
+      <div class="course-head">
+        <h2 id="course-title">貼上在職課程資料</h2>
+        <p>先輸入證書生效日，再將系統整段資料直接貼在下方。貼上後會自動辨識姓名、身分證字號與課程欄位，並依年度區間整理。</p>
+      </div>
+      <div class="course-body">
+        <label for="coursePaste">課程資料 <span class="required">＊</span></label>
+        <textarea id="coursePaste" class="paste-box" placeholder="請從系統複製包含「姓名、身分證字號」及課程表格的完整資料，再貼到這裡。"></textarea>
+        <p class="course-auto-hint">貼上後會自動整理；資料有修改時，也會自動重新整理。</p>
+        <div class="course-actions">
+          <button id="organizeBtn" class="action primary" type="button">重新整理資料</button>
+          <button id="exportExcelBtn" class="action secondary" type="button" disabled>匯出 Excel</button>
+          <button id="clearCourseBtn" class="action ghost" type="button">清除課程資料</button>
+        </div>
+        <div id="courseStatus" class="course-status" role="status" aria-live="polite"></div>
+        <div id="identityGrid" class="identity-grid" hidden>
+          <div class="identity-box"><span>姓名</span><strong id="previewName">—</strong></div>
+          <div class="identity-box"><span>身分證字號</span><strong id="previewId">—</strong></div>
+        </div>
+        <div id="adjustHint" class="course-adjust-hint" hidden>若課程是限期改善要求、颱風假延期等特殊情形，可在「計入區間」選擇併入前一個區間；Excel 時數與備註會立即重新計算。</div>
+        <div id="coursePreview" class="course-preview"></div>
+      </div>
+    </section>
+
+    <details class="card">
+      <summary>查看計算規則</summary>
+      <ol class="rules">
+        <li>登記證有效期間為 6 年，最後一個區間只計算到證書屆期日前一日。</li>
+        <li>114 年以前，依證書生效日的週期逐年計算。</li>
+        <li>區間起日進入 114 年後，該區間直接切至 114/12/31。</li>
+        <li>115 年起改採曆年制，每年為 1/1 至 12/31。</li>
+        <li>若最後一個曆年區間超過證書有效期限，迄日改為證書屆期日。</li>
+      </ol>
+    </details>
+
+    <p class="notice">※ 本工具僅產生證書 6 年有效期間內的年度日期區間，不計算應完成時數、已完成時數或課程類別。</p>
+  </main>
+
+  <div id="rocPickerBackdrop" class="roc-picker-backdrop" role="dialog"
+       aria-modal="true" aria-labelledby="rocPickerTitle" aria-hidden="true">
+    <div class="roc-picker">
+      <div class="roc-picker-head">
+        <button id="rocPrevBtn" type="button" class="roc-nav" aria-label="上一頁">‹</button>
+        <button id="rocPickerTitle" type="button" class="roc-title-button"
+                aria-label="切換年份選擇">民國115年7月</button>
+        <button id="rocNextBtn" type="button" class="roc-nav" aria-label="下一頁">›</button>
+      </div>
+
+      <div id="rocMonthView" class="roc-month-view">
+        <div class="roc-week" aria-hidden="true">
+          <span>日</span><span>一</span><span>二</span><span>三</span>
+          <span>四</span><span>五</span><span>六</span>
+        </div>
+        <div id="rocPickerGrid" class="roc-grid"></div>
+      </div>
+
+      <div id="rocYearGrid" class="roc-year-grid"></div>
+      <div id="rocMonthGrid" class="roc-month-grid"></div>
+
+      <div class="roc-picker-actions">
+        <button id="rocTodayBtn" type="button" class="roc-action light">今天</button>
+        <button id="rocClearBtn" type="button" class="roc-action light">清除</button>
+        <button id="rocCloseBtn" type="button" class="roc-action main">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script>
+    (() => {
+      const ROC_OFFSET = 1911;
+      const TRANSITION_ROC_YEAR = 114;
+      const CERTIFICATE_YEARS = 6;
+      const MIN_PICKER_ROC_YEAR = 1;
+      const MAX_PICKER_ROC_YEAR = 250;
+      const ROC_YEAR_PAGE_SIZE = 12;
+
+      const dateInput = document.getElementById('effectiveDate');
+      const calendarBtn = document.getElementById('calendarBtn');
+      const rocPickerBackdrop = document.getElementById('rocPickerBackdrop');
+      const rocPickerTitle = document.getElementById('rocPickerTitle');
+      const rocPrevBtn = document.getElementById('rocPrevBtn');
+      const rocNextBtn = document.getElementById('rocNextBtn');
+      const rocMonthView = document.getElementById('rocMonthView');
+      const rocPickerGrid = document.getElementById('rocPickerGrid');
+      const rocYearGrid = document.getElementById('rocYearGrid');
+      const rocMonthGrid = document.getElementById('rocMonthGrid');
+      const rocTodayBtn = document.getElementById('rocTodayBtn');
+      const rocClearBtn = document.getElementById('rocClearBtn');
+      const rocCloseBtn = document.getElementById('rocCloseBtn');
+      const generateBtn = document.getElementById('generateBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const message = document.getElementById('message');
+      const resultArea = document.getElementById('resultArea');
+      const resultCard = document.getElementById('resultCard');
+      const resultHead = document.getElementById('resultHead');
+      const resultSummary = document.getElementById('resultSummary');
+      const resultBadge = document.getElementById('resultBadge');
+      const coursePaste = document.getElementById('coursePaste');
+      const organizeBtn = document.getElementById('organizeBtn');
+      const exportExcelBtn = document.getElementById('exportExcelBtn');
+      const clearCourseBtn = document.getElementById('clearCourseBtn');
+      const courseStatus = document.getElementById('courseStatus');
+      const identityGrid = document.getElementById('identityGrid');
+      const previewName = document.getElementById('previewName');
+      const previewId = document.getElementById('previewId');
+      const adjustHint = document.getElementById('adjustHint');
+      const coursePreview = document.getElementById('coursePreview');
+      const TEMPLATE_XLSX_BASE64 = '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';
+
+      let latestIntervals = [];
+      let latestExpiryDate = null;
+      let organizedData = null;
+      let inputTimer = null;
+      let courseInputTimer = null;
+      let rocPickerView = new Date();
+      let rocPickerMode = 'month';
+      let rocYearPageStart = null;
+      let rocPickerSelectedDate = null;
+
+      function pad2(value) {
+        return String(value).padStart(2, '0');
+      }
+
+      function daysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+      }
+
+      function makeLocalDate(year, month, day) {
+        const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+        if (
+          date.getFullYear() !== year ||
+          date.getMonth() !== month - 1 ||
+          date.getDate() !== day
+        ) {
+          return null;
+        }
+        return date;
+      }
+
+      function addDays(date, days) {
+        const next = new Date(date.getTime());
+        next.setDate(next.getDate() + days);
+        return next;
+      }
+
+      function addYearsThenMinusOneDay(date, years) {
+        const anniversary = new Date(
+          date.getFullYear() + years,
+          date.getMonth(),
+          date.getDate(),
+          12, 0, 0, 0
+        );
+        return addDays(anniversary, -1);
+      }
+
+      function nextCycleStart(date) {
+        return new Date(
+          date.getFullYear() + 1,
+          date.getMonth(),
+          date.getDate(),
+          12, 0, 0, 0
+        );
+      }
+
+      function rocYear(date) {
+        return date.getFullYear() - ROC_OFFSET;
+      }
+
+      function endOfRocYear(roc) {
+        return makeLocalDate(roc + ROC_OFFSET, 12, 31);
+      }
+
+      function formatRoc(date) {
+        return `${rocYear(date)}/${pad2(date.getMonth() + 1)}/${pad2(date.getDate())}`;
+      }
+
+      function isAfter(dateA, dateB) {
+        return dateA.getTime() > dateB.getTime();
+      }
+
+      function earlierDate(dateA, dateB) {
+        return isAfter(dateA, dateB) ? new Date(dateB.getTime()) : new Date(dateA.getTime());
+      }
+
+      function parseDateInput(rawValue) {
+        const raw = String(rawValue || '')
+          .trim()
+          .replace(/[年月.．-]/g, '/')
+          .replace(/日/g, '')
+          .replace(/\s+/g, '');
+
+        if (!raw) {
+          throw new Error('請輸入證書生效日。');
+        }
+
+        let year;
+        let month;
+        let day;
+
+        if (/^\d+$/.test(raw)) {
+          if (raw.length === 7) {
+            year = Number(raw.slice(0, 3)) + ROC_OFFSET;
+            month = Number(raw.slice(3, 5));
+            day = Number(raw.slice(5, 7));
+          } else if (raw.length === 8) {
+            year = Number(raw.slice(0, 4));
+            month = Number(raw.slice(4, 6));
+            day = Number(raw.slice(6, 8));
+          } else {
+            throw new Error('純數字日期請輸入民國 7 碼或西元 8 碼，例如 1091201 或 20201201。');
+          }
+        } else {
+          const parts = raw.split('/').filter(Boolean);
+          if (parts.length !== 3 || parts.some(part => !/^\d+$/.test(part))) {
+            throw new Error('日期格式無法辨識，請輸入例如 109/12/01 或 2020/12/01。');
+          }
+
+          const enteredYear = Number(parts[0]);
+          year = enteredYear < 1000 ? enteredYear + ROC_OFFSET : enteredYear;
+          month = Number(parts[1]);
+          day = Number(parts[2]);
+        }
+
+        if (year <= ROC_OFFSET) {
+          throw new Error('民國年份必須大於 0。');
+        }
+
+        const date = makeLocalDate(year, month, day);
+        if (!date) {
+          throw new Error('日期不存在，請確認年、月、日是否正確。');
+        }
+
+        return date;
+      }
+
+      function generateIntervals(effectiveDate) {
+        const intervals = [];
+        const expiryDate = addYearsThenMinusOneDay(effectiveDate, CERTIFICATE_YEARS);
+        let currentStart = new Date(effectiveDate.getTime());
+
+        while (!isAfter(currentStart, expiryDate)) {
+          const currentRocYear = rocYear(currentStart);
+          let plannedEnd;
+
+          if (currentRocYear < TRANSITION_ROC_YEAR) {
+            plannedEnd = addDays(nextCycleStart(currentStart), -1);
+          } else {
+            plannedEnd = endOfRocYear(currentRocYear);
+          }
+
+          const currentEnd = earlierDate(plannedEnd, expiryDate);
+
+          intervals.push({
+            index: intervals.length + 1,
+            start: new Date(currentStart.getTime()),
+            end: new Date(currentEnd.getTime())
+          });
+
+          currentStart = addDays(currentEnd, 1);
+        }
+
+        return { intervals, expiryDate };
+      }
+
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = `message show ${type}`;
+      }
+
+      function clearMessage() {
+        message.textContent = '';
+        message.className = 'message';
+      }
+
+      function renderIntervals(intervals, effectiveDate, expiryDate) {
+        const rows = intervals.map(item => {
+          const startText = formatRoc(item.start);
+          const endText = formatRoc(item.end);
+          return `
+            <tr>
+              <td class="interval-no">第 ${item.index} 區間</td>
+              <td>${startText}</td>
+              <td>${endText}</td>
+              <td class="interval-text">${startText}~${endText}</td>
+            </tr>`;
+        }).join('');
+
+        resultArea.className = 'table-wrap';
+        resultArea.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>區間序號</th>
+                <th>起日</th>
+                <th>迄日</th>
+                <th>區間文字</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+
+        resultSummary.textContent = `證書生效日：${formatRoc(effectiveDate)}｜證書屆期日：${formatRoc(expiryDate)}｜共 ${intervals.length} 個區間`;
+        resultBadge.textContent = '計算完成';
+      }
+
+      function calculate({ quiet = false } = {}) {
+        try {
+          clearMessage();
+          const effectiveDate = parseDateInput(dateInput.value);
+          const generated = generateIntervals(effectiveDate);
+          latestIntervals = generated.intervals;
+          latestExpiryDate = generated.expiryDate;
+          renderIntervals(latestIntervals, effectiveDate, latestExpiryDate);
+          if (!quiet) showMessage(`已依證書 6 年有效期間產生 ${latestIntervals.length} 個年度區間。`, 'success');
+          return true;
+        } catch (error) {
+          latestIntervals = [];
+          latestExpiryDate = null;
+          resultArea.className = 'empty';
+          resultArea.textContent = '日期有誤，請修正後重新計算。';
+          resultSummary.textContent = '尚未產生區間';
+          resultBadge.textContent = '等待修正';
+          if (!quiet || dateInput.value.trim()) showMessage(error.message, 'error');
+          return false;
+        }
+      }
+
+      function buildCopyText() {
+        return latestIntervals.map(item => {
+          return `第 ${item.index} 區間：${formatRoc(item.start)}~${formatRoc(item.end)}`;
+        }).join('\n');
+      }
+
+      async function copyResults() {
+        if (!latestIntervals.length && !calculate({ quiet: true })) return;
+
+        const text = buildCopyText();
+        try {
+          await navigator.clipboard.writeText(text);
+          showMessage('已複製全部區間，可直接貼到其他文件。', 'success');
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          const copied = document.execCommand('copy');
+          textarea.remove();
+          showMessage(copied ? '已複製全部區間。' : '無法自動複製，請手動選取表格內容。', copied ? 'success' : 'error');
+        }
+      }
+
+      function clearAll() {
+        dateInput.value = '';
+        latestIntervals = [];
+        latestExpiryDate = null;
+        clearMessage();
+        closeDatePicker();
+        resultArea.className = 'empty';
+        resultArea.textContent = '請先輸入證書生效日，再按下「產生年度區間」。';
+        resultSummary.textContent = '尚未產生區間';
+        resultBadge.textContent = '等待輸入';
+        dateInput.focus();
+      }
+
+      function scheduleAutoCalculate() {
+        window.clearTimeout(inputTimer);
+        if (!dateInput.value.trim()) return;
+        inputTimer = window.setTimeout(() => calculate({ quiet: true }), 450);
+      }
+
+      function sameDay(dateA, dateB) {
+        return Boolean(
+          dateA &&
+          dateB &&
+          dateA.getFullYear() === dateB.getFullYear() &&
+          dateA.getMonth() === dateB.getMonth() &&
+          dateA.getDate() === dateB.getDate()
+        );
+      }
+
+      function getPickerDefaultDate() {
+        try {
+          return parseDateInput(dateInput.value);
+        } catch {
+          const today = new Date();
+          return makeLocalDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+        }
+      }
+
+      function setPickerOpen(isOpen) {
+        rocPickerBackdrop.classList.toggle('open', isOpen);
+        rocPickerBackdrop.setAttribute('aria-hidden', String(!isOpen));
+        calendarBtn.setAttribute('aria-expanded', String(isOpen));
+      }
+
+      function openDatePicker() {
+        rocPickerSelectedDate = getPickerDefaultDate();
+        rocPickerView = new Date(
+          rocPickerSelectedDate.getFullYear(),
+          rocPickerSelectedDate.getMonth(),
+          1,
+          12, 0, 0, 0
+        );
+        rocPickerMode = 'month';
+        rocYearPageStart = null;
+        renderRocPicker();
+        setPickerOpen(true);
+        rocPickerTitle.focus();
+      }
+
+      function closeDatePicker() {
+        setPickerOpen(false);
+      }
+
+      function toggleDatePicker() {
+        if (rocPickerBackdrop.classList.contains('open')) {
+          closeDatePicker();
+        } else {
+          openDatePicker();
+        }
+      }
+
+      function hideAllPickerViews() {
+        rocMonthView.classList.add('hidden-view');
+        rocYearGrid.classList.remove('open');
+        rocMonthGrid.classList.remove('open');
+      }
+
+      function normalizeYearPageStart(startYear) {
+        const maxStart = Math.max(
+          MIN_PICKER_ROC_YEAR,
+          MAX_PICKER_ROC_YEAR - ROC_YEAR_PAGE_SIZE + 1
+        );
+        return Math.min(Math.max(startYear, MIN_PICKER_ROC_YEAR), maxStart);
+      }
+
+      function currentYearPageStart() {
+        const roc = rocPickerView.getFullYear() - ROC_OFFSET;
+        const calculated = Math.floor((roc - 1) / ROC_YEAR_PAGE_SIZE) * ROC_YEAR_PAGE_SIZE + 1;
+        return normalizeYearPageStart(calculated);
+      }
+
+      function movePicker(delta) {
+        if (rocPickerMode === 'year') {
+          if (rocYearPageStart === null) rocYearPageStart = currentYearPageStart();
+          rocYearPageStart = normalizeYearPageStart(
+            rocYearPageStart + delta * ROC_YEAR_PAGE_SIZE
+          );
+        } else if (rocPickerMode === 'monthSelect') {
+          const nextYear = Math.min(
+            Math.max(rocPickerView.getFullYear() + delta, ROC_OFFSET + MIN_PICKER_ROC_YEAR),
+            ROC_OFFSET + MAX_PICKER_ROC_YEAR
+          );
+          rocPickerView.setFullYear(nextYear);
+        } else {
+          rocPickerView.setMonth(rocPickerView.getMonth() + delta);
+          const roc = rocPickerView.getFullYear() - ROC_OFFSET;
+          if (roc < MIN_PICKER_ROC_YEAR) {
+            rocPickerView = new Date(ROC_OFFSET + MIN_PICKER_ROC_YEAR, 0, 1, 12);
+          } else if (roc > MAX_PICKER_ROC_YEAR) {
+            rocPickerView = new Date(ROC_OFFSET + MAX_PICKER_ROC_YEAR, 11, 1, 12);
+          }
+        }
+        renderRocPicker();
+      }
+
+      function toggleRocYearPanel() {
+        if (rocPickerMode === 'year') {
+          rocPickerMode = 'month';
+        } else {
+          rocPickerMode = 'year';
+          rocYearPageStart = currentYearPageStart();
+        }
+        renderRocPicker();
+      }
+
+      function choosePickerDate(date) {
+        dateInput.value = formatRoc(date);
+        rocPickerSelectedDate = new Date(date.getTime());
+        closeDatePicker();
+        calculate();
+        scheduleAutoOrganizeCourses({ immediate: true });
+      }
+
+      function renderYearPicker() {
+        hideAllPickerViews();
+        rocYearGrid.classList.add('open');
+
+        if (rocYearPageStart === null) rocYearPageStart = currentYearPageStart();
+
+        const endYear = Math.min(
+          rocYearPageStart + ROC_YEAR_PAGE_SIZE - 1,
+          MAX_PICKER_ROC_YEAR
+        );
+        rocPickerTitle.textContent = `民國${rocYearPageStart}～${endYear}年`;
+        rocPickerTitle.setAttribute('aria-label', '返回日期選擇');
+        rocYearGrid.innerHTML = '';
+
+        const selectedRocYear = rocPickerView.getFullYear() - ROC_OFFSET;
+        for (let year = rocYearPageStart; year <= endYear; year += 1) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'roc-year-btn';
+          button.textContent = `民國${year}年`;
+          if (year === selectedRocYear) button.classList.add('selected');
+
+          button.addEventListener('click', () => {
+            rocPickerView.setFullYear(year + ROC_OFFSET);
+            rocPickerMode = 'monthSelect';
+            renderRocPicker();
+          });
+          rocYearGrid.appendChild(button);
+        }
+      }
+
+      function renderMonthPicker() {
+        hideAllPickerViews();
+        rocMonthGrid.classList.add('open');
+
+        const displayYear = rocPickerView.getFullYear();
+        const displayRocYear = displayYear - ROC_OFFSET;
+        rocPickerTitle.textContent = `民國${displayRocYear}年`;
+        rocPickerTitle.setAttribute('aria-label', '切換年份選擇');
+        rocMonthGrid.innerHTML = '';
+
+        for (let month = 0; month < 12; month += 1) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'roc-month-btn';
+          button.textContent = `${month + 1}月`;
+          if (month === rocPickerView.getMonth()) button.classList.add('selected');
+
+          button.addEventListener('click', () => {
+            rocPickerView = new Date(displayYear, month, 1, 12, 0, 0, 0);
+            rocPickerMode = 'month';
+            renderRocPicker();
+          });
+          rocMonthGrid.appendChild(button);
+        }
+      }
+
+      function renderDayPicker() {
+        hideAllPickerViews();
+        rocMonthView.classList.remove('hidden-view');
+
+        const year = rocPickerView.getFullYear();
+        const month = rocPickerView.getMonth();
+        const displayRocYear = year - ROC_OFFSET;
+        rocPickerTitle.textContent = `民國${displayRocYear}年${month + 1}月`;
+        rocPickerTitle.setAttribute('aria-label', '選擇民國年份');
+        rocPickerGrid.innerHTML = '';
+
+        const firstDay = new Date(year, month, 1, 12, 0, 0, 0);
+        const gridStart = new Date(year, month, 1 - firstDay.getDay(), 12, 0, 0, 0);
+        const today = new Date();
+
+        for (let index = 0; index < 42; index += 1) {
+          const date = new Date(gridStart.getTime());
+          date.setDate(gridStart.getDate() + index);
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'roc-day';
+          button.textContent = String(date.getDate());
+          button.setAttribute('aria-label', formatRoc(date));
+
+          if (date.getMonth() !== month) button.classList.add('muted');
+          if (sameDay(date, today)) button.classList.add('today');
+          if (sameDay(date, rocPickerSelectedDate)) button.classList.add('selected');
+
+          button.addEventListener('click', () => choosePickerDate(date));
+          rocPickerGrid.appendChild(button);
+        }
+      }
+
+      function renderRocPicker() {
+        if (rocPickerMode === 'year') {
+          renderYearPicker();
+        } else if (rocPickerMode === 'monthSelect') {
+          renderMonthPicker();
+        } else {
+          renderDayPicker();
+        }
+      }
+
+      function pickToday() {
+        const today = new Date();
+        choosePickerDate(
+          makeLocalDate(today.getFullYear(), today.getMonth() + 1, today.getDate())
+        );
+      }
+
+      function clearPickerDate() {
+        dateInput.value = '';
+        latestIntervals = [];
+        latestExpiryDate = null;
+        closeDatePicker();
+        clearMessage();
+        resultArea.className = 'empty';
+        resultArea.textContent = '請先輸入證書生效日，再按下「產生年度區間」。';
+        resultSummary.textContent = '尚未產生區間';
+        resultBadge.textContent = '等待輸入';
+        dateInput.focus();
+      }
+
+
+      function showCourseStatus(text, type = 'info') {
+        courseStatus.textContent = text;
+        courseStatus.className = `course-status show ${type}`;
+      }
+
+      function cleanCell(value) {
+        return String(value ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
+      function parseCourseDate(value) {
+        const text = cleanCell(value);
+        const match = text.match(/(\d{2,4})\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})/);
+        if (!match) return null;
+        let year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        if (year < 1911) year += ROC_OFFSET;
+        try { return makeLocalDate(year, month, day); } catch { return null; }
+      }
+
+      function parseHours(value) {
+        const match = cleanCell(value).match(/([0-9]+(?:\.[0-9]+)?)/);
+        return match ? Number(match[1]) : 0;
+      }
+
+      function parsePastedCourses(rawText) {
+        const raw = String(rawText || '').replace(/\r\n?/g, '\n').trim();
+        if (!raw) throw new Error('請先貼上課程資料。');
+
+        const nameMatch = raw.match(/姓名\s*[:：]\s*([^、，,\t\n]+?)(?=\s*[、，,]|\s*身分證字號)/);
+        const idMatch = raw.match(/身分證字號\s*[:：]\s*([A-Za-z][0-9*]+)/i);
+        const name = nameMatch ? cleanCell(nameMatch[1]) : '';
+        const idNumber = idMatch ? cleanCell(idMatch[1]).toUpperCase() : '';
+
+        const lines = raw.split('\n').map(line => line.trim()).filter(Boolean);
+        let headerIndex = lines.findIndex(line => line.includes('課程名稱') && line.includes('課程日期') && line.includes('登錄時數'));
+        if (headerIndex < 0) throw new Error('找不到課程表頭，請確認貼上的內容包含「課程名稱、課程日期、登錄時數」。');
+
+        const headers = lines[headerIndex].split('\t').map(cleanCell);
+        const headerMap = new Map(headers.map((h, i) => [h, i]));
+        const findColumn = names => {
+          for (const name of names) {
+            if (headerMap.has(name)) return headerMap.get(name);
+            const idx = headers.findIndex(h => h.includes(name));
+            if (idx >= 0) return idx;
+          }
+          return -1;
+        };
+
+        const col = {
+          course: findColumn(['課程名稱']),
+          tableName: findColumn(['課程表名稱']),
+          field: findColumn(['專業領域']),
+          date: findColumn(['課程日期']),
+          hours: findColumn(['登錄時數'])
+        };
+        if (Object.values(col).some(v => v < 0)) throw new Error('課程欄位不完整，請重新從表格第一欄到「登錄時數」完整複製。');
+
+        const courses = [];
+        for (const line of lines.slice(headerIndex + 1)) {
+          const cells = line.split('\t').map(cleanCell);
+          if (cells.length < headers.length) continue;
+          const dateText = cells[col.date] || '';
+          const date = parseCourseDate(dateText);
+          if (!date) continue;
+          const hours = parseHours(cells[col.hours]);
+          courses.push({
+            sourceOrder: courses.length,
+            courseName: cells[col.course] || '',
+            tableName: cells[col.tableName] || '',
+            field: cells[col.field] || '',
+            dateText,
+            date,
+            hours,
+            hoursText: hours ? `${Number.isInteger(hours) ? hours : hours.toFixed(1)}小時` : cleanCell(cells[col.hours])
+          });
+        }
+        if (!courses.length) throw new Error('沒有辨識到任何課程資料，請確認資料是以表格方式複製貼上。');
+        return { name, idNumber, courses };
+      }
+
+      function dateKey(date) { return date.getTime(); }
+      function within(date, start, end) { return dateKey(date) >= dateKey(start) && dateKey(date) <= dateKey(end); }
+      function formatRocLoose(date) { return `${rocYear(date)}/${date.getMonth()+1}/${date.getDate()}`; }
+      function formatHours(value) { return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, ''); }
+
+      function buildIntervalGroups(courses) {
+        const groups = latestIntervals.map((interval, index) => ({
+          index,
+          start: interval.start,
+          end: interval.end,
+          courses: [],
+          totalHours: 0
+        }));
+        courses.forEach(course => {
+          const group = groups[course.assignedIntervalIndex];
+          if (!group) return;
+          group.courses.push(course);
+          group.totalHours += course.hours;
+        });
+        return groups;
+      }
+
+      function sortCoursesForOutput(courses) {
+        return courses.sort((a, b) =>
+          a.assignedIntervalIndex - b.assignedIntervalIndex ||
+          a.date - b.date ||
+          a.sourceOrder - b.sourceOrder
+        );
+      }
+
+      function intervalRangeText(index) {
+        const interval = latestIntervals[index];
+        return interval ? `${formatRocLoose(interval.start)}~${formatRocLoose(interval.end)}` : '';
+      }
+
+      function renderCoursePreview() {
+        if (!organizedData) return;
+        const { courses, intervalGroups } = organizedData;
+        const rows = courses.map((course, index) => {
+          const group = intervalGroups[course.assignedIntervalIndex];
+          const first = group && group.courses[0] === course;
+          const note = first ? `${formatRocLoose(group.start)}-${formatRocLoose(group.end)}在職時數核計${formatHours(group.totalHours)}小時` : '';
+          const adjusted = course.assignedIntervalIndex !== course.naturalIntervalIndex;
+          const normalLabel = `第 ${course.naturalIntervalIndex + 1} 區間（依課程日期）`;
+          const previousOption = course.naturalIntervalIndex > 0
+            ? `<option value="${course.naturalIntervalIndex - 1}" ${adjusted ? 'selected' : ''}>第 ${course.naturalIntervalIndex} 區間（併入前一區間）</option>`
+            : '';
+          const detail = adjusted
+            ? `已改計：${intervalRangeText(course.assignedIntervalIndex)}`
+            : `原區間：${intervalRangeText(course.naturalIntervalIndex)}`;
+          return `<tr class="${adjusted ? 'adjusted-row' : ''}">
+            <td>${index + 1}</td>
+            <td>
+              <select class="interval-adjust-select" data-course-id="${escapeHtml(course.id)}" aria-label="調整課程計入區間">
+                <option value="${course.naturalIntervalIndex}" ${adjusted ? '' : 'selected'}>${escapeHtml(normalLabel)}</option>
+                ${previousOption}
+              </select>
+              <span class="interval-detail ${adjusted ? 'adjusted' : ''}">${escapeHtml(detail)}</span>
+            </td>
+            <td>${escapeHtml(course.dateText)}</td>
+            <td>${escapeHtml(course.courseName)}</td>
+            <td>${escapeHtml(course.tableName)}</td>
+            <td>${escapeHtml(course.field)}</td>
+            <td>${escapeHtml(course.hoursText)}</td>
+            <td>${escapeHtml(note)}</td>
+          </tr>`;
+        }).join('');
+
+        coursePreview.innerHTML = `<table><thead><tr><th>序號</th><th>計入區間</th><th>上課日期</th><th>課程名稱</th><th>課程表名稱</th><th>專業領域</th><th>登錄時數</th><th>備註</th></tr></thead><tbody>${rows}</tbody></table>`;
+        coursePreview.classList.add('show');
+      }
+
+      function organizeCourses({ auto = false } = {}) {
+        try {
+          const effectiveDate = parseDateInput(dateInput.value);
+          if (!effectiveDate) throw new Error('請先輸入正確的證書生效日。');
+          calculate({ quiet: true });
+          if (!latestIntervals.length || !latestExpiryDate) throw new Error('年度區間尚未成功產生。');
+
+          const parsed = parsePastedCourses(coursePaste.value);
+          const allCount = parsed.courses.length;
+          const courses = parsed.courses
+            .filter(item => within(item.date, effectiveDate, latestExpiryDate))
+            .map(item => {
+              const naturalIntervalIndex = latestIntervals.findIndex(interval => within(item.date, interval.start, interval.end));
+              return {
+                ...item,
+                id: `course-${item.sourceOrder}`,
+                naturalIntervalIndex,
+                assignedIntervalIndex: naturalIntervalIndex
+              };
+            })
+            .filter(item => item.naturalIntervalIndex >= 0);
+          const excludedCount = allCount - courses.length;
+          if (!courses.length) throw new Error('貼上的課程都不在這張證書的 6 年有效期間內。');
+
+          sortCoursesForOutput(courses);
+          const intervalGroups = buildIntervalGroups(courses);
+          organizedData = { ...parsed, effectiveDate, expiryDate: latestExpiryDate, courses, intervalGroups, excludedCount };
+          previewName.textContent = parsed.name || '未辨識（匯出前可在貼上資料補上）';
+          previewId.textContent = parsed.idNumber || '未辨識';
+          identityGrid.hidden = false;
+          adjustHint.hidden = false;
+          renderCoursePreview();
+          exportExcelBtn.disabled = false;
+          const prefix = auto ? '已自動整理' : '已重新整理';
+          showCourseStatus(`${prefix} ${courses.length} 筆課程${excludedCount ? `，另有 ${excludedCount} 筆不在證書有效期間內，未納入匯出` : ''}。可在「計入區間」調整特殊課程。`, 'success');
+        } catch (error) {
+          organizedData = null;
+          exportExcelBtn.disabled = true;
+          coursePreview.classList.remove('show');
+          identityGrid.hidden = true;
+          adjustHint.hidden = true;
+          showCourseStatus(error.message || '整理資料時發生錯誤。', 'error');
+        }
+      }
+
+      function updateCourseInterval(courseId, assignedIntervalIndex) {
+        if (!organizedData) return;
+        const course = organizedData.courses.find(item => item.id === courseId);
+        if (!course) return;
+        const allowed = [course.naturalIntervalIndex];
+        if (course.naturalIntervalIndex > 0) allowed.push(course.naturalIntervalIndex - 1);
+        if (!allowed.includes(assignedIntervalIndex)) return;
+
+        course.assignedIntervalIndex = assignedIntervalIndex;
+        sortCoursesForOutput(organizedData.courses);
+        organizedData.intervalGroups = buildIntervalGroups(organizedData.courses);
+        renderCoursePreview();
+
+        const adjusted = course.assignedIntervalIndex !== course.naturalIntervalIndex;
+        const actionText = adjusted
+          ? `已將「${course.courseName || '此課程'}」併入第 ${course.assignedIntervalIndex + 1} 區間，時數與備註已更新。`
+          : `「${course.courseName || '此課程'}」已恢復依課程日期計入第 ${course.naturalIntervalIndex + 1} 區間。`;
+        showCourseStatus(actionText, 'success');
+      }
+
+      function scheduleAutoOrganizeCourses({ immediate = false } = {}) {
+        window.clearTimeout(courseInputTimer);
+        const run = () => {
+          const raw = coursePaste.value.trim();
+          if (!raw) return;
+          if (!raw.includes('課程名稱') || !raw.includes('課程日期') || !raw.includes('登錄時數')) return;
+          organizeCourses({ auto: true });
+        };
+        if (immediate) run();
+        else courseInputTimer = window.setTimeout(run, 500);
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+      }
+
+      function base64ToArrayBuffer(base64) {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes.buffer;
+      }
+
+      function deepClone(value) {
+        return value == null ? value : JSON.parse(JSON.stringify(value));
+      }
+
+      function syncIntervalSelectionsBeforeExport() {
+        if (!organizedData) return;
+        const selects = coursePreview.querySelectorAll('.interval-adjust-select');
+        selects.forEach(select => {
+          const course = organizedData.courses.find(item => item.id === select.dataset.courseId);
+          if (!course) return;
+          const selectedIndex = Number(select.value);
+          const allowed = [course.naturalIntervalIndex];
+          if (course.naturalIntervalIndex > 0) allowed.push(course.naturalIntervalIndex - 1);
+          if (allowed.includes(selectedIndex)) course.assignedIntervalIndex = selectedIndex;
+        });
+        sortCoursesForOutput(organizedData.courses);
+        organizedData.intervalGroups = buildIntervalGroups(organizedData.courses);
+      }
+
+      async function exportExcel() {
+        if (!organizedData) { showCourseStatus('請先按「整理資料」。', 'error'); return; }
+        // 以畫面目前的選擇為準，避免匯出時沿用調整前的舊區間資料。
+        syncIntervalSelectionsBeforeExport();
+        if (typeof ExcelJS === 'undefined') {
+          showCourseStatus('Excel 匯出元件載入失敗，請確認目前有網路連線後重新整理頁面。', 'error');
+          return;
+        }
+        exportExcelBtn.disabled = true;
+        exportExcelBtn.textContent = '正在匯出…';
+        try {
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(base64ToArrayBuffer(TEMPLATE_XLSX_BASE64));
+          const templateSheet = workbook.worksheets[0];
+
+          // 先從原範本取出版面與資料列樣式，再建立一張全新的乾淨工作表。
+          // 不在原範本上刪列，避免 ExcelJS 將範例課程殘留在輸出的 XML 中。
+          const bodyStyle = {};
+          const noteStyle = {};
+          for (let col = 1; col <= 7; col++) {
+            bodyStyle[col] = deepClone(templateSheet.getRow(8).getCell(col).style);
+            noteStyle[col] = deepClone(templateSheet.getRow(7).getCell(col).style);
+          }
+          const bodyHeight = templateSheet.getRow(8).height || 33;
+          const originalName = templateSheet.name || '在職時數';
+          const cleanSheetName = `${originalName}_整理中`;
+          let sheet = workbook.addWorksheet(cleanSheetName, {
+            properties: deepClone(templateSheet.properties || {}),
+            pageSetup: deepClone(templateSheet.pageSetup || {}),
+            views: deepClone(templateSheet.views || [])
+          });
+
+          // 複製範本第 1～6 列及欄寬；第 7 列以後完全不複製。
+          for (let col = 1; col <= 7; col++) {
+            const sourceColumn = templateSheet.getColumn(col);
+            const targetColumn = sheet.getColumn(col);
+            targetColumn.width = sourceColumn.width;
+            targetColumn.hidden = sourceColumn.hidden;
+            targetColumn.outlineLevel = sourceColumn.outlineLevel;
+            if (sourceColumn.style) targetColumn.style = deepClone(sourceColumn.style);
+          }
+          for (let rowNo = 1; rowNo <= 6; rowNo++) {
+            const sourceRow = templateSheet.getRow(rowNo);
+            const targetRow = sheet.getRow(rowNo);
+            targetRow.height = sourceRow.height;
+            targetRow.hidden = sourceRow.hidden;
+            targetRow.outlineLevel = sourceRow.outlineLevel;
+            for (let col = 1; col <= 7; col++) {
+              const sourceCell = sourceRow.getCell(col);
+              const targetCell = targetRow.getCell(col);
+              targetCell.value = deepClone(sourceCell.value);
+              targetCell.style = deepClone(sourceCell.style);
+              if (sourceCell.note) targetCell.note = deepClone(sourceCell.note);
+            }
+          }
+
+          // 僅重建表頭區需要的合併儲存格。
+          // 小標題原本位於 C2，改為 A2:G2 跨欄置中。
+          const subtitleValue = deepClone(templateSheet.getCell('C2').value);
+          const subtitleStyle = deepClone(templateSheet.getCell('C2').style);
+          sheet.getCell('A2').value = subtitleValue;
+          sheet.getCell('A2').style = subtitleStyle;
+          sheet.getCell('A2').alignment = {
+            ...deepClone(subtitleStyle.alignment || {}),
+            horizontal: 'center',
+            vertical: 'middle'
+          };
+          const headerMerges = ['A1:G1', 'A2:G2', 'A3:G3', 'E5:G5', 'F6:G6'];
+          headerMerges.forEach(ref => sheet.mergeCells(ref));
+          sheet.headerFooter = deepClone(templateSheet.headerFooter || {});
+          sheet.pageSetup = deepClone(templateSheet.pageSetup || {});
+
+          // 移除含有示範課程的原工作表，再把乾淨工作表改回原名稱。
+          workbook.removeWorksheet(templateSheet.id);
+          sheet.name = originalName;
+
+          const startRow = 7;
+          organizedData.courses.forEach((course, index) => {
+            const rowNo = startRow + index;
+            const row = sheet.getRow(rowNo);
+            row.height = bodyHeight;
+            row.getCell(1).value = course.courseName;
+            row.getCell(2).value = course.tableName;
+            row.getCell(3).value = course.field;
+            row.getCell(4).value = course.dateText;
+            row.getCell(5).value = course.hoursText;
+            row.getCell(6).value = null;
+            row.getCell(7).value = null;
+            for (let col = 1; col <= 7; col++) row.getCell(col).style = deepClone(bodyStyle[col]);
+          });
+
+          for (const group of organizedData.intervalGroups) {
+            if (!group.courses.length) continue;
+            const firstCourseIndex = organizedData.courses.indexOf(group.courses[0]);
+            const lastCourseIndex = organizedData.courses.indexOf(group.courses[group.courses.length - 1]);
+            const firstRow = startRow + firstCourseIndex;
+            const lastRow = startRow + lastCourseIndex;
+            // 先替備註合併範圍的每個邊緣儲存格畫框線，再進行合併，
+            // 避免合併後右側或下方框線中斷。
+            const baseBorder = deepClone((noteStyle[6] && noteStyle[6].border) || (bodyStyle[6] && bodyStyle[6].border) || {});
+            for (let rowNo = firstRow; rowNo <= lastRow; rowNo++) {
+              const leftCell = sheet.getCell(`F${rowNo}`);
+              const rightCell = sheet.getCell(`G${rowNo}`);
+              leftCell.style = deepClone(noteStyle[6]);
+              rightCell.style = deepClone(noteStyle[7]);
+              leftCell.border = {
+                ...deepClone(baseBorder),
+                left: deepClone(baseBorder.left || { style: 'thin', color: { argb: 'FF000000' } }),
+                top: rowNo === firstRow ? deepClone(baseBorder.top || { style: 'thin', color: { argb: 'FF000000' } }) : undefined,
+                bottom: rowNo === lastRow ? deepClone(baseBorder.bottom || { style: 'thin', color: { argb: 'FF000000' } }) : undefined
+              };
+              rightCell.border = {
+                ...deepClone(baseBorder),
+                right: deepClone(baseBorder.right || { style: 'thin', color: { argb: 'FF000000' } }),
+                top: rowNo === firstRow ? deepClone(baseBorder.top || { style: 'thin', color: { argb: 'FF000000' } }) : undefined,
+                bottom: rowNo === lastRow ? deepClone(baseBorder.bottom || { style: 'thin', color: { argb: 'FF000000' } }) : undefined
+              };
+            }
+            sheet.mergeCells(`F${firstRow}:G${lastRow}`);
+            const noteCell = sheet.getCell(`F${firstRow}`);
+            noteCell.value = `${formatRocLoose(group.start)}-${formatRocLoose(group.end)}在職時數核計${formatHours(group.totalHours)}小時`;
+            noteCell.style = deepClone(noteStyle[6]);
+            noteCell.alignment = { ...noteCell.alignment, vertical: 'middle', horizontal: 'center', wrapText: true };
+            noteCell.border = {
+              left: deepClone(baseBorder.left || { style: 'thin', color: { argb: 'FF000000' } }),
+              right: deepClone(baseBorder.right || { style: 'thin', color: { argb: 'FF000000' } }),
+              top: deepClone(baseBorder.top || { style: 'thin', color: { argb: 'FF000000' } }),
+              bottom: deepClone(baseBorder.bottom || { style: 'thin', color: { argb: 'FF000000' } })
+            };
+            // ExcelJS 對合併儲存格邊界的處理較特殊，需同步補上右下角邊界。
+            const bottomRight = sheet.getCell(`G${lastRow}`);
+            bottomRight.border = {
+              ...deepClone(bottomRight.border || {}),
+              right: deepClone(baseBorder.right || { style: 'thin', color: { argb: 'FF000000' } }),
+              bottom: deepClone(baseBorder.bottom || { style: 'thin', color: { argb: 'FF000000' } })
+            };
+          }
+
+          const period = `${formatRocLoose(organizedData.effectiveDate)}-${formatRocLoose(organizedData.expiryDate)}`;
+          sheet.getCell('A3').value = `姓名：${organizedData.name || ''}、身分證字號：${organizedData.idNumber || ''}        時數核計期程：${period}`;
+          const today = new Date();
+          sheet.getCell('E5').value = `統計日期：${formatRocLoose(today)}`;
+          sheet.pageSetup = { ...sheet.pageSetup, printArea: `A1:G${Math.max(7, startRow + organizedData.courses.length - 1)}`, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+
+          const safeName = (organizedData.name || '托育人員').replace(/[\\/:*?"<>|]/g, '_');
+          const buffer = await workbook.xlsx.writeBuffer();
+          const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${safeName}_在職時數.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          showCourseStatus(`Excel 已依目前的區間設定匯出，共 ${organizedData.courses.length} 筆課程。`, 'success');
+        } catch (error) {
+          console.error(error);
+          showCourseStatus('Excel 匯出失敗，請重新整理頁面後再試一次。', 'error');
+        } finally {
+          exportExcelBtn.disabled = false;
+          exportExcelBtn.textContent = '匯出 Excel';
+        }
+      }
+
+      function clearCourseData() {
+        window.clearTimeout(courseInputTimer);
+        coursePaste.value = '';
+        organizedData = null;
+        exportExcelBtn.disabled = true;
+        coursePreview.innerHTML = '';
+        coursePreview.classList.remove('show');
+        identityGrid.hidden = true;
+        adjustHint.hidden = true;
+        courseStatus.className = 'course-status';
+        courseStatus.textContent = '';
+        coursePaste.focus();
+      }
+
+      function toggleResultCard() {
+        const collapsed = resultCard.classList.toggle('collapsed');
+        resultHead.setAttribute('aria-expanded', String(!collapsed));
+      }
+
+      resultHead.addEventListener('click', toggleResultCard);
+      resultHead.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggleResultCard();
+        }
+      });
+
+      generateBtn.addEventListener('click', () => calculate());
+      copyBtn.addEventListener('click', copyResults);
+      clearBtn.addEventListener('click', clearAll);
+      organizeBtn.addEventListener('click', () => organizeCourses());
+      exportExcelBtn.addEventListener('click', exportExcel);
+      clearCourseBtn.addEventListener('click', clearCourseData);
+      coursePaste.addEventListener('paste', () => {
+        window.setTimeout(() => scheduleAutoOrganizeCourses({ immediate: true }), 30);
+      });
+      coursePaste.addEventListener('input', () => scheduleAutoOrganizeCourses());
+      coursePreview.addEventListener('change', event => {
+        const select = event.target.closest('.interval-adjust-select');
+        if (!select) return;
+        updateCourseInterval(select.dataset.courseId, Number(select.value));
+      });
+      calendarBtn.addEventListener('click', toggleDatePicker);
+      rocPrevBtn.addEventListener('click', () => movePicker(-1));
+      rocNextBtn.addEventListener('click', () => movePicker(1));
+      rocPickerTitle.addEventListener('click', toggleRocYearPanel);
+      rocTodayBtn.addEventListener('click', pickToday);
+      rocClearBtn.addEventListener('click', clearPickerDate);
+      rocCloseBtn.addEventListener('click', closeDatePicker);
+      rocPickerBackdrop.addEventListener('click', event => {
+        if (event.target === rocPickerBackdrop) closeDatePicker();
+      });
+
+      dateInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') calculate();
+      });
+
+      dateInput.addEventListener('input', () => {
+        scheduleAutoCalculate();
+        scheduleAutoOrganizeCourses();
+      });
+
+      document.querySelectorAll('.example-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          dateInput.value = button.dataset.date;
+          calculate();
+          scheduleAutoOrganizeCourses({ immediate: true });
+        });
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && rocPickerBackdrop.classList.contains('open')) {
+          closeDatePicker();
+          calendarBtn.focus();
+        }
+      });
+    })();
+  </script>
+
+  <script>
+    // 此工具由首頁後端登入權限控管；直接開啟工具網址時，未登入即返回首頁。
+    (function () {
+      const role = sessionStorage.getItem("toolRole");
+      const loggedIn = sessionStorage.getItem("toolLogin") === "ok";
+      if (!loggedIn || role !== "admin") {
+        if (window.top === window.self) {
+          window.location.replace("../");
+        } else {
+          try { window.top.location.replace("../"); } catch (e) { window.location.replace("../"); }
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

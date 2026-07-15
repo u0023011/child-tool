@@ -1,0 +1,39 @@
+{
+  "name": "托育工具箱",
+  "short_name": "托育工具箱",
+  "description": "托育工作常用計算、整理與報表工具。",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5ecdf",
+  "theme_color": "#9a7b4f",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "在職課程時數工具",
+      "short_name": "在職時數",
+      "url": "./training-hours-tool/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
