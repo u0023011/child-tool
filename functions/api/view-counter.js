@@ -4,7 +4,8 @@ const COUNTER_KEYS = {
   age_tool: "tool_age_tool_views",
   report_date_tool: "tool_report_date_tool_views",
   receipt_tool: "tool_receipt_tool_views",
-  report_generator: "tool_report_generator_views"
+  report_generator: "tool_report_generator_views",
+  training_hours_tool: "tool_training_hours_tool_views"
 };
 
 function jsonResponse(data, status = 200) {
@@ -38,11 +39,14 @@ export async function onRequestGet(context) {
   const key = resolveCounterKey(counterName);
 
   if (!key) {
-    return jsonResponse({
-      ok: false,
-      message: "未知的人次計數器",
-      counter: counterName
-    }, 400);
+    return jsonResponse(
+      {
+        ok: false,
+        message: "未知的人次計數器",
+        counter: counterName
+      },
+      400
+    );
   }
 
   const count = await readCount(env, key);
@@ -60,25 +64,31 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
+
     if (body && body.counter) {
       counterName = String(body.counter);
     }
   } catch (error) {
-    // 沒有 JSON 內容時，使用網址參數；若也沒有，則計算首頁。
+    // 沒有 JSON 內容時，使用網址參數；
+    // 若網址也沒有指定，則預設計算首頁。
   }
 
   const key = resolveCounterKey(counterName);
 
   if (!key) {
-    return jsonResponse({
-      ok: false,
-      message: "未知的人次計數器",
-      counter: counterName
-    }, 400);
+    return jsonResponse(
+      {
+        ok: false,
+        message: "未知的人次計數器",
+        counter: counterName
+      },
+      400
+    );
   }
 
   let count = await readCount(env, key);
   count += 1;
+
   await env.VISITOR_COUNTER.put(key, String(count));
 
   return jsonResponse({
