@@ -391,6 +391,16 @@
       margin-top:16px;
     }
 
+    .overview-table-block + .overview-table-block{
+      margin-top:16px;
+    }
+
+    .overview-table-actions{
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom:8px;
+    }
+
     .table-scroll::-webkit-scrollbar{
       height:12px;
     }
@@ -662,7 +672,7 @@
       @page{size:A4 landscape;margin:8mm}
       body{background:#fff}
       .page{width:100%;padding:0;background:#fff}
-      .hero,.input-card,.report-generatorbar .actions,.report-copy-actions,.status{display:none !important}
+      .hero,.input-card,.report-generatorbar .actions,.report-copy-actions,.overview-table-actions,.status{display:none !important}
       .card{margin:0;padding:0;border:0;box-shadow:none}
       .report-card{display:block !important}
       .report-generatorbar{margin:0 0 6px;padding-bottom:6px;border-bottom:1px solid #ddd}
@@ -671,6 +681,7 @@
       .report-wrap{overflow:visible}
       .table-scroll{overflow:visible;padding-bottom:0}
       .table-scroll + .table-scroll{margin-top:8px}
+      .overview-table-block + .overview-table-block{margin-top:8px}
       .table-scroll table{min-width:0}
       .validation-panel{padding:7px;margin-bottom:8px;box-shadow:none}
       .validation-title{font-size:11px;margin-bottom:5px}
@@ -783,12 +794,13 @@
                 <h3 class="report-section-title">整體概況</h3>
                 <p class="report-section-desc">分成兩個獨立表格，可分別左右滑動查看。</p>
               </div>
-              <div class="report-copy-actions">
-                <button type="button" class="copy-data-btn" data-copy-report="overview">複製數據</button>
-              </div>
             </div>
 
-            <div class="table-scroll overview-primary">
+            <div class="overview-table-block">
+              <div class="overview-table-actions">
+                <button type="button" class="copy-data-btn" data-copy-report="overviewPrimary">複製數據</button>
+              </div>
+              <div class="table-scroll overview-primary">
               <table class="overview-table">
                 <colgroup>
                   <col style="width:20%"><col style="width:20%"><col style="width:20%">
@@ -814,9 +826,14 @@
                   <td class="top-blue value" data-out="signedActive">0</td>
                 </tr>
               </table>
+              </div>
             </div>
 
-            <div class="table-scroll overview-secondary">
+            <div class="overview-table-block">
+              <div class="overview-table-actions">
+                <button type="button" class="copy-data-btn" data-copy-report="overviewSecondary">複製數據</button>
+              </div>
+              <div class="table-scroll overview-secondary">
               <table class="overview-table">
                 <colgroup>
                   <col style="width:33.333%"><col style="width:33.333%"><col style="width:33.334%">
@@ -835,6 +852,7 @@
                   <td class="top-orange value" data-out="publicCaregiverCount">0</td>
                 </tr>
               </table>
+              </div>
             </div>
           </section>
 
@@ -2507,14 +2525,21 @@
     }
 
     function reportDataText(type){
-      if(type === "overview"){
+      if(type === "overviewPrimary"){
         return [
           [
             outputText("registeredCount"),
             outputText("activeCount"),
             outputText("childrenTotal"),
             outputText("eligibleActive"),
-            outputText("signedActive"),
+            outputText("signedActive")
+          ].join("\t")
+        ].join("\n");
+      }
+
+      if(type === "overviewSecondary"){
+        return [
+          [
             outputText("noChildCount"),
             outputText("generalCaregiverCount"),
             outputText("publicCaregiverCount")
