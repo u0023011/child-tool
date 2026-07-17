@@ -285,8 +285,8 @@
     }
 
     .report-wrap{
-      overflow-x:auto;
-      padding-bottom:5px;
+      overflow:visible;
+      padding-bottom:0;
     }
 
 
@@ -373,10 +373,44 @@
     }
 
     .report{
-      min-width:1120px;
+      min-width:0;
       color:#2f261d;
       background:transparent;
     }
+
+    .table-scroll{
+      width:100%;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding-bottom:8px;
+      scrollbar-color:#777 #eee8df;
+      scrollbar-width:auto;
+    }
+
+    .table-scroll + .table-scroll{
+      margin-top:16px;
+    }
+
+    .table-scroll::-webkit-scrollbar{
+      height:12px;
+    }
+
+    .table-scroll::-webkit-scrollbar-track{
+      border-radius:999px;
+      background:#eee8df;
+    }
+
+    .table-scroll::-webkit-scrollbar-thumb{
+      border:2px solid #eee8df;
+      border-radius:999px;
+      background:#777;
+    }
+
+    .overview-primary table{min-width:850px}
+    .overview-secondary table{min-width:540px}
+    .age-table-scroll table{min-width:760px}
+    .district-table-scroll table,
+    .qualification-table-scroll table{min-width:1000px}
 
     .report table{
       width:100%;
@@ -635,6 +669,9 @@
       .report-generatorbar .section-title{font-size:18px}
       .report-meta{font-size:10px}
       .report-wrap{overflow:visible}
+      .table-scroll{overflow:visible;padding-bottom:0}
+      .table-scroll + .table-scroll{margin-top:8px}
+      .table-scroll table{min-width:0}
       .validation-panel{padding:7px;margin-bottom:8px;box-shadow:none}
       .validation-title{font-size:11px;margin-bottom:5px}
       .validation-list{gap:4px}
@@ -744,46 +781,61 @@
             <div class="report-section-head">
               <div>
                 <h3 class="report-section-title">整體概況</h3>
-                <p class="report-section-desc">維持原報表的合併欄位結構，方便整塊選取與複製。</p>
+                <p class="report-section-desc">分成兩個獨立表格，可分別左右滑動查看。</p>
               </div>
               <div class="report-copy-actions">
                 <button type="button" class="copy-data-btn" data-copy-report="overview">複製數據</button>
               </div>
             </div>
 
-            <table class="overview-table">
-              <colgroup>
-                <col style="width:12.5%"><col style="width:12.5%"><col style="width:12.5%">
-                <col style="width:12.5%"><col style="width:12.5%">
-                <col style="width:12.5%"><col style="width:12.5%"><col style="width:12.5%">
-              </colgroup>
-              <tr>
-                <th class="top-green" colspan="2">托育人員數</th>
-                <th class="top-green">收托兒童數</th>
-                <th class="top-blue" colspan="2">有收托小孩之托育人員數當中</th>
-                <th class="top-orange" colspan="3">有托育人員數</th>
-              </tr>
-              <tr>
-                <td class="top-green">登記在案保母數<br>（包含跨區至本區收托<br>扣除本區到他區收托）</td>
-                <td class="top-green">有收托之托育人員數<br>（包含跨區至本區收托<br>扣除本區到他區收托）</td>
-                <td class="top-green">收托兒童數<br>（包含跨區保母到本區<br>收托的幼兒數）</td>
-                <td class="top-blue">符合簽準公的人員數</td>
-                <td class="top-blue">已完成簽準公的人員數</td>
-                <td class="top-orange">無收托人數</td>
-                <td class="top-orange">一般托育人員</td>
-                <td class="top-orange">準公共托育人員數</td>
-              </tr>
-              <tr>
-                <td class="top-green value" data-out="registeredCount">0</td>
-                <td class="top-green value" data-out="activeCount">0</td>
-                <td class="top-green value" data-out="childrenTotal">0</td>
-                <td class="top-blue value" data-out="eligibleActive">0</td>
-                <td class="top-blue value" data-out="signedActive">0</td>
-                <td class="top-orange value" data-out="noChildCount">0</td>
-                <td class="top-orange value" data-out="generalCaregiverCount">0</td>
-                <td class="top-orange value" data-out="publicCaregiverCount">0</td>
-              </tr>
-            </table>
+            <div class="table-scroll overview-primary">
+              <table class="overview-table">
+                <colgroup>
+                  <col style="width:20%"><col style="width:20%"><col style="width:20%">
+                  <col style="width:20%"><col style="width:20%">
+                </colgroup>
+                <tr>
+                  <th class="top-green" colspan="2">托育人員數</th>
+                  <th class="top-green">收托兒童數</th>
+                  <th class="top-blue" colspan="2">有收托小孩之托育人員數當中</th>
+                </tr>
+                <tr>
+                  <td class="top-green">登記在案保母數<br>（包含跨區至本區收托<br>扣除本區到他區收托）</td>
+                  <td class="top-green">有收托之托育人員數<br>（包含跨區至本區收托<br>扣除本區到他區收托）</td>
+                  <td class="top-green">收托兒童數<br>（包含跨區保母到本區<br>收托的幼兒數）</td>
+                  <td class="top-blue">符合簽準公的人員數</td>
+                  <td class="top-blue">已完成簽準公的人員數</td>
+                </tr>
+                <tr>
+                  <td class="top-green value" data-out="registeredCount">0</td>
+                  <td class="top-green value" data-out="activeCount">0</td>
+                  <td class="top-green value" data-out="childrenTotal">0</td>
+                  <td class="top-blue value" data-out="eligibleActive">0</td>
+                  <td class="top-blue value" data-out="signedActive">0</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="table-scroll overview-secondary">
+              <table class="overview-table">
+                <colgroup>
+                  <col style="width:33.333%"><col style="width:33.333%"><col style="width:33.334%">
+                </colgroup>
+                <tr>
+                  <th class="top-orange" colspan="3">有托育人員數</th>
+                </tr>
+                <tr>
+                  <td class="top-orange">無收托人數</td>
+                  <td class="top-orange">一般托育人員</td>
+                  <td class="top-orange">準公共托育人員數</td>
+                </tr>
+                <tr>
+                  <td class="top-orange value" data-out="noChildCount">0</td>
+                  <td class="top-orange value" data-out="generalCaregiverCount">0</td>
+                  <td class="top-orange value" data-out="publicCaregiverCount">0</td>
+                </tr>
+              </table>
+            </div>
           </section>
 
           <section class="report-section" id="ageSection">
@@ -796,6 +848,7 @@
                 <button type="button" class="copy-data-btn" data-copy-report="age">複製數據</button>
               </div>
             </div>
+            <div class="table-scroll age-table-scroll">
             <table>
               <colgroup>
                 <col style="width:14%">
@@ -828,6 +881,7 @@
                 <td class="value" data-out="age3Public">0</td>
               </tr>
             </table>
+            </div>
           </section>
 
           <section class="report-section" id="districtSection">
@@ -841,6 +895,7 @@
               </div>
             </div>
             <div class="district-note">只算屬於第四區保母；跨區至本區收托時，保母不重複計算，但托兒人數仍納入。</div>
+            <div class="table-scroll district-table-scroll">
             <table id="districtTable">
               <colgroup>
                 <col style="width:12%">
@@ -863,6 +918,7 @@
               </thead>
               <tbody id="districtBody"></tbody>
             </table>
+            </div>
             <div class="small-note">此區塊會自動彙整行政區；例如「新營區南紙里」及「到宅－新營」都會計入「新營區」，單獨寫「到宅」或「跨區」時不納入計算。</div>
           </section>
 
@@ -877,6 +933,7 @@
                 <button type="button" class="copy-data-btn" data-copy-report="gender">複製性別數據</button>
               </div>
             </div>
+            <div class="table-scroll qualification-table-scroll">
             <table>
               <colgroup>
                 <col style="width:12%">
@@ -939,6 +996,7 @@
                 <td colspan="2" style="border:0;background:#fff"></td>
               </tr>
             </table>
+            </div>
           </section>
         </div>
       </div>
@@ -953,6 +1011,7 @@
       {id:"age23", title:"2～3歲", aliases:["2～3歲","2~3","2-3歲","2～3","2至3歲"]},
       {id:"age02", title:"0～2歲", aliases:["0～2歲","0~2","0-2歲","0～2","0至2歲"]},
       {id:"total", title:"總人數", aliases:["總人數","總數","加總","合計","托兒加總","托兒總數","收托加總","收托總數"]},
+      {id:"outboundArea", title:"第四區跨區收托", aliases:["第四區跨區收托","四區跨區收托","本區跨區收托"]},
       {id:"otherArea", title:"其他區來", aliases:["其他區來","他區跨四區收托","他區跨第四區收托","他區跨區收托","他區跨本區收托","其他區跨四區收托"]},
       {id:"eligible", title:"符合簽準公", aliases:["符合簽準公","符合簽準公共","符合準公","符合準公共"]},
       {id:"publicStatus", title:"準公共", aliases:["準公共","準公","準公共狀態"]},
@@ -974,6 +1033,7 @@
           age23:5,
           age02:6,
           total:7,
+          outboundArea:10,
           otherArea:11,
           eligible:16,
           publicStatus:17,
@@ -982,7 +1042,7 @@
         },
         anchors:[
           "name","gender","age3","age23","age02",
-          "total","otherArea","eligible","publicStatus",
+          "total","outboundArea","otherArea","eligible","publicStatus",
           "qualification","district"
         ]
       }
@@ -2066,7 +2126,7 @@
       if(isExcludedCaregiverRow(row)) return false;
 
       const personFields = [
-        "name","gender","otherArea","eligible",
+        "name","gender","outboundArea","otherArea","eligible",
         "publicStatus","qualification","district"
       ];
 
@@ -2079,6 +2139,11 @@
 
     function sumWhere(rows,key,predicate){
       return rows.reduce((sum,row) => sum + (predicate(row) ? toNumber(row[key]) : 0),0);
+    }
+
+    function isOutboundToOtherTainanArea(row){
+      const outboundArea = normalize(row.outboundArea).replace(/\s+/g,"");
+      return /^(一區|二區|三區)$/.test(outboundArea);
     }
 
     function normalizeDistrict(value){
@@ -2167,7 +2232,13 @@
         row => isAggregateSummaryRow(row)
       );
 
-      const registeredCount = countWhere(rows,r => isCaregiverRow(r));
+      // 登記在案保母數：所有有效托育人員資料列，
+      // 扣除 K 欄「第四區跨區收托」為一區、二區或三區者。
+      // K 欄為外縣市或空白時仍納入計算。
+      const registeredCount = countWhere(rows,r =>
+        isCaregiverRow(r) &&
+        !isOutboundToOtherTainanArea(r)
+      );
       const activeCount = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0);
       const childrenTotal = sumWhere(rows,"total",r => isCaregiverRow(r));
       const eligibleActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizeEligible(r.eligible) === "符合");
@@ -2222,6 +2293,7 @@
       // 整體概況包含其他區來的人員；一致性檢查時改用扣除其他區後的人數。
       const localRegisteredCount = countWhere(rows,r =>
         isCaregiverRow(r) &&
+        !isOutboundToOtherTainanArea(r) &&
         normalize(r.otherArea) === ""
       );
       const otherAreaCaregiverCount = registeredCount - localRegisteredCount;
