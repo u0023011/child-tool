@@ -2029,16 +2029,17 @@
       setTimeout(()=>toast.classList.remove("show"),1400);
     }
 
-    async function copyTextArea(id){
+    async function copyTextArea(id,successText="已複製"){
       const el = $(id);
-      if(!el.value.trim()) return;
+      if(!el.value.trim()) return false;
       try{
         await navigator.clipboard.writeText(el.value);
       }catch(e){
         el.select();
         document.execCommand("copy");
       }
-      showToast();
+      showToast(successText);
+      return true;
     }
 
     function rocDateText(){
@@ -2515,12 +2516,16 @@
               const childName=card.querySelector(".child-name").value.trim();
               const labels=persons.map(person=>{
                 if(person==="托兒"){
-                  return `${childName || "托兒"}身分證影本`;
+                  return childName || "托兒";
                 }
-                return `${person}身分證影本`;
+                return person;
               });
 
-              items.push(labels.length===1 ? labels[0] : `「${labels.join("、")}」`);
+              items.push(
+                labels.length===1
+                  ? `${labels[0]}身分證影本`
+                  : `「${labels.join("、")}身分證影本」`
+              );
             }else{
               items.push("身分證影本");
             }
@@ -2550,7 +2555,10 @@
       $("receiptResult").value=lines.join("\n");
     }
 
-    $("receiptGenerate").addEventListener("click",generateReceipt);
+    $("receiptGenerate").addEventListener("click",async ()=>{
+      generateReceipt();
+      await copyTextArea("receiptResult","複製成功");
+    });
     $("receiptCopy").addEventListener("click",()=>{
       if(!$("receiptResult").value.trim()) generateReceipt();
       copyTextArea("receiptResult");
