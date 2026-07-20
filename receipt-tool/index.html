@@ -1435,6 +1435,74 @@
       min-height:48px;
     }
 </style>
+<style>
+    .id-card-modal-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(42,28,17,.42);
+    }
+
+    .id-card-modal-backdrop.show{
+      display:flex;
+    }
+
+    .id-card-modal{
+      width:min(430px,100%);
+      padding:20px;
+      border:1.5px solid #c9ad85;
+      border-radius:18px;
+      background:#fffdf8;
+      box-shadow:0 18px 48px rgba(49,31,15,.28);
+    }
+
+    .id-card-modal h3{
+      margin:0 0 6px;
+      color:#4e321b;
+      font-size:22px;
+    }
+
+    .id-card-modal p{
+      margin:0 0 16px;
+      color:#745f4b;
+      line-height:1.7;
+    }
+
+    .id-card-options{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+
+    .id-card-option{
+      min-height:52px;
+      border:1.5px solid #c9ad85;
+      border-radius:12px;
+      background:#fff;
+      color:#3c2f23;
+      font-weight:900;
+    }
+
+    .id-card-option.active{
+      border-color:var(--ok);
+      background:var(--ok-soft);
+      color:#52632f;
+    }
+
+    .id-card-option.active::before{
+      content:"✓ ";
+    }
+
+    @media(max-width:520px){
+      .id-card-options{
+        grid-template-columns:1fr;
+      }
+    }
+</style>
 </head>
 
 <body>
@@ -2266,9 +2334,67 @@
     });
 
 
+    // 身分證複選視窗
+    let currentIdCardButton=null;
+
+    function openIdCardModal(button){
+      currentIdCardButton=button;
+      const selected=(button.dataset.idPersons || "")
+        .split(",")
+        .map(x=>x.trim())
+        .filter(Boolean);
+
+      document.querySelectorAll("#idCardOptions .id-card-option").forEach(option=>{
+        option.classList.toggle("active",selected.includes(option.dataset.value));
+      });
+
+      $("idCardModalBackdrop").classList.add("show");
+      $("idCardModalBackdrop").setAttribute("aria-hidden","false");
+    }
+
+    function closeIdCardModal(){
+      $("idCardModalBackdrop").classList.remove("show");
+      $("idCardModalBackdrop").setAttribute("aria-hidden","true");
+      currentIdCardButton=null;
+    }
+
+    document.querySelectorAll("#idCardOptions .id-card-option").forEach(option=>{
+      option.addEventListener("click",()=>{
+        option.classList.toggle("active");
+      });
+    });
+
+    $("idCardConfirm").addEventListener("click",()=>{
+      if(!currentIdCardButton){
+        closeIdCardModal();
+        return;
+      }
+
+      const selected=[...document.querySelectorAll("#idCardOptions .id-card-option.active")]
+        .map(option=>option.dataset.value);
+
+      currentIdCardButton.dataset.idPersons=selected.join(",");
+
+      if(selected.length){
+        currentIdCardButton.classList.add("active");
+        currentIdCardButton.textContent=`身分證影本（${selected.join("、")}）`;
+      }else{
+        currentIdCardButton.classList.remove("active");
+        currentIdCardButton.textContent="身分證影本";
+      }
+
+      closeIdCardModal();
+    });
+
+    $("idCardCancel").addEventListener("click",closeIdCardModal);
+
+    $("idCardModalBackdrop").addEventListener("click",event=>{
+      if(event.target===$("idCardModalBackdrop")) closeIdCardModal();
+    });
+
     // 收件紀錄
     const childOptions = [
-      "異動申請書","契約書","臨托契約書","補助申報表","戶口名簿",
+      "異動單","契約書","臨托契約書","補助申報表","戶口名簿",
       "戶籍謄本","身分證影本","健保卡","郵局影本","中低收入證明","低收入證明",
       "特境證明","身障證明","發緩證明","停止補助申報表"
     ];
@@ -2289,7 +2415,7 @@
         </div>
 
         <div class="child-qty-grid">
-          ${["異動申請書","契約書","臨托契約書"].map(label=>`
+          ${["異動單","契約書","臨托契約書"].map(label=>`
             <label class="child-qty-box">
               <span>${label}</span>
               <input type="number" min="0" inputmode="numeric" data-child-qty="${label}">
@@ -2297,8 +2423,10 @@
         </div>
 
         <div class="child-toggles">
-          ${childOptions.filter(x=>!["異動申請書","契約書","臨托契約書"].includes(x))
-            .map(x=>`<button type="button" class="toggle" data-label="${x}">${x}</button>`).join("")}
+          ${childOptions.filter(x=>!["異動單","契約書","臨托契約書"].includes(x))
+            .map(x=>x==="身分證影本"
+              ? `<button type="button" class="toggle id-card-toggle" data-label="${x}" data-id-persons="">${x}</button>`
+              : `<button type="button" class="toggle" data-label="${x}">${x}</button>`).join("")}
         </div>
 
         <div class="development-inline">
@@ -2315,7 +2443,11 @@
 
       box.querySelector(".remove-child").addEventListener("click",()=>box.remove());
       box.querySelectorAll(".toggle,.age-toggle").forEach(btn=>{
-        btn.addEventListener("click",()=>btn.classList.toggle("active"));
+        if(btn.classList.contains("id-card-toggle")){
+          btn.addEventListener("click",()=>openIdCardModal(btn));
+        }else{
+          btn.addEventListener("click",()=>btn.classList.toggle("active"));
+        }
       });
 
       const toggle=box.querySelector(".development-inline-toggle");
@@ -2333,6 +2465,14 @@
     addChild();
     $("addChild").addEventListener("click",addChild);
 
+    const receiptItemOutputNames={
+      "異動單":"異動單"
+    };
+
+    function receiptOutputName(label){
+      return receiptItemOutputNames[label] || label;
+    }
+
     function generateReceipt(){
       const opening=$("opening").value.trim() || "今日收件：";
       const general=[];
@@ -2346,16 +2486,31 @@
 
         card.querySelectorAll("[data-child-qty]").forEach(input=>{
           const n=Number(input.value);
-          if(n>0) items.push(`${input.dataset.childQty}*${n}`);
+          if(n>0) items.push(`${receiptOutputName(input.dataset.childQty)}*${n}`);
         });
 
-        card.querySelectorAll(".child-toggles .toggle.active").forEach(btn=>items.push(btn.dataset.label));
+        card.querySelectorAll(".child-toggles .toggle.active").forEach(btn=>{
+          if(btn.dataset.label==="身分證影本"){
+            const persons=(btn.dataset.idPersons || "")
+              .split(",")
+              .map(x=>x.trim())
+              .filter(Boolean);
+
+            if(persons.length){
+              items.push(`${persons.join("、")}身分證影本`);
+            }else{
+              items.push("身分證影本");
+            }
+          }else{
+            items.push(receiptOutputName(btn.dataset.label));
+          }
+        });
 
         const ages=[...card.querySelectorAll(".age-toggle.active")].map(x=>x.textContent.trim());
-        if(ages.length) items.push(`檢核表${ages.join("、")}`);
+        if(ages.length) items.push(`${ages.join("、")}檢核表`);
 
         if(items.length){
-          const prefix=name?`${name}的`:"";
+          const prefix=name?`${name}-`:"";
           childLines.push(prefix+joinChinese(items));
         }
       });
@@ -2380,6 +2535,10 @@
     $("receiptReset").addEventListener("click",()=>{
       $("opening").value="今日收件：";
       document.querySelectorAll('#section-receipt .toggle.active').forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll('#section-receipt .id-card-toggle').forEach(btn=>{
+        btn.dataset.idPersons="";
+        btn.textContent="身分證影本";
+      });
       $("receiptResult").value="";
       $("registrationDetails").open=false;
       $("childList").innerHTML="";
