@@ -2000,6 +2000,23 @@
     </section>
   </main>
 
+
+  <div class="id-card-modal-backdrop" id="idCardModalBackdrop" aria-hidden="true">
+    <div class="id-card-modal" role="dialog" aria-modal="true" aria-labelledby="idCardModalTitle">
+      <h3 id="idCardModalTitle">選擇身分證資料</h3>
+      <p>可複選要收件的身分證對象。</p>
+      <div class="id-card-options" id="idCardOptions">
+        <button type="button" class="id-card-option" data-value="爸爸">爸爸</button>
+        <button type="button" class="id-card-option" data-value="媽媽">媽媽</button>
+        <button type="button" class="id-card-option" data-value="托兒">托兒</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="action primary wide" id="idCardConfirm">確認</button>
+        <button type="button" class="action ghost" id="idCardCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">已複製</div>
 
   <script>
