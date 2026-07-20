@@ -2512,7 +2512,15 @@
               .filter(Boolean);
 
             if(persons.length){
-              items.push(`「${persons.join("、")}身分證影本」`);
+              const childName=card.querySelector(".child-name").value.trim();
+              const labels=persons.map(person=>{
+                if(person==="托兒"){
+                  return `${childName || "托兒"}身分證影本`;
+                }
+                return `${person}身分證影本`;
+              });
+
+              items.push(labels.length===1 ? labels[0] : `「${labels.join("、")}」`);
             }else{
               items.push("身分證影本");
             }
