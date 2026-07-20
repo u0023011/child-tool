@@ -2121,9 +2121,7 @@
     }
 
     function joinChinese(items){
-      if(items.length===0) return "";
-      if(items.length===1) return items[0];
-      return items.slice(0,-1).join("、") + "及" + items.at(-1);
+      return items.filter(Boolean).join("、");
     }
 
     function selectedValues(rootSelector, itemSelector=".active"){
@@ -2514,7 +2512,7 @@
               .filter(Boolean);
 
             if(persons.length){
-              items.push(`${persons.join("、")}身分證影本`);
+              items.push(`「${persons.join("、")}身分證影本」`);
             }else{
               items.push("身分證影本");
             }
