@@ -593,15 +593,15 @@
 
     .tainan-map-wrap{
       margin-top:10px;
-      padding:14px;
-      border:1px solid #e2d0b4;
-      border-radius:18px;
-      background:#fbf7f0;
+      padding:0;
+      border:none;
+      border-radius:0;
+      background:transparent;
     }
 
     .tainan-map{
       position:relative;
-      width:min(100%,760px);
+      width:min(100%,860px);
       margin:0 auto;
       aspect-ratio:1 / 1;
       border-radius:18px;
@@ -610,50 +610,62 @@
       background-size:contain;
       background-position:center;
       background-repeat:no-repeat;
-      border:1px solid #d7c2a2;
-      box-shadow:inset 0 0 0 1px rgba(255,255,255,.42);
+      border:none;
+      box-shadow:none;
     }
 
     .map-choice{
       position:absolute;
       transform:translate(-50%,-50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
       min-width:62px;
       min-height:34px;
-      padding:0;
+      padding:4px 8px;
+      border:none;
       border-radius:999px;
-      border:2px solid transparent;
-      background:transparent;
+      background:none;
       color:transparent;
-      font-size:0;
+      font-size:clamp(19px,2.15vw,27px);
+      font-weight:950;
+      line-height:1;
+      letter-spacing:.02em;
+      text-shadow:none;
       box-shadow:none;
+      cursor:pointer;
+      outline:none;
+      transition:transform .16s ease, color .16s ease, text-shadow .16s ease;
     }
 
-    .map-choice:hover{
-      border-color:rgba(139,100,57,.72);
-      background:rgba(255,247,234,.28);
+    .map-choice:hover,
+    .map-choice:focus-visible{
+      transform:translate(-50%,-50%) scale(1.16);
+      color:#2f2115;
+      text-shadow:
+        -2px -2px 0 rgba(255,255,255,.98),
+         2px -2px 0 rgba(255,255,255,.98),
+        -2px  2px 0 rgba(255,255,255,.98),
+         2px  2px 0 rgba(255,255,255,.98),
+         0 3px 8px rgba(0,0,0,.18);
+      background:none;
     }
 
     .map-choice.active{
-      border-color:var(--ok);
-      background:rgba(237,242,227,.38);
-      box-shadow:0 0 0 3px rgba(100,117,65,.16);
+      transform:translate(-50%,-50%) scale(1.16);
+      color:#4f6b2d;
+      text-shadow:
+        -2px -2px 0 rgba(255,255,255,.98),
+         2px -2px 0 rgba(255,255,255,.98),
+        -2px  2px 0 rgba(255,255,255,.98),
+         2px  2px 0 rgba(255,255,255,.98),
+         0 3px 8px rgba(0,0,0,.18);
+      background:none;
+      box-shadow:none;
     }
 
     .map-choice.active::before{
-      content:"✓";
-      position:absolute;
-      top:-8px;
-      right:-6px;
-      display:grid;
-      place-items:center;
-      width:22px;
-      height:22px;
-      border-radius:50%;
-      background:var(--ok);
-      color:#fff;
-      font-size:13px;
-      font-weight:900;
-      box-shadow:0 2px 5px rgba(45,58,25,.25);
+      content:none;
     }
 
     .region-selected-hint{
