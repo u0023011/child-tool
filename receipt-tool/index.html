@@ -642,8 +642,8 @@
     .map-choice.active::before{
       content:"✓";
       position:absolute;
-      top:-10px;
-      right:-8px;
+      top:-8px;
+      right:-6px;
       display:grid;
       place-items:center;
       width:22px;
@@ -2655,25 +2655,25 @@
 
     // 媒合資訊
     const regionMapSpots = [
-      {name:"北門", value:"北門區", x:18, y:22},
-      {name:"鹽水", value:"鹽水區", x:34, y:21},
-      {name:"學甲", value:"學甲區", x:25, y:31},
-      {name:"將軍", value:"將軍區", x:15, y:39},
-      {name:"佳里", value:"佳里區", x:25, y:45},
-      {name:"麻豆", value:"麻豆區", x:34, y:46},
-      {name:"下營", value:"下營區", x:36, y:35},
-      {name:"新營", value:"新營區", x:42, y:20},
-      {name:"柳營", value:"柳營區", x:48, y:27},
-      {name:"後壁", value:"後壁區", x:51, y:11},
-      {name:"白河", value:"白河區", x:68, y:13},
-      {name:"東山", value:"東山區", x:69, y:27},
-      {name:"六甲", value:"六甲區", x:54, y:35},
-      {name:"官田", value:"官田區", x:50, y:43},
-      {name:"善化", value:"善化區", x:42, y:53},
-      {name:"大內", value:"大內區", x:56, y:53},
-      {name:"玉井", value:"玉井區", x:68, y:57},
-      {name:"楠西", value:"楠西區", x:77, y:44},
-      {name:"南化", value:"南化區", x:81, y:60}
+      {name:"北門", value:"北門區", x:15, y:27, w:12, h:8},
+      {name:"鹽水", value:"鹽水區", x:37, y:24, w:12, h:8},
+      {name:"學甲", value:"學甲區", x:27, y:37, w:12, h:8},
+      {name:"將軍", value:"將軍區", x:13, y:44, w:12, h:8},
+      {name:"佳里", value:"佳里區", x:18, y:59, w:12, h:8},
+      {name:"麻豆", value:"麻豆區", x:36, y:58, w:12, h:8},
+      {name:"下營", value:"下營區", x:42, y:44, w:12, h:8},
+      {name:"新營", value:"新營區", x:50, y:30, w:12, h:8},
+      {name:"柳營", value:"柳營區", x:61, y:39, w:12, h:8},
+      {name:"後壁", value:"後壁區", x:53, y:14, w:12, h:8},
+      {name:"白河", value:"白河區", x:71, y:16, w:12, h:8},
+      {name:"東山", value:"東山區", x:75, y:33, w:12, h:8},
+      {name:"六甲", value:"六甲區", x:56, y:50, w:12, h:8},
+      {name:"官田", value:"官田區", x:50, y:60, w:12, h:8},
+      {name:"善化", value:"善化區", x:41, y:73, w:12, h:8},
+      {name:"大內", value:"大內區", x:64, y:66, w:12, h:8},
+      {name:"玉井", value:"玉井區", x:63, y:81, w:12, h:8},
+      {name:"楠西", value:"楠西區", x:80, y:54, w:13, h:9},
+      {name:"南化", value:"南化區", x:78, y:75, w:13, h:9}
     ];
 
     const regions=regionMapSpots.map(item=>item.name);
@@ -2685,7 +2685,7 @@
         data-value="${item.value}"
         style="left:${item.x}%; top:${item.y}%"
         aria-pressed="false"
-        title="${item.name}"
+        aria-label="${item.name}"
       >${item.name}</button>
     `).join("");
 
