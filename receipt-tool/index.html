@@ -2666,6 +2666,8 @@
       {name:"南化", value:"南化區", x:87, y:60}
     ];
 
+    const regions=regionMapSpots.map(item=>item.name);
+
     $("regionChoices").innerHTML = regionMapSpots.map(item => `
       <button
         type="button"
