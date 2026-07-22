@@ -472,12 +472,6 @@
 
     /* 收件紀錄 */
     .child-list{display:grid;gap:12px}
-    .roster-link-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-    .roster-import-box{margin-bottom:16px;padding:14px;border:1.5px dashed var(--line);border-radius:14px;background:var(--subcard)}
-    .roster-import-box summary{cursor:pointer;font-weight:900;color:#5b4126}
-    .roster-import-box textarea{margin-top:12px;min-height:120px}
-    .roster-status{margin-top:9px;color:var(--muted);font-size:14px;line-height:1.6}
-    @media(max-width:650px){.roster-link-grid{grid-template-columns:1fr}}
     .child-card{
       border:1.5px solid var(--line);
       border-radius:16px;
@@ -1660,28 +1654,6 @@
 
       <section class="card">
         <h3 class="card-title"><span class="badge">2</span>收托資料</h3>
-        <details class="roster-import-box">
-          <summary>貼上 Excel 名單資料</summary>
-          <p class="helper">家長及幼兒資料維護(ca31010) →列印家長幼兒資料</p>
-          <textarea id="receiptRosterPaste" placeholder="在此貼上 Excel 資料"></textarea>
-          <div class="actions">
-            <button class="action primary" id="parseReceiptRoster" type="button">解析並儲存名單</button>
-            <button class="action danger" id="clearReceiptRoster" type="button">清除名單</button>
-          </div>
-          <div class="roster-status" id="receiptRosterStatus">尚未匯入名單。</div>
-        </details>
-        <div class="roster-link-grid">
-          <div class="field">
-            <label class="field-label" for="receiptArea">區域</label>
-            <input id="receiptArea" type="text" list="receiptAreaList" autocomplete="off" placeholder="可輸入關鍵字搜尋">
-            <datalist id="receiptAreaList"></datalist>
-          </div>
-          <div class="field">
-            <label class="field-label" for="receiptCaregiver">托育人員</label>
-            <input id="receiptCaregiver" type="text" list="receiptCaregiverList" autocomplete="off" placeholder="可直接輸入姓名">
-            <datalist id="receiptCaregiverList"></datalist>
-          </div>
-        </div>
         <div class="section-label">依托兒登錄資料</div>
         <div id="childList" class="child-list"></div>
         <div class="actions">
@@ -2537,125 +2509,6 @@
 
     const developmentAges = ["0.4","0.6","0.9","1","1.3","1.5","2","2.5","3","3.5","4","5","6"];
 
-    const receiptRosterKey="receiptLinkedRosterV1";
-    let receiptRoster=[];
-
-    function normalizeReceiptArea(value){
-      const raw=String(value||"").trim();
-      const district=raw.match(/^(.+?區)/);
-      return district ? district[1] : raw;
-    }
-
-    function uniqueSorted(values){
-      return [...new Set(values.map(x=>String(x||"").trim()).filter(Boolean))]
-        .sort((a,b)=>a.localeCompare(b,"zh-Hant"));
-    }
-
-    function setDataList(id,values,keyword=""){
-      const list=$(id);
-      if(!list) return;
-      const key=String(keyword||"").trim().toLowerCase();
-      const filtered=key ? values.filter(x=>x.toLowerCase().includes(key)) : values;
-      list.innerHTML=filtered.map(value=>`<option value="${escapeHtml(value)}"></option>`).join("");
-    }
-
-    function matchingRosterRows(){
-      const area=$("receiptArea").value.trim();
-      const caregiver=$("receiptCaregiver").value.trim();
-      return receiptRoster.filter(row=>(!area || row.area===area) && (!caregiver || row.caregiver===caregiver));
-    }
-
-    function refreshReceiptLinkedLists(){
-      const areaInput=$("receiptArea");
-      const caregiverInput=$("receiptCaregiver");
-      const areas=uniqueSorted(receiptRoster.map(x=>x.area));
-      setDataList("receiptAreaList",areas,areaInput.value);
-
-      const exactArea=areas.includes(areaInput.value.trim()) ? areaInput.value.trim() : "";
-      const caregivers=uniqueSorted(receiptRoster
-        .filter(x=>!exactArea || x.area===exactArea)
-        .map(x=>x.caregiver));
-      setDataList("receiptCaregiverList",caregivers,caregiverInput.value);
-
-      const exactCaregiverRows=receiptRoster.filter(x=>x.caregiver===caregiverInput.value.trim());
-      const caregiverAreas=uniqueSorted(exactCaregiverRows.map(x=>x.area));
-      if(caregiverAreas.length===1 && areaInput.value.trim()!==caregiverAreas[0]){
-        areaInput.value=caregiverAreas[0];
-        setDataList("receiptAreaList",areas,areaInput.value);
-      }
-
-      const children=uniqueSorted(matchingRosterRows().map(x=>x.child));
-      document.querySelectorAll(".child-name").forEach(input=>{
-        const list=input.nextElementSibling;
-        if(list && list.tagName==="DATALIST"){
-          const key=input.value.trim().toLowerCase();
-          const filtered=key ? children.filter(x=>x.toLowerCase().includes(key)) : children;
-          list.innerHTML=filtered.map(value=>`<option value="${escapeHtml(value)}"></option>`).join("");
-        }
-      });
-    }
-
-    function parseReceiptRosterText(text){
-      const rows=String(text||"").replace(/\r/g,"").split("\n")
-        .map(line=>line.split("\t").map(cell=>cell.trim()))
-        .filter(row=>row.some(Boolean));
-      if(rows.length<2) throw new Error("請貼上包含標題列及資料列的 Excel 內容。");
-      const normalizeHeaders=row=>row.map(x=>x.replace(/[\s　]/g,""));
-      const findHeaderIn=(headers,aliases)=>headers.findIndex(h=>aliases.some(alias=>h===alias || h.includes(alias)));
-      const caregiverAliases=["托育人員姓名","托育人員","保母姓名","保母"];
-      const childAliases=["托兒姓名","幼兒姓名","托兒","幼兒"];
-      const headerRowIndex=rows.findIndex(row=>{
-        const candidate=normalizeHeaders(row);
-        return findHeaderIn(candidate,caregiverAliases)>=0 && findHeaderIn(candidate,childAliases)>=0;
-      });
-      if(headerRowIndex<0){
-        throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
-      }
-      const headers=normalizeHeaders(rows[headerRowIndex]);
-      const findHeader=aliases=>findHeaderIn(headers,aliases);
-      const areaIndex=findHeader(["區域","服務區域","行政區"]);
-      const caregiverIndex=findHeader(caregiverAliases);
-      const childIndex=findHeader(childAliases);
-      if(caregiverIndex<0 || childIndex<0){
-        throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
-      }
-      const caregiverAreaMap=new Map();
-      uniqueSorted(receiptRoster.map(x=>x.caregiver)).forEach(caregiver=>{
-        const areas=uniqueSorted(receiptRoster.filter(x=>x.caregiver===caregiver).map(x=>x.area));
-        if(areas.length===1) caregiverAreaMap.set(caregiver,areas[0]);
-      });
-      const parsed=rows.slice(headerRowIndex+1).map(row=>({
-        area:areaIndex>=0
-          ? normalizeReceiptArea(row[areaIndex])
-          : "",
-        caregiver:(row[caregiverIndex]||"").trim(),
-        child:(row[childIndex]||"").trim()
-      })).filter(x=>x.caregiver && x.child);
-      const seen=new Set();
-      return parsed.filter(x=>{
-        const key=`${x.area}\u0001${x.caregiver}\u0001${x.child}`;
-        if(seen.has(key)) return false;
-        seen.add(key); return true;
-      });
-    }
-
-    function updateReceiptRosterStatus(){
-      const caregivers=uniqueSorted(receiptRoster.map(x=>x.caregiver)).length;
-      const children=uniqueSorted(receiptRoster.map(x=>x.child)).length;
-      const noArea=receiptRoster.filter(x=>!x.area).length;
-      $("receiptRosterStatus").textContent=receiptRoster.length
-        ? `已載入 ${receiptRoster.length} 筆關聯資料（${caregivers} 位托育人員、${children} 位托兒）${noArea?`；${noArea} 筆未提供區域，仍可用托育人員搜尋。`:"。"}`
-        : "尚未匯入名單。";
-    }
-
-    try{
-      const saved=JSON.parse(localStorage.getItem(receiptRosterKey)||"[]");
-      if(Array.isArray(saved)){
-        receiptRoster=saved.map(row=>({...row,area:row.area==="未分類"?"":normalizeReceiptArea(row.area)}));
-        localStorage.setItem(receiptRosterKey,JSON.stringify(receiptRoster));
-      }
-    }catch(error){ receiptRoster=[]; }
-
     function addChild(){
       const box = document.createElement("div");
       box.className = "child-card";
@@ -2663,8 +2516,7 @@
         <div class="child-head">
           <div class="field">
             <label class="field-label">托兒姓名</label>
-            <input type="text" class="child-name" list="child-name-list-${Date.now()}-${Math.random().toString(36).slice(2)}" autocomplete="off" placeholder="可輸入關鍵字搜尋">
-            <datalist id="child-name-list-${Date.now()}-${Math.random().toString(36).slice(2)}"></datalist>
+            <input type="text" class="child-name">
           </div>
           <div></div>
           <button type="button" class="action danger remove-child">刪除</button>
@@ -2716,46 +2568,10 @@
       });
 
       $("childList").appendChild(box);
-      const childInput=box.querySelector(".child-name");
-      const childList=box.querySelector("datalist");
-      childInput.setAttribute("list",childList.id);
-      childInput.addEventListener("input",refreshReceiptLinkedLists);
-      childInput.addEventListener("focus",refreshReceiptLinkedLists);
-      refreshReceiptLinkedLists();
     }
 
     addChild();
     $("addChild").addEventListener("click",addChild);
-    $("receiptArea").addEventListener("input",refreshReceiptLinkedLists);
-    $("receiptArea").addEventListener("change",refreshReceiptLinkedLists);
-    $("receiptArea").addEventListener("focus",refreshReceiptLinkedLists);
-    $("receiptCaregiver").addEventListener("input",refreshReceiptLinkedLists);
-    $("receiptCaregiver").addEventListener("change",refreshReceiptLinkedLists);
-    $("receiptCaregiver").addEventListener("focus",refreshReceiptLinkedLists);
-    $("parseReceiptRoster").addEventListener("click",()=>{
-      try{
-        receiptRoster=parseReceiptRosterText($("receiptRosterPaste").value);
-        localStorage.setItem(receiptRosterKey,JSON.stringify(receiptRoster));
-        updateReceiptRosterStatus();
-        refreshReceiptLinkedLists();
-        const noArea=receiptRoster.filter(x=>!x.area).length;
-        showToast(noArea ? "名單解析完成，可直接搜尋托育人員" : "名單解析完成");
-      }catch(error){
-        alert(error.message||"名單解析失敗，請檢查資料格式。");
-      }
-    });
-    $("clearReceiptRoster").addEventListener("click",()=>{
-      if(!confirm("確定要清除已儲存的名單嗎？")) return;
-      receiptRoster=[];
-      localStorage.removeItem(receiptRosterKey);
-      $("receiptRosterPaste").value="";
-      $("receiptArea").value="";
-      $("receiptCaregiver").value="";
-      updateReceiptRosterStatus();
-      refreshReceiptLinkedLists();
-    });
-    updateReceiptRosterStatus();
-    refreshReceiptLinkedLists();
 
     const receiptItemOutputNames={
       "異動單":"異動單"
@@ -2841,8 +2657,6 @@
     });
     $("receiptReset").addEventListener("click",()=>{
       $("opening").value="今日收件：";
-      $("receiptArea").value="";
-      $("receiptCaregiver").value="";
       document.querySelectorAll('#section-receipt .toggle.active').forEach(x=>x.classList.remove("active"));
       document.querySelectorAll('#section-receipt .id-card-toggle').forEach(btn=>{
         btn.dataset.idPersons="";
@@ -2852,7 +2666,6 @@
       $("registrationDetails").open=false;
       $("childList").innerHTML="";
       addChild();
-      refreshReceiptLinkedLists();
     });
 
     // 媒合資訊
@@ -3324,12 +3137,20 @@
       if(children.length===1){
         if(children[0].age) lines.push(`幼兒年齡：${children[0].age}`);
         if(children[0].gender) lines.push(`幼兒性別：${children[0].gender}`);
-        if(children[0].reminder) lines.push(`特殊提醒：${children[0].reminder}`);
+        if(children[0].reminder){
+          lines.push("");
+          lines.push("⚠️【特殊提醒】");
+          lines.push(children[0].reminder);
+        }
       }else if(children.length>1){
         children.forEach((child,index)=>{
           const details=[child.age,child.gender].filter(Boolean).join("／");
           lines.push(`幼兒${index+1}：${details || "未填年齡及性別"}`);
-          if(child.reminder) lines.push(`幼兒${index+1}特殊提醒：${child.reminder}`);
+          if(child.reminder){
+            lines.push("⚠️【特殊提醒】");
+            lines.push(child.reminder);
+          }
+          if(index<children.length-1) lines.push("");
         });
       }
 
