@@ -284,11 +284,13 @@ input[placeholder*="搜尋"],
 
 
 <script>
-const role = sessionStorage.getItem("toolRole");
-if (window.top === window.self && !(role === "admin")) {
+let role = null;
+try { role = sessionStorage.getItem("toolRole"); } catch (_) {}
+const isStandaloneFile = window.location.protocol === "file:";
+if (!isStandaloneFile && window.top === window.self && !(role === "admin")) {
   window.location.href = "../";
 }
-if (window.top !== window.self && !(role === "admin")) {
+if (!isStandaloneFile && window.top !== window.self && !(role === "admin")) {
   window.top.location.href = "../";
 }
 </script>
@@ -297,7 +299,7 @@ if (window.top !== window.self && !(role === "admin")) {
 <body>
 
 <div class="container">
-<h1>托育違規法規對照工具</h1><div class="subtitle">先選問題類型，再勾選細項，最後產生法規對照。</div>
+<h1>托育違規法規對照工具</h1><div class="subtitle">法規核心修正版｜區分現行裁罰、行政處分、準公共契約效果與新法預覽</div>
 <div class="steps"><div class="step active" id="s1" onclick="go1()">① 問題類型</div><div class="step" id="s2" onclick="go2()">② 違規細項</div><div class="step" id="s3" onclick="go3()">③ 結果產出</div></div>
 <div class="panel active" id="p1"><div class="title">步驟一：選擇問題類型</div><div class="helper">可複選。兒童托育服務法不放在這裡，會依勾選內容於結果中補充。</div><div class="grid" id="cats"></div><div class="buttons"><button class="ghost" onclick="clearAll()">清除全部</button><button class="primary" onclick="go2()">下一步：勾選細項</button></div></div>
 <div class="panel" id="p2"><div class="title">步驟二：勾選細項／填寫收托人數</div><div class="helper"></div><div class="search"></div><div id="details"></div><div class="buttons"><button class="secondary" onclick="go1()">上一步：問題類型</button><button class="primary" onclick="go3()">下一步：產生結果</button></div></div>
@@ -839,6 +841,419 @@ function generate(){
  r.innerHTML=html
 }
 function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=false;else i.value=""});qsa(".card").forEach(c=>c.classList.remove("selected"));qs("#details").innerHTML="";qs("#result").style.display="none";setStep(1)} renderCats();
+</script>
+
+<style>
+/* 法規核心修正版：115/07/22 */
+.version-note{margin:10px 0 16px;padding:11px 13px;border-radius:11px;background:#f2eee6;color:#5a432b;line-height:1.7;font-size:14px}
+.legal-status{padding:10px 12px;border-radius:10px;margin:10px 0;line-height:1.7}
+.legal-status.current{background:#eef6ef;border:1px solid #9fc4a7;color:#31533a}
+.legal-status.future-only{background:#fff0e8;border:1px solid #efb58c;color:#7b452b}
+.legal-status.review{background:#fff8df;border:1px solid #dec36d;color:#67551c}
+.item-badge.future{background:#f8e8dc;color:#8d4b2c}
+.item-badge.conditional{background:#fff1c9;color:#775600}
+.focus-item.focus-conditional{border-color:#d1a33e;background:#fff9df}
+.law-reference{margin:12px 0;padding:12px 14px;border:1px solid #d8c7aa;border-radius:12px;background:#f9f5ed;line-height:1.75}
+.law-reference summary{cursor:pointer;font-weight:800;color:#5a432b}
+.count-config{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 14px}
+.config-field{background:#fff;border:1px solid #e1d5c3;border-radius:10px;padding:10px}
+.config-field label{display:block;font-weight:700;color:#5a432b;margin-bottom:6px}
+.config-field select{width:100%;padding:9px;border:1px solid #bbb;border-radius:8px;font-size:16px;background:white}
+.check-line{display:flex;gap:9px;align-items:flex-start;margin:9px 0;line-height:1.65}
+.check-line input{margin-top:5px;transform:scale(1.15)}
+.source-links{margin-top:16px;padding:12px;background:#f4f1ea;border-radius:10px;line-height:1.8;font-size:14px}
+.source-links a{color:#5a432b}
+@media(max-width:760px){.count-config{grid-template-columns:1fr}.version-note{font-size:15px}}
+</style>
+
+<script>
+/*
+ * 法規核心修正版
+ * 核對基準：
+ * 1. 兒童及少年福利與權益保障法
+ * 2. 居家式托育服務提供者登記及管理辦法（112/02/20）
+ * 3. 準公共服務作業要點（114/07/16）
+ * 4. 兒童托育服務法（115/05/08公布，施行日未定）
+ */
+(() => {
+ const patchItem=(id,patch)=>{const item=items.find(x=>x.id===id);if(item)Object.assign(item,patch);};
+ const removeIds=new Set(["A12","C17","C21","C25"]);
+ for(let i=items.length-1;i>=0;i--){if(removeIds.has(items[i].id))items.splice(i,1);}
+
+ patchItem("A01",{
+  summary:"未辦理居家式托育服務登記即提供托育服務。現行兒少權法第90條第1項先處6,000元以上3萬元以下罰鍰並命限期改善；屆期未改善者再處罰鍰，並命一個月內轉介。",
+  effect:"先處罰鍰並命限期改善；屆期未改善，再處罰鍰並命一個月內轉介。未登記者沒有既存登記可供廢止。",
+  penalty:"6,000元以上3萬元以下；基本未登記案件並非一開始即可按次處罰。",
+  fineLevel:"direct",currentRevoke:false,
+  per:"否（基本型）；限期改善期間增加收托另依第90條第4項處理",
+  stop:"否（基本型）",transfer:"屆期未改善時命轉介",
+  revoke:"否／未登記者沒有既存登記可供廢止",
+  public:"不符合準公共合作基本資格。",publicStatus:"application_bar"
+ });
+ patchItem("A03",{fineLevel:"none",public:"本項本身不是準公共作業要點第8點直接退場事由。",publicStatus:"none"});
+ patchItem("A04",{
+  public:"準公共作業要點第8點第5款：服務登記證書效期屆滿且未申請換發，應即終止契約；自終止日起二年內不得再提出簽約申請。",
+  publicStatus:"terminate_now",fineLevel:"none",currentRevoke:true
+ });
+ patchItem("A05",{
+  effect:"違反管理辦法第13條第1項者，主管機關應依第18-1條命限期改善；屆期未改善時，依兒少權法第90條第5項處理。準公共合作期間經查證屬實，應即終止契約。",
+  penalty:"經命限期改善而屆期未改善者，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",improve:"是",per:"屆期未改善後得按次",
+  public:"準公共作業要點第8點第6款：違反管理辦法第13條第1項，經查證屬實者，應即終止契約。",publicStatus:"terminate_now"
+ });
+ patchItem("A06",{
+  summary:"服務登記證書所載姓名、性別、出生年月日或資格證明有變更時，應自事實發生日起30日內辦理變更登記。本項不包含證書遺失、毀損，也不是證書效期屆滿未換發。",
+  effect:"主管機關應依管理辦法第18-1條命限期改善；屆期未改善時，依兒少權法第90條第5項處理。準公共須另達三次限期改善或已科處罰鍰的門檻。",
+  penalty:"經命限期改善而屆期未改善者，處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",per:"屆期未改善後得按次",
+  public:"準公共作業要點第8點第7款：違反管理辦法第14條，且經命限期改善達三次或科處罰鍰者，才應即終止契約。",publicStatus:"terminate_conditional"
+ });
+ patchItem("A07",{
+  effect:"服務登記處所地址變更應事前申請核准；未核准前不得在變更後處所提供托育。應先依管理辦法第18-1條命限期改善，不直接等同證書屆期或未辦理登記。",
+  penalty:"經命限期改善而屆期未改善者，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",per:"屆期未改善後得按次",stop:"視主管機關個案處理",transfer:"視個案",
+  public:"準公共作業要點第8點第7款：違反管理辦法第14條，且經命限期改善達三次或科處罰鍰者，才應即終止契約。",publicStatus:"terminate_conditional"
+ });
+ patchItem("A08",{
+  title:"停止托育服務未於30日內提出申請",
+  law:"管理辦法第15條第1項；準公共作業要點第8點第5款",
+  summary:"托育人員停止托育服務，應自事實發生日起30日內提出申請並繳回原服務登記證書。",
+  effect:"未依期限申請可列入管理紀錄；若事實上已停托，準公共合作契約依第8點第5款應即終止。",
+  penalty:"管理辦法第18-1條列明的是第15條第2項；第1項逾期申請不宜直接套用同一罰鍰結論。",
+  fine:"否／須依個案法源確認",fineLevel:"none",improve:"視個案",per:"否",stop:"已停托",transfer:"否",revoke:"否",
+  public:"事實上已停托者，準公共作業要點第8點第5款規定應即終止契約。",publicStatus:"terminate_now"
+ });
+ if(!items.some(x=>x.id==="A10"))items.push({
+  cat:"reg",id:"A10",title:"恢復托育服務未經主管機關同意即收托",law:"管理辦法第15條第2項、第18-1條；兒少權法第90條第5項",
+  summary:"托育人員恢復托育服務時，應填具申請書並檢附文件，經原核發機關同意後始可收托。",
+  effect:"主管機關應命限期改善；屆期未改善時，依兒少權法第90條第5項處理。",
+  penalty:"屆期未改善者，處6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或三次處罰後仍未改善者，得廢止登記。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",improve:"是",per:"屆期未改善後得按次",stop:"未經同意不得收托",transfer:"視個案",revoke:"可能",currentRevoke:false,
+  public:"管理辦法第15條第2項不是準公共第8點第7款明列條文；不得僅因本項直接判定應即終止契約。",publicStatus:"none",future:""
+ });
+ patchItem("A09",{
+  effect:"依管理辦法第18-1條先命限期改善；屆期未改善時，依兒少權法第90條第5項處理。",
+  penalty:"屆期未改善者，處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",per:"屆期未改善後得按次",
+  public:"準公共作業要點第8點第7款：違反管理辦法第16條，且經命限期改善達三次或科處罰鍰者，才應即終止契約。",publicStatus:"terminate_conditional"
+ });
+ patchItem("A11",{
+  cat:"reg",title:"未登記者於限期改善期間增加收托",
+  summary:"僅指未辦理登記者依兒少權法第90條第1項受命限期改善期間，又增加收托兒童；不是所有一般改善案件都適用。",
+  effect:"處罰鍰並得按次處罰；主管機關並應強制轉介其收托兒童。",
+  penalty:"6,000元以上3萬元以下，並得按次處罰。",
+  fineLevel:"direct",stop:"否",transfer:"應強制轉介",revoke:"否／未登記者沒有既存登記可供廢止",currentRevoke:false,
+  public:"不符合準公共合作基本資格。",publicStatus:"application_bar"
+ });
+
+ ["B04","B05","B06","B07"].forEach(id=>patchItem(id,{
+  effect:"先確認該兒童是否在同一托育服務時間實際受照顧，以及列入後是否造成收托人數或附表組合違規；只有實際違反收托人數規定時，才進入裁罰與準公共退場。",
+  penalty:"若列入後確實違反收托人數規定，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"實際造成收托人數違規時是",fineLevel:"fact_pending",improve:"是",per:"確認超收後得按次",revoke:"確認超收後可能",
+  public:"確認收托比或收托人數確實違反法令時，準公共作業要點第8點第2款規定應即終止契約。",publicStatus:"fact_pending"
+ }));
+ patchItem("B08",{
+  effect:"未分配主要照顧人屬管理辦法第7條第4項違反，應先命限期改善；不應錯寫成『收托比違反』。準公共合作對象經查證違反管理辦法第7條者，另依第8點第6款處理。",
+  penalty:"經列入應改善而屆期未改善者，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",per:"屆期未改善後得按次",
+  public:"準公共作業要點第8點第6款：違反管理辦法第7條，經查證屬實者，應即終止契約。",publicStatus:"terminate_now"
+ });
+
+ ["C01","C02","C03","C04","C05"].forEach(id=>patchItem(id,{
+  fine:"符合限期改善後仍未改善條件時是",fineLevel:"conditional",
+  public:"準公共作業要點第8點第7款：違反管理辦法第3條，須經命限期改善達三次或科處罰鍰，才應即終止契約。",publicStatus:"terminate_conditional"
+ }));
+ patchItem("C01",{
+  law:"管理辦法第3條第1款、第18-1條；兒少權法第90條第5項",
+  summary:"托育人員應提供清潔、衛生、安全及適宜兒童發展之托育服務環境。",
+  effect:"依管理辦法第18-1條命限期改善；屆期未改善時，再依兒少權法第90條第5項處理。",
+  penalty:"經列入應改善而屆期未改善者，處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  per:"屆期未改善後得按次"
+ });
+ ["C06","C07","C08","C09","C10","C11"].forEach(id=>patchItem(id,{
+  fine:"符合限期改善後仍未改善條件時是",fineLevel:"conditional",
+  public:"準公共作業要點第8點第7款：違反管理辦法第4條，須經命限期改善達三次或科處罰鍰，才應即終止契約。",publicStatus:"terminate_conditional"
+ }));
+ patchItem("C09",{
+  effect:"未完成訓練應依管理辦法第18-1條命限期改善；換證時須檢具六年內完成訓練與健康檢查的證明。只有證書屆期未申請換發，才是第12條直接廢止登記。",
+  penalty:"經列入應改善而屆期未改善者，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。不能把『訓練不足』直接寫成『廢止登記』。",
+  per:"屆期未改善後得按次",revoke:"訓練不足本身不直接廢止；屆期未申請換發才廢止",currentRevoke:false
+ });
+ patchItem("C10",{
+  effect:"未完成健康檢查應先依管理辦法第18-1條命限期改善；換證時須檢具證明。只有證書屆期未申請換發，才依第12條廢止登記。",
+  penalty:"經列入應改善而屆期未改善者，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  per:"屆期未改善後得按次",revoke:"健康檢查不足本身不直接廢止；屆期未申請換發才廢止",currentRevoke:false
+ });
+ patchItem("C11",{
+  effect:"未於收托兒童當日前投保責任保險，應依管理辦法第18-1條命限期改善；屆期未改善時進入兒少權法第90條第5項。",
+  penalty:"屆期未改善者，處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  per:"屆期未改善後得按次"
+ });
+ patchItem("C12",{
+  title:"虐待、疏忽或其他違反兒童保護規定（須區分是否構成第49條）",
+  summary:"管理辦法第5條第1款禁止虐待、疏忽或其他違反兒童保護規定行為；若具體行為同時構成兒少權法第49條並經查證屬實，另進入第97條罰鍰及第26-1條停止服務、轉介與廢止登記。單純『疏忽』不可未經認定就直接等同第49條。",
+  effect:"構成第49條並查證屬實：命停止服務、強制轉介，已登記者廢止登記；不服停止命令另依第90條第7項處理。",
+  penalty:"第49條行為本身依第97條處6萬元以上60萬元以下罰鍰；不依停止服務命令者，另處6萬元以上30萬元以下罰鍰並得公布姓名。",
+  fine:"是／依具體行為分流",fineLevel:"direct",improve:"不得以一般改善取代兒少保護處理",per:"依各罰則",stop:"構成第26-1條時應停止",transfer:"構成第26-1條時應強制轉介",revoke:"構成第26-1條時應廢止",currentRevoke:true,
+  public:"違反兒少權法第49條或管理辦法第5條，經查證屬實者，準公共作業要點第8點第6款規定應即終止契約。",publicStatus:"terminate_now"
+ });
+ ["C13","C14","D01"].forEach(id=>patchItem(id,{
+  penalty:"依管理辦法第18-1條命限期改善；屆期未改善時，依兒少權法第90條第5項處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"符合屆期未改善條件時是",fineLevel:"conditional",per:"屆期未改善後得按次",
+  public:"最近二年曾違反管理辦法第5條者，不得提出準公共簽約申請；合作期間經查證違反第5條者，依第8點第6款應即終止契約。",publicStatus:"terminate_now"
+ }));
+ patchItem("D02",{fineLevel:"none",publicStatus:"terminate_now"});
+ patchItem("D03",{fineLevel:"none",publicStatus:"terminate_now"});
+ patchItem("D04",{fineLevel:"fact_pending",publicStatus:"terminate_now"});
+ patchItem("D05",{fineLevel:"none",publicStatus:"terminate_now"});
+
+ patchItem("E01",{
+  effect:"違反兒少權法第26條第4項者，直接依第90條第5項裁罰；本項不以另一次限期改善作為罰鍰前提。準公共合作期間應即終止契約。",
+  penalty:"6,000元以上3萬元以下，並得按次處罰；情節重大或三次處罰後仍未改善者，得廢止登記。",
+  fineLevel:"direct",improve:"否（本項依第90條第5項直接裁罰）",per:"是",publicStatus:"terminate_now"
+ });
+ ["E02","E03","E04"].forEach(id=>patchItem(id,{
+  effect:"先確認是否僅為文件一時未備，或已構成規避、妨礙、拒絕檢查。只有後者才直接進入兒少權法第26條第4項、第90條第5項及準公共第8點第3款。",
+  penalty:"構成規避、妨礙或拒絕檢查時，處6,000元以上3萬元以下罰鍰，並得按次處罰。",
+  fine:"構成拒檢時是",fineLevel:"fact_pending",per:"構成拒檢後得按次",
+  public:"確認構成規避、妨礙或拒絕管理、輔導、監督及檢查時，應即終止準公共契約。",publicStatus:"fact_pending"
+ }));
+ patchItem("E05",{
+  law:"管理辦法第18-1條；兒少權法第90條第5項",
+  summary:"管理辦法第18-1條所列事項經命限期改善而屆期未改善時，進入兒少權法第90條第5項處理。須記錄原違規條文、限期改善日期及是否屆期。",
+  effect:"屆期未改善後裁罰，並得按次處罰；情節重大或三次處罰後仍未改善者，得廢止登記。",
+  fine:"是／但須先有合法限期改善及屆期未改善",fineLevel:"conditional",
+  public:"須回到原違規條文判斷：第3、4、14、16條須限改達三次或已科罰鍰；其他事項不得一律推定準公共應即終止。",publicStatus:"fact_pending"
+ });
+ patchItem("E06",{fineLevel:"direct",currentRevoke:true,public:"準公共效果應依造成停止服務的原違規事實判斷；不得只因本項文字自動套用第8點。",publicStatus:"fact_pending"});
+ patchItem("E07",{fineLevel:"direct",public:"本項通常發生於未登記者的轉介命令，原則上不具準公共合作資格；不得額外顯示準公共第8點退場。",publicStatus:"none"});
+ patchItem("E08",{
+  law:"現行：兒少權法第26條第4項、第90條第5項；管理辦法第5條第4款；新法預覽：兒托法第13條、第78條、第79條",
+  summary:"現行法未逐字使用『藏匿兒童』，但若檢查時藏匿兒童已構成規避、妨礙或拒絕檢查，依現行兒少權法第26條第4項、第90條第5項處理。新法則已明文禁止檢查時藉故藏匿兒童。",
+  effect:"現行須先認定已構成規避、妨礙或拒絕檢查；成立時得裁罰並按次處罰，準公共應即終止契約。",
+  penalty:"現行成立時處6,000元以上3萬元以下；新法施行後，居家托育人員或其他行為人分別依第78條、第79條處理。",
+  fine:"構成拒檢時是",fineLevel:"fact_pending",publicStatus:"terminate_now"
+ });
+
+ patchItem("C18",{futureOnly:true,fineLevel:"future",public:"新法預覽事項；不得僅憑本項直接判定準公共退場。",publicStatus:"none"});
+ patchItem("C19",{futureOnly:true,fineLevel:"future",public:"新法預覽事項；不得列為現行罰鍰。",publicStatus:"none"});
+ patchItem("C20",{futureOnly:true,fineLevel:"future",public:"屬新法服務說明及溝通機制，不是準公共第8點直接退場事由。",publicStatus:"none"});
+ patchItem("C26",{
+  law:"兒少權法第51條、第99條；兒少權法施行細則第14條；管理辦法第5條第1款；新法預覽：兒托法第19條、第78條",
+  summary:"不得使六歲以下或需要特別看護之兒童獨處，或由不適當之人代為照顧。『不適當之人』依兒少權法施行細則第14條，包括無行為能力人、七歲以上未滿十二歲兒童，或依客觀事實足認有影響兒童身心健康或安全之虞者。",
+  effect:"現行兒少權法第99條直接裁罰；如另構成管理辦法第5條、兒少權法第49條或重大疏忽，再依各該規定分流。",
+  penalty:"依兒少權法第99條處3,000元以上1萬5,000元以下罰鍰。",
+  fineLevel:"direct",per:"否（第99條本身未規定按次處罰）",
+  public:"如經查證同時構成管理辦法第5條或兒少權法第49條，才依準公共第8點第6款應即終止契約。",publicStatus:"fact_pending"
+ });
+ patchItem("C27",{
+  summary:"責任通報人員執行業務時知悉兒少權法第53條第1項所列情形，應立即通報，至遲不得超過24小時。",
+  effect:"無正當理由違反通報義務者，依第100條裁罰。是否另有停止、轉介或準公共效果，須依原保護事件判斷。",
+  penalty:"無正當理由未依第53條第1項通報者，處6,000元以上6萬元以下罰鍰。",
+  fineLevel:"direct",improve:"不以補通報取代原違規",per:"第100條本身未規定按次",revoke:"否／須依其他事件另判斷",currentRevoke:false,
+  public:"未通報本身不是準公共第8點明列的居家托育直接退場事由；須依原違法事件另行判斷。",publicStatus:"none"
+ });
+ patchItem("E09",{
+  futureOnly:true,fineLevel:"future",public:"新法記點制度本身不是現行準公共第8點獨立退場事由。",publicStatus:"none",
+  effect:"兒托法施行後，達法定記點門檻時主管機關應命暫停新收托；五年內已暫停二次，再違規且被記點者，廢止登記。",
+  penalty:"屬新法行政處分與記點機制，不是現行罰鍰。",
+  stop:"施行後達門檻應暫停新收托",revoke:"施行後符合條件應廢止"
+ });
+ patchItem("D09",{
+  referenceOnly:true,
+  summary:"居家托育準公共第8點退場共七類：額外或調高費用；改變收托條件或違反收托比；拒絕管理檢查；詐術或不實失效資料；停托或證書屆期未換發；經查證違反兒少權法第49條或管理辦法第5條、第7條、第13條第1項；違反管理辦法第3條、第4條、第14條、第16條且限改達三次或已科罰鍰。"
+ });
+ patchItem("D10",{fineLevel:"none",publicStatus:"none"});
+
+ const futureRules={
+  A01:`<strong>兒托法第75條：</strong>不具資格而提供服務者，處2萬元以上10萬元以下罰鍰，並令停止收托及立即轉介；具資格但未登記，或暫停收托期間仍提供服務者，先處1萬元以上5萬元以下並限期辦理登記，屆期未辦理再處2萬元以上10萬元以下並命轉介。限期辦理登記期間增加收托者，處2萬元以上10萬元以下並按次處罰。`,
+  A11:`<strong>兒托法第75條第5項：</strong>限期辦理登記期間增加收托者，處2萬元以上10萬元以下罰鍰並按次處罰，主管機關並應強制轉介其增加收托之兒童。`,
+  A03:`<strong>兒托法第14條：</strong>提供在宅托育服務者，應將居家托育服務證書懸掛於服務登記處所明顯處；本條未直接列入第78條立即罰鍰項目。`,
+  A04:`<strong>兒托法第13條第5項：</strong>證書效期與換發細節將由後續居家托育管理辦法規定；不得錯套第62條租借證書罰則。`,
+  A05:`<strong>兒托法第62條、第74條：</strong>不得租借托育服務證書或資格證書予他人使用；違反者處3萬元以上15萬元以下罰鍰，並令限期改善，屆期未改善按次處罰。新法文字為「租借」，轉讓或借用他人證書仍須依具體行為及後續子法判斷。`,
+  A06:`<strong>新法銜接：</strong>兒托法第23條規定居家托育服務中心受理證書申請、變更及換發；具體期限與處理效果仍待第13條第5項授權辦法明定。`,
+  A07:`<strong>新法銜接：</strong>服務處所變更的申請與核准細節，仍待兒托法第13條第5項授權辦法明定。`,
+  A08:`<strong>兒托法第13條第2項：</strong>有暫停收托服務需要時，應向主管機關申請暫停；後續程序與效果仍待授權辦法。`,
+  A09:`<strong>兒托法第23條：</strong>居家托育服務中心受理居家托育人員收托異動通報；具體期限及處理效果仍待相關辦法。`,
+  A10:`<strong>兒托法第13條：</strong>暫停、恢復收托的具體程序仍待第13條第5項授權辦法；不得先行套用租借證書或拒檢罰則。`,
+  B04:`<strong>兒托法第71條、第78條：</strong>違反未來收托人數辦法，收托達5人以上者處6萬元以上30萬元以下；其他違反收托人數規定者處1萬元以上5萬元以下。兩者均有後續限改、按次及廢止登記規定。`,
+  B05:`<strong>兒托法第71條、第78條：</strong>須先依施行後的收托人數辦法確認是否實際超收，再依是否達5人分流裁罰。`,
+  B06:`<strong>兒托法第71條、第78條：</strong>須先依施行後的收托人數辦法確認是否實際超收，再依是否達5人分流裁罰。`,
+  B07:`<strong>兒托法第71條、第78條：</strong>須先依施行後的收托人數辦法確認是否實際超收，再依是否達5人分流裁罰。`,
+  B08:`<strong>兒托法第13條、第81條：</strong>共同托育及主要照顧人的詳細規則仍待授權辦法；如屬輔導或管理規定，經限期改善而屆期未改善時，才依第81條處理。`,
+  C06:`<strong>兒托法第19條、第78條：</strong>收托時間應於托育服務處所專心托育；違反者處1萬元以上5萬元以下罰鍰並令限期改善，屆期未改善按次處罰。`,
+  C07:`<strong>兒托法第17條、第78條、第83條、第84條：</strong>未訂書面契約、契約內容不符定型化規定、未交付契約影本，分別適用不同成立要件與罰則，不可合併成同一立即罰鍰。`,
+  C08:`<strong>兒托法第65條、第74條：</strong>托育相關人員應對兒童及其法定代理人或實際照顧者資料保密；違反者處3萬元以上15萬元以下罰鍰並令限期改善。`,
+  C09:`<strong>兒托法第63條、第84條：</strong>每年完成18小時以上專業知能研習，每二年研習應包含性別平等課程；並須於規定期間完成8小時以上兒童基本救命術、3小時以上事故傷害預防及處理<strong>及</strong>一次以上緊急救護情境演習。第84條採先限期改善、屆期未改善再罰。`,
+  C11:`<strong>兒托法第18條、第78條：</strong>應於收托兒童當日前完成投保專業責任保險；違反者處1萬元以上5萬元以下罰鍰並令限期改善。`,
+  C12:`<strong>兒托法第47條、第56條、第69條、第76條：</strong>不當對待依行為及情節分流；身心虐待或情節重大者處6萬元以上60萬元以下並公布姓名。符合第56條第4項情形者，應停止服務、立即轉介，已登記者廢止登記。`,
+  C13:`<strong>兒托法第19條、第78條：</strong>收托時間不得兼任其他職務、經營事業或從事影響托育的活動；違反者處1萬元以上5萬元以下並令限期改善。`,
+  C18:`<strong>兒托法第20條：</strong>應依地方主管機關訂定的救護原則處理緊急傷病或事故傷害；本條未直接列入第78條立即罰鍰項目。`,
+  C19:`<strong>兒托法第17條、第84條：</strong>未交付書面契約影本予居家托育服務中心者，先令限期改善，屆期未改善處6,000元以上3萬元以下並按次處罰。`,
+  C20:`<strong>兒托法第21條：</strong>家長得請求托育人員提出服務說明，雙方得協議調整；本條未設直接罰鍰。`,
+  C26:`<strong>兒托法第19條、第78條：</strong>托育服務時間不得使六歲以下或需要特別看護的收托兒童獨處或由不適當之人照顧；違反者處1萬元以上5萬元以下並令限期改善。`,
+  C27:`<strong>兒托法第59條、第78條：</strong>知悉第57條第1項所定違法事件，至遲24小時內通報；居家托育人員違反者處1萬元以上5萬元以下並令限期改善。`,
+  D01:`<strong>兒托法第16條、第78條：</strong>不得收取地方主管機關公告收費、退費項目及金額基準以外費用；違反者處1萬元以上5萬元以下並令限期改善。`,
+  D02:`<strong>兒托法第15條、第16條、第78條：</strong>須以施行後臺南市公告的收退費基準判斷，不得沿用過期金額。`,
+  D03:`<strong>兒托法第16條、第78條：</strong>超出地方公告收退費項目或金額基準者，處1萬元以上5萬元以下並令限期改善。`,
+  D04:`<strong>兒托法第71條、第78條：</strong>若同時構成收托人數違規，依是否達5人分流；準公共契約終止仍屬現行作業要點效果。`,
+  E01:`<strong>兒托法第13條、第78條、第79條：</strong>居家托育人員拒絕監督檢查或藏匿兒童，依第78條處1萬元以上5萬元以下；其他行為人依第79條處理。`,
+  E02:`<strong>兒托法第68條、第85條：</strong>無正當理由不配合訪視、輔導、檢查或不提供相關資料者，處6,000元以上3萬元以下並按次處罰；若同時構成第13條第4項拒檢，另依第78條分流。`,
+  E03:`<strong>兒托法第68條、第85條：</strong>須先確認是否無正當理由不提供資料；成立時處6,000元以上3萬元以下並按次處罰。`,
+  E04:`<strong>兒托法第68條、第85條：</strong>「未提供證明」不等於「未完成訓練或健康檢查」；應分別查明後再適用資料配合或訓練規定。`,
+  E05:`<strong>兒托法第81條：</strong>違反第13條第5項辦法中的輔導或管理規定，須先經限期改善且屆期未改善，才處6,000元以上3萬元以下並按次處罰。`,
+  E06:`<strong>兒托法第56條、第61條、第71條：</strong>未依主管機關命令停止服務、暫停收托或轉介時，依命令來源與構成要件分流；第71條重大或三次處罰仍未改善者為廢止登記。`,
+  E07:`<strong>兒托法第75條：</strong>拒不配合未登記案件的轉介命令者，處2萬元以上10萬元以下，主管機關並應強制轉介。`,
+  E08:`<strong>兒托法第13條、第78條、第79條：</strong>新法已明文禁止檢查時藉故藏匿兒童；居家托育人員與其他行為人分別適用第78條、第79條。`,
+  E09:`<strong>兒托法第86條：</strong>達法定記點門檻時，主管機關<strong>應命</strong>暫停一定期間的新收托服務；五年內暫停新收托達二次，再違規且遭記點者，廢止登記。`,
+  D10:`<strong>新法提醒：</strong>準公共退出期限仍屬準公共作業要點及合作契約管理，不因兒托法公布即自動變成罰鍰。`
+ };
+
+ futureText=function(it){
+  if(it&&it.futureOverride)return it.futureOverride;
+  if(it&&String(it.id||"").startsWith("auto_count"))return it.future||"";
+  return futureRules[it&&it.id]||"已公布的兒童托育服務法未就本項設置可直接套用的獨立條文；如涉及第13條授權事項，仍須等待施行後子法確認，不以關鍵字推測罰則。";
+ };
+
+ articleSummary=function(it){
+  return `<div class="article-summary"><div class="article-row"><strong>條文重點：</strong><span>${it.summary||""}</span></div></div>`;
+ };
+ publicImpactText=function(it){return it.public||"本項未設定準公共直接效果，須依具體事實與合作契約判斷。";};
+ hasPublicPoint8=function(it){return ["terminate_now","terminate_conditional","fact_pending"].includes(it&&it.publicStatus);};
+ publicRuleParts=function(it){return it&&it.public?[{key:"準公共效果：",text:it.public}]:[];};
+
+ function fineKind(it){
+  if(it.futureOnly)return "future";
+  if(it.fineLevel)return it.fineLevel;
+  const f=String(it.fine||"");
+  if(/^是/.test(f))return "direct";
+  if(/視情節|可能|轉為/.test(f))return "fact_pending";
+  return "none";
+ }
+ itemPriority=function(it){
+  if(it.futureOnly)return 5;
+  let score=0;
+  if(it.publicStatus==="terminate_now")score+=100;
+  else if(it.publicStatus==="terminate_conditional")score+=55;
+  if(it.currentRevoke===true||it.revoke==="是")score+=90;
+  if(fineKind(it)==="direct")score+=45;
+  else if(["conditional","fact_pending"].includes(fineKind(it)))score+=20;
+  if(String(it.stop||"").startsWith("是"))score+=40;
+  return score;
+ };
+ itemBadges=function(it){
+  const badges=[];const add=(cls,label)=>{if(!badges.some(x=>x.label===label))badges.push({cls,label});};
+  if(it.futureOnly){add("future","新法預覽");return badges;}
+  if(it.publicStatus==="terminate_now")add("critical","準公共應即終止");
+  if(it.publicStatus==="terminate_conditional")add("conditional","準公共有成立門檻");
+  if(it.publicStatus==="fact_pending")add("conditional","準公共待確認事實");
+  if(it.publicStatus==="application_bar")add("warn","不得簽約／不予續約");
+  if(it.currentRevoke===true||it.revoke==="是")add("critical","廢止登記");
+  const fk=fineKind(it);
+  if(fk==="direct")add("warn","現行有罰鍰");
+  if(fk==="conditional")add("conditional","須先符合裁罰前提");
+  if(fk==="fact_pending")add("conditional","須先查明事實");
+  return badges;
+ };
+ itemBadgeHtml=function(it){const badges=itemBadges(it);return badges.length?`<div class="item-badges">${badges.map(b=>`<span class="item-badge ${b.cls}">${b.label}</span>`).join("")}</div>`:"";};
+ itemClassByPriority=function(it){const s=itemPriority(it);if(s>=90)return "item item-critical";if(s>=20)return "item item-warn";return "item item-normal";};
+
+ renderDetails=function(){
+  const cats=selectedCats(),area=qs("#details");area.innerHTML="";
+  cats.forEach(cid=>{
+   const c=categories.find(x=>x.id===cid),block=document.createElement("div");block.className="block";
+   block.innerHTML=`<h2>${c.title}</h2>`;
+   if(cid==="ratio"){
+    block.innerHTML+=`<div class="count-box">
+     <div class="count-title">收托人數填寫</div>
+     <div class="count-note">請填同一時段「實際照顧」的全部兒童。未滿3歲子女、受監護者、三親等內未滿5歲兒童及未收費未滿12歲兒童，也必須計入。</div>
+     <div class="count-config">
+      <div class="config-field"><label for="careModel">托育型態</label><select id="careModel"><option value="single">單一托育人員</option><option value="joint">二名以上共同托育</option></select></div>
+      <div class="config-field"><label for="ownUnder3">是否有未滿3歲子女或受監護者同時受照顧</label><select id="ownUnder3"><option value="no">沒有</option><option value="yes">有，需依附表第三部分覆核</option></select></div>
+     </div>
+     <table class="count-table"><thead><tr><th></th><th>未滿2歲</th><th>2歲以上</th></tr></thead><tbody>${["半日托育","日間托育","夜間托育","全日托育","延長托育","臨時托育"].map((n,i)=>`<tr><td>${n}</td><td><input type="number" min="0" step="1" class="count-input u2" data-row="${i}"></td><td><input type="number" min="0" step="1" class="count-input o2" data-row="${i}"></td></tr>`).join("")}</tbody></table>
+     <label class="check-line"><input id="countIncluded" type="checkbox"><span>我已將同一時段實際照顧的未滿3歲子女、受監護者、三親等內未滿5歲兒童及未收費未滿12歲兒童計入上表。</span></label>
+     <label class="check-line"><input id="mainCareAssigned" type="checkbox"><span>若為共同托育，已為每名兒童分配主要照顧人（單一托育人員可不勾）。</span></label>
+    </div>`;
+   }
+   if(cid==="fee"){
+    const ref=items.find(x=>x.id==="D09");
+    block.innerHTML+=`<details class="law-reference"><summary>查看：準公共第8點居家托育退場規則</summary><div>${ref?ref.summary:""}</div></details>`;
+   }
+   const fs=items.filter(it=>it.cat===cid&&!it.referenceOnly).sort((a,b)=>itemPriority(b)-itemPriority(a)||a.title.localeCompare(b,"zh-Hant"));
+   fs.forEach(it=>{const l=document.createElement("label");l.className=itemClassByPriority(it);l.innerHTML=`<input type="checkbox" class="detail" value="${it.id}"><div><div class="ct">${it.title}</div><div class="cs">${it.law}</div>${itemBadgeHtml(it)}</div>`;block.appendChild(l);});
+   area.appendChild(block);
+  });
+ };
+
+ function reviewItem(title,summary){return {cat:"ratio",id:"review_"+title,title,law:"管理辦法第7條及附表",summary,effect:"目前資料不足，不產生違法或罰鍰結論。",penalty:"無；請補足資料或依附表人工覆核。",fine:"否",fineLevel:"none",improve:"—",per:"—",stop:"—",transfer:"—",revoke:"—",public:"資料不足，暫不判定準公共效果。",publicStatus:"none",neutral:true,futureOverride:"新法施行後仍須依第13條第5項授權辦法確認收托人數規則。"};}
+ autoItem=function(title,summary,total){return {cat:"ratio",id:"auto_count_"+title,title,law:"管理辦法第7條及附表；兒少權法第90條第5項；準公共作業要點第8點",summary,effect:"確認違反現行收托人數或附表組合規定；準公共合作對象應即終止契約。",penalty:"依兒少權法第90條第5項，處6,000元以上3萬元以下罰鍰，並得按次處罰；情節重大或三次處罰後仍未改善者，得廢止登記。",fine:"是",fineLevel:"direct",improve:"是（管理辦法第18-1條）",per:"是",stop:"視情節",transfer:"視情節",revoke:"可能",public:"收托比或收托人數違反法令規定，準公共作業要點第8點第2款規定應即終止契約。",publicStatus:"terminate_now",future:total>=5?"兒托法施行後，違反收托人數規定且達5人以上者，依第71條處6萬元以上30萬元以下，並令限期改善；屆期未改善按次處罰，情節重大或三次處罰仍未改善者，廢止登記。":"兒托法施行後，違反第13條第5項辦法中的收托人數規定，依第78條處1萬元以上5萬元以下並令限期改善；實際仍須依施行後子法確認。"};};
+ autoCounts=function(){
+  if(!selectedCats().includes("ratio"))return [];
+  const c=countSnapshot();if(c.total<=0)return [];
+  if(!qs("#countIncluded")||!qs("#countIncluded").checked)return [reviewItem("收托人數資料尚未確認完整",`<strong>填寫情形：</strong>${countEntrySummary(c)}<br><br>尚未確認是否已把依法必須計入的其他兒童納入，因此暫不判定是否合法。`)];
+  if(qs("#ownUnder3")&&qs("#ownUnder3").value==="yes")return [reviewItem("有未滿3歲子女或受監護者，需依附表第三部分覆核",`<strong>填寫情形：</strong>${countEntrySummary(c)}<br><br>附表對未滿3歲子女另依年齡、是否家外送托及列入全日或夜間名額設有不同組合，本版不冒然以一般加總判定。`)];
+  const model=qs("#careModel")?qs("#careModel").value:"single",reasons=[];
+  const add=t=>{if(!reasons.includes(t))reasons.push(t);};
+  if(model==="joint"){
+   if(c.total>4)add(`共同托育同一時段實際照顧共 ${c.total} 人，超過至多4人。`);
+   if(c.longTotal>2)add(`共同托育之全日及夜間托育合計 ${c.longTotal} 人，超過至多2人。`);
+  }else{
+   if(c.shortTotal>4)add(`半日、日間、延長及臨時托育合計 ${c.shortTotal} 人，超過至多4人。`);
+   if(c.shortU>2)add(`半日、日間、延長及臨時托育的未滿2歲兒童合計 ${c.shortU} 人，超過至多2人。`);
+   if(c.longTotal>2)add(`全日及夜間托育合計 ${c.longTotal} 人，超過至多2人。`);
+   if(c.totalU>2)add(`同一時段未滿2歲兒童合計 ${c.totalU} 人，不符合附表年齡組合限制。`);
+   if(c.longTotal===1&&c.shortTotal>2)add(`已有1名全日或夜間托育兒童時，其他托育方式最多再收2人；目前為 ${c.shortTotal} 人。`);
+   if(c.longTotal>=2){
+    if(c.fullTotal>0&&c.shortTotal>0)add(`全日與夜間合計已達 ${c.longTotal} 人且包含全日托育，不得再同時收托其他方式兒童。`);
+    else if(c.fullTotal===0&&c.shortTotal>c.nightO)add(`夜間托育共 ${c.nightTotal} 人時，可再收的其他方式人數最多為其中2歲以上夜間兒童人數 ${c.nightO} 人；目前另收 ${c.shortTotal} 人。`);
+   }
+  }
+  const out=[];
+  if(reasons.length){const summary=`<strong>填寫情形：</strong>${countEntrySummary(c)}<br><br><strong>不符合原因：</strong><br>${reasons.map((r,i)=>`${i+1}. ${r}`).join("<br>")}`;out.push(autoItem("收托人數組合不符第7條附表",summary,c.total));}
+  if(model==="joint"&&(!qs("#mainCareAssigned")||!qs("#mainCareAssigned").checked)){
+   const base=items.find(x=>x.id==="B08");if(base)out.push({...base,id:"auto_B08",summary:`<strong>填寫情形：</strong>${countEntrySummary(c)}<br><br>已選擇共同托育，但尚未確認是否為每名兒童分配主要照顧人。`});
+  }
+  return out;
+ };
+
+ penaltyFocus=function(it){
+  if(it.neutral)return `<div class="legal-status review"><strong>判讀狀態：</strong>資料不足，暫不產生違法結論。</div>`;
+  if(it.futureOnly)return `<div class="legal-status future-only"><strong>判讀狀態：</strong>本項僅為兒童托育服務法預覽，不列入現行罰鍰或處分。</div>`;
+  const fk=fineKind(it);
+  const fineText=fk==="direct"?(it.penalty||"有現行罰鍰"):(fk==="conditional"?`須先符合裁罰前提：${it.penalty||""}`:(fk==="fact_pending"?`須先查明事實：${it.penalty||""}`:(it.fine||"無直接罰鍰")));
+  const revokeText=it.revoke||"否／須另確認";
+  const publicText=publicImpactText(it);
+  return `<div class="focus-box"><div class="focus-title">⚠️ 現行效果分流</div><div class="focus-grid">
+   <div class="focus-item ${fk==="direct"?"focus-critical":(["conditional","fact_pending"].includes(fk)?"focus-conditional":"")}"><strong>行政罰／成立前提</strong>${highlightPenaltyText(fineText)}</div>
+   <div class="focus-item ${(it.currentRevoke===true||it.revoke==="是")?"focus-critical":""}"><strong>行政處分</strong>${highlightPenaltyText(revokeText)}</div>
+   <div class="focus-item ${it.publicStatus==="terminate_now"?"focus-critical":(["terminate_conditional","fact_pending"].includes(it.publicStatus)?"focus-conditional":"")}"><strong>準公共契約效果</strong>${highlightPenaltyText(publicText)}</div>
+  </div></div>`;
+ };
+
+ generate=function(){
+  const arr=getSelected(),r=qs("#result");r.style.display="block";
+  if(!arr.length){r.innerHTML='<h2>尚未選擇</h2><div class="empty">請回前一步勾選細項或填入需判讀的收托人數。</div>';return;}
+  let html=`<h2>✅ 已產生 ${arr.length} 項法規對照</h2><div class="version-note">法規核對日：民國115年7月22日。兒童托育服務法已於115年5月8日公布，但施行日期尚待行政院決定。</div>`;
+  arr.forEach((it,idx)=>{
+   const c=categories.find(x=>x.id===it.cat)||{title:"系統判斷"};
+   html+=`<div class="rcard"><span class="tag">${c.title}</span>${it.futureOnly?'<span class="tag">新法預覽</span>':''}<h3>${idx+1}. ${it.title}</h3>`;
+   if(!it.futureOnly){
+    html+=`<div class="lawbox"><div class="lawbox-title">一、現行法規依據</div><div class="line"><strong>法規名稱／條號：</strong>${it.law}</div><div class="line">${articleSummary(it)}</div><div class="line"><strong>可能處理／效果：</strong>${highlightPenaltyText(it.effect||"")}</div><div class="line"><strong>現行罰則：</strong>${highlightPenaltyText(it.penalty||"無直接罰鍰")}</div></div>${penaltyFocus(it)}`;
+    if(!it.neutral)html+=`<div class="flags">${flag("限期改善",it.improve)+flag("按次處罰",it.per)+flag("命停止服務",it.stop)+flag("強制轉介",it.transfer)}</div>`;
+   }else html+=penaltyFocus(it);
+   html+=`<div class="lawbox futurelaw"><div class="lawbox-title">二、兒童托育服務法（已公布、尚未施行）</div><div class="line">${futureText(it)}</div><div class="line"><strong>施行狀態：</strong>施行日期由行政院定之；施行前仍以現行法規處理。</div></div></div>`;
+  });
+  html+=`<div class="future"><strong>提醒：</strong>本工具用於法規對照與訪視輔助。涉及裁罰、停止服務、強制轉介、廢止登記或準公共終止契約時，仍須核對行為日期、證據、限期改善程序及主管機關認定。</div>
+  <div class="source-links"><strong>官方核對來源：</strong><br>
+   <a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0050001" target="_blank" rel="noreferrer">兒童及少年福利與權益保障法</a>｜
+   <a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0050195" target="_blank" rel="noreferrer">居家式托育服務提供者登記及管理辦法</a>｜
+   <a href="https://dowcd.tycg.gov.tw/News_Content.aspx?n=16424&s=1178268" target="_blank" rel="noreferrer">準公共服務作業要點114年7月16日版</a>｜
+   <a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0050217" target="_blank" rel="noreferrer">兒童托育服務法</a>
+  </div>`;
+  r.innerHTML=html;
+ };
+})();
 </script>
 <script>
 if ("serviceWorker" in navigator) {
