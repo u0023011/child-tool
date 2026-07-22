@@ -1662,7 +1662,7 @@
         <h3 class="card-title"><span class="badge">2</span>收托資料</h3>
         <details class="roster-import-box">
           <summary>貼上 Excel 名單資料</summary>
-          <p class="helper">請連同標題列一起複製貼上；系統會辨識「區域、托育人員、托兒姓名」欄位。</p>
+          <p class="helper">請連同標題列一起複製貼上；支援「區域、托育人員、幼兒」及「幼兒姓名、出生日期、幼兒ID、幼兒編號、托育人員姓名」兩種模板。</p>
           <textarea id="receiptRosterPaste" placeholder="在此貼上 Excel 資料"></textarea>
           <div class="actions">
             <button class="action primary" id="parseReceiptRoster" type="button">解析並儲存名單</button>
@@ -2540,6 +2540,12 @@
     const receiptRosterKey="receiptLinkedRosterV1";
     let receiptRoster=[];
 
+    function normalizeReceiptArea(value){
+      const raw=String(value||"").trim();
+      const district=raw.match(/^(.+?區)/);
+      return district ? district[1] : raw;
+    }
+
     function uniqueSorted(values){
       return [...new Set(values.map(x=>String(x||"").trim()).filter(Boolean))]
         .sort((a,b)=>a.localeCompare(b,"zh-Hant"));
@@ -2599,14 +2605,21 @@
       const areaIndex=findHeader(["區域","服務區域","行政區"]);
       const caregiverIndex=findHeader(["托育人員姓名","托育人員","保母姓名","保母"]);
       const childIndex=findHeader(["托兒姓名","幼兒姓名","托兒","幼兒"]);
-      if(areaIndex<0 || caregiverIndex<0 || childIndex<0){
-        throw new Error("找不到必要欄位，標題需包含：區域、托育人員、托兒姓名。");
+      if(caregiverIndex<0 || childIndex<0){
+        throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
       }
+      const caregiverAreaMap=new Map();
+      uniqueSorted(receiptRoster.map(x=>x.caregiver)).forEach(caregiver=>{
+        const areas=uniqueSorted(receiptRoster.filter(x=>x.caregiver===caregiver).map(x=>x.area));
+        if(areas.length===1) caregiverAreaMap.set(caregiver,areas[0]);
+      });
       const parsed=rows.slice(1).map(row=>({
-        area:(row[areaIndex]||"").trim(),
+        area:areaIndex>=0
+          ? normalizeReceiptArea(row[areaIndex])
+          : "",
         caregiver:(row[caregiverIndex]||"").trim(),
         child:(row[childIndex]||"").trim()
-      })).filter(x=>x.area && x.caregiver && x.child);
+      })).filter(x=>x.caregiver && x.child);
       const seen=new Set();
       return parsed.filter(x=>{
         const key=`${x.area}\u0001${x.caregiver}\u0001${x.child}`;
@@ -2618,14 +2631,18 @@
     function updateReceiptRosterStatus(){
       const caregivers=uniqueSorted(receiptRoster.map(x=>x.caregiver)).length;
       const children=uniqueSorted(receiptRoster.map(x=>x.child)).length;
+      const noArea=receiptRoster.filter(x=>!x.area).length;
       $("receiptRosterStatus").textContent=receiptRoster.length
-        ? `已載入 ${receiptRoster.length} 筆關聯資料（${caregivers} 位托育人員、${children} 位托兒）。`
+        ? `已載入 ${receiptRoster.length} 筆關聯資料（${caregivers} 位托育人員、${children} 位托兒）${noArea?`；${noArea} 筆未提供區域，仍可用托育人員搜尋。`:"。"}`
         : "尚未匯入名單。";
     }
 
     try{
       const saved=JSON.parse(localStorage.getItem(receiptRosterKey)||"[]");
-      if(Array.isArray(saved)) receiptRoster=saved;
+      if(Array.isArray(saved)){
+        receiptRoster=saved.map(row=>({...row,area:row.area==="未分類"?"":normalizeReceiptArea(row.area)}));
+        localStorage.setItem(receiptRosterKey,JSON.stringify(receiptRoster));
+      }
     }catch(error){ receiptRoster=[]; }
 
     function addChild(){
@@ -2699,6 +2716,7 @@
     addChild();
     $("addChild").addEventListener("click",addChild);
     $("receiptArea").addEventListener("input",refreshReceiptLinkedLists);
+    $("receiptArea").addEventListener("change",refreshReceiptLinkedLists);
     $("receiptArea").addEventListener("focus",refreshReceiptLinkedLists);
     $("receiptCaregiver").addEventListener("input",refreshReceiptLinkedLists);
     $("receiptCaregiver").addEventListener("change",refreshReceiptLinkedLists);
@@ -2709,7 +2727,8 @@
         localStorage.setItem(receiptRosterKey,JSON.stringify(receiptRoster));
         updateReceiptRosterStatus();
         refreshReceiptLinkedLists();
-        showToast("名單解析完成");
+        const noArea=receiptRoster.filter(x=>!x.area).length;
+        showToast(noArea ? "名單解析完成，可直接搜尋托育人員" : "名單解析完成");
       }catch(error){
         alert(error.message||"名單解析失敗，請檢查資料格式。");
       }
