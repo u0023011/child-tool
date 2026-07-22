@@ -1662,7 +1662,7 @@
         <h3 class="card-title"><span class="badge">2</span>收托資料</h3>
         <details class="roster-import-box">
           <summary>貼上 Excel 名單資料</summary>
-          <p class="helper">請連同標題列一起複製貼上；支援「區域、托育人員、幼兒」及「幼兒姓名、出生日期、幼兒ID、幼兒編號、托育人員姓名」兩種模板。</p>
+          <p class="helper">家長及幼兒資料維護(ca31010) →列印家長幼兒資料</p>
           <textarea id="receiptRosterPaste" placeholder="在此貼上 Excel 資料"></textarea>
           <div class="actions">
             <button class="action primary" id="parseReceiptRoster" type="button">解析並儲存名單</button>
@@ -2600,11 +2600,22 @@
         .map(line=>line.split("\t").map(cell=>cell.trim()))
         .filter(row=>row.some(Boolean));
       if(rows.length<2) throw new Error("請貼上包含標題列及資料列的 Excel 內容。");
-      const headers=rows[0].map(x=>x.replace(/[\s　]/g,""));
-      const findHeader=aliases=>headers.findIndex(h=>aliases.some(alias=>h===alias || h.includes(alias)));
+      const normalizeHeaders=row=>row.map(x=>x.replace(/[\s　]/g,""));
+      const findHeaderIn=(headers,aliases)=>headers.findIndex(h=>aliases.some(alias=>h===alias || h.includes(alias)));
+      const caregiverAliases=["托育人員姓名","托育人員","保母姓名","保母"];
+      const childAliases=["托兒姓名","幼兒姓名","托兒","幼兒"];
+      const headerRowIndex=rows.findIndex(row=>{
+        const candidate=normalizeHeaders(row);
+        return findHeaderIn(candidate,caregiverAliases)>=0 && findHeaderIn(candidate,childAliases)>=0;
+      });
+      if(headerRowIndex<0){
+        throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
+      }
+      const headers=normalizeHeaders(rows[headerRowIndex]);
+      const findHeader=aliases=>findHeaderIn(headers,aliases);
       const areaIndex=findHeader(["區域","服務區域","行政區"]);
-      const caregiverIndex=findHeader(["托育人員姓名","托育人員","保母姓名","保母"]);
-      const childIndex=findHeader(["托兒姓名","幼兒姓名","托兒","幼兒"]);
+      const caregiverIndex=findHeader(caregiverAliases);
+      const childIndex=findHeader(childAliases);
       if(caregiverIndex<0 || childIndex<0){
         throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
       }
@@ -2613,7 +2624,7 @@
         const areas=uniqueSorted(receiptRoster.filter(x=>x.caregiver===caregiver).map(x=>x.area));
         if(areas.length===1) caregiverAreaMap.set(caregiver,areas[0]);
       });
-      const parsed=rows.slice(1).map(row=>({
+      const parsed=rows.slice(headerRowIndex+1).map(row=>({
         area:areaIndex>=0
           ? normalizeReceiptArea(row[areaIndex])
           : "",
