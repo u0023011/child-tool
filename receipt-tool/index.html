@@ -2565,17 +2565,17 @@
       return receiptRoster.filter(row=>(!area || row.area===area) && (!caregiver || row.caregiver===caregiver));
     }
 
-    function refreshReceiptLinkedLists(){
+    function refreshReceiptLinkedLists(showAll={}){
       const areaInput=$("receiptArea");
       const caregiverInput=$("receiptCaregiver");
       const areas=uniqueSorted(receiptRoster.map(x=>x.area));
-      setDataList("receiptAreaList",areas,areaInput.value);
+      setDataList("receiptAreaList",areas,showAll.area?"":areaInput.value);
 
       const exactArea=areas.includes(areaInput.value.trim()) ? areaInput.value.trim() : "";
       const caregivers=uniqueSorted(receiptRoster
         .filter(x=>!exactArea || x.area===exactArea)
         .map(x=>x.caregiver));
-      setDataList("receiptCaregiverList",caregivers,caregiverInput.value);
+      setDataList("receiptCaregiverList",caregivers,showAll.caregiver?"":caregiverInput.value);
 
       const exactCaregiverRows=receiptRoster.filter(x=>x.caregiver===caregiverInput.value.trim());
       const caregiverAreas=uniqueSorted(exactCaregiverRows.map(x=>x.area));
@@ -2588,7 +2588,7 @@
       document.querySelectorAll(".child-name").forEach(input=>{
         const list=input.nextElementSibling;
         if(list && list.tagName==="DATALIST"){
-          const key=input.value.trim().toLowerCase();
+          const key=showAll.child?"":input.value.trim().toLowerCase();
           const filtered=key ? children.filter(x=>x.toLowerCase().includes(key)) : children;
           list.innerHTML=filtered.map(value=>`<option value="${escapeHtml(value)}"></option>`).join("");
         }
@@ -2719,19 +2719,32 @@
       const childInput=box.querySelector(".child-name");
       const childList=box.querySelector("datalist");
       childInput.setAttribute("list",childList.id);
-      childInput.addEventListener("input",refreshReceiptLinkedLists);
-      childInput.addEventListener("focus",refreshReceiptLinkedLists);
+      childInput.addEventListener("input",()=>{
+        refreshReceiptLinkedLists();
+        const children=uniqueSorted(matchingRosterRows().map(x=>x.child));
+        if(children.includes(childInput.value.trim())) setTimeout(()=>childInput.blur(),0);
+      });
+      childInput.addEventListener("focus",()=>refreshReceiptLinkedLists({child:true}));
       refreshReceiptLinkedLists();
     }
 
     addChild();
     $("addChild").addEventListener("click",addChild);
-    $("receiptArea").addEventListener("input",refreshReceiptLinkedLists);
+    $("receiptArea").addEventListener("input",()=>{
+      refreshReceiptLinkedLists();
+      const areas=uniqueSorted(receiptRoster.map(x=>x.area));
+      if(areas.includes($("receiptArea").value.trim())) setTimeout(()=>$("receiptArea").blur(),0);
+    });
     $("receiptArea").addEventListener("change",refreshReceiptLinkedLists);
-    $("receiptArea").addEventListener("focus",refreshReceiptLinkedLists);
-    $("receiptCaregiver").addEventListener("input",refreshReceiptLinkedLists);
+    $("receiptArea").addEventListener("focus",()=>refreshReceiptLinkedLists({area:true}));
+    $("receiptCaregiver").addEventListener("input",()=>{
+      refreshReceiptLinkedLists();
+      const area=$("receiptArea").value.trim();
+      const caregivers=uniqueSorted(receiptRoster.filter(x=>!area||x.area===area).map(x=>x.caregiver));
+      if(caregivers.includes($("receiptCaregiver").value.trim())) setTimeout(()=>$("receiptCaregiver").blur(),0);
+    });
     $("receiptCaregiver").addEventListener("change",refreshReceiptLinkedLists);
-    $("receiptCaregiver").addEventListener("focus",refreshReceiptLinkedLists);
+    $("receiptCaregiver").addEventListener("focus",()=>refreshReceiptLinkedLists({caregiver:true}));
     $("parseReceiptRoster").addEventListener("click",()=>{
       try{
         receiptRoster=parseReceiptRosterText($("receiptRosterPaste").value);
