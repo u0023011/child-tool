@@ -2966,7 +2966,7 @@
       const lines=[];
 
       lines.push(header);
-      if(general.length) lines.push(`「${joinChinese(general)}」。`);
+      if(general.length) lines.push(`${joinChinese(general)}。`);
       else if(!childLines.length) lines.push("資料。");
 
       lines.push(...childLines);
