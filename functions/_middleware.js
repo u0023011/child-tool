@@ -67,8 +67,11 @@ export async function onRequest(context) {
   const protectedRules = [
     { prefix: "/age-tool", roles: ["basic", "admin"] },
     { prefix: "/childcare-law", roles: ["admin"] },
+    { prefix: "/childcare-case-library", roles: ["admin"] },
     { prefix: "/report-date-tool", roles: ["admin"] },
-    { prefix: "/receipt-tool", roles: ["admin"] }
+    { prefix: "/receipt-tool", roles: ["admin"] },
+    { prefix: "/report-generator", roles: ["admin"] },
+    { prefix: "/training-hours-tool", roles: ["admin"] }
   ];
 
   const rule = protectedRules.find(r => path === r.prefix || path.startsWith(r.prefix + "/"));

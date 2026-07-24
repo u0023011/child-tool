@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#a86f2d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="托育案例庫">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>托育違規案例庫</title>
+<style>
+:root{
+  --bg:#f4ecdf;--paper:#fffdf9;--ink:#3c3026;--muted:#78695c;
+  --line:#ead8c1;--gold:#a86f2d;--gold2:#c88f49;--soft:#fff7ed;
+  --green:#4f7666;--red:#a64d45;--blue:#496c87;--shadow:0 14px 36px rgba(86,61,34,.12)
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;background:linear-gradient(135deg,#f6efe4,#efe4d2);color:var(--ink)}
+button,input,select{font:inherit}
+.wrap{max-width:1280px;margin:auto;padding:24px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:48px;height:48px;border-radius:15px;background:#fff;display:grid;place-items:center;box-shadow:var(--shadow);font-size:24px}
+h1{font-size:28px;margin:0;color:#6d431d}
+.sub{margin:4px 0 0;color:var(--muted);font-size:14px}
+.back{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 16px;cursor:pointer;color:#74491f}
+.panel{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:var(--shadow);padding:22px}
+.searchbar{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:10px}
+.searchbar input,.searchbar select{width:100%;border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:#fff;color:var(--ink);outline:none}
+.searchbar input:focus,.searchbar select:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(200,143,73,.14)}
+.quick-topics{display:flex;align-items:flex-start;gap:10px;margin:14px 0 2px}
+.quick-label{flex:0 0 auto;color:var(--muted);font-size:13px;padding-top:8px}
+.topic-chips{display:flex;flex-wrap:wrap;gap:7px}
+.topic-chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:7px 11px;color:#70471f;cursor:pointer;font-size:13px}
+.topic-chip:hover,.topic-chip.active{border-color:var(--gold2);background:#fff1df;color:#6b3e16}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:15px}
+.stat strong{display:block;font-size:24px;color:#7c4b20}.stat span{font-size:13px;color:var(--muted)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px}
+.toolbar[hidden]{display:none}
+.result-count{color:var(--muted);font-size:14px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 13px;cursor:pointer;color:#70471f}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;transition:.2s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(89,60,26,.10)}
+.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--gold2)}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.badge{font-size:12px;padding:5px 9px;border-radius:99px;background:#f4eadc;color:#74491f}
+.badge.green{background:#e8f1ec;color:#365d4d}.badge.red{background:#f8e8e5;color:#8c4139}.badge.blue{background:#e8f0f6;color:#365a74}.badge.purple{background:#eee8f7;color:#60417d}.badge.pending{background:#fff1cf;color:#8a5b00}
+.card h3{margin:0 0 8px;font-size:18px;color:#57371d}
+.meta{font-size:13px;color:var(--muted);line-height:1.75}
+.summary{font-size:14px;line-height:1.8;color:#55473b;margin:12px 0}
+.actions{display:flex;justify-content:flex-end}
+.primary{border:0;background:linear-gradient(135deg,#b47b37,#936027);color:#fff;border-radius:11px;padding:10px 15px;cursor:pointer}
+.empty{grid-column:1/-1;text-align:center;padding:48px;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:18px}
+.modal{position:fixed;inset:0;background:rgba(44,33,24,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal.show{display:flex}
+.dialog{background:#fffdf9;border-radius:22px;max-width:960px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.25)}
+.dialog-head{position:sticky;top:0;background:#fffdf9;border-bottom:1px solid var(--line);padding:18px 22px;display:flex;justify-content:space-between;gap:16px;z-index:2}
+.dialog-head h2{margin:0;font-size:22px;color:#653d1b}
+.close{border:0;background:#f2e7da;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:20px}
+.dialog-body{padding:22px}
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.info{background:#fff7ed;border:1px solid #f0dbc0;border-radius:13px;padding:12px}
+.info b{display:block;font-size:12px;color:#8a694c;margin-bottom:4px}
+.section{margin:18px 0}.section h4{margin:0 0 9px;color:#77491e;font-size:17px}
+.section p,.section li{line-height:1.85;color:#4f4338;font-size:14px}
+.section ul{margin:0;padding-left:21px}
+.related-list{display:grid;gap:8px}
+.related-item{background:#f5f8fa;border:1px solid #dfe8ee;border-radius:11px;padding:10px 12px;font-size:14px}
+.related-item a{color:#315b78;text-decoration:none}
+.source{display:inline-flex;gap:8px;align-items:center;text-decoration:none;color:#fff;background:var(--green);padding:10px 14px;border-radius:11px}
+.dialog-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.small-note{font-size:12px;color:var(--muted);margin-top:18px;line-height:1.7}
+@media(max-width:1180px){.searchbar{grid-template-columns:1fr 1fr 1fr}.searchbar input{grid-column:1/-1}}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){
+ .wrap{padding:12px}.header{align-items:flex-start}.back{padding:8px 10px}.searchbar{grid-template-columns:1fr}.searchbar input{grid-column:auto}
+ .quick-topics{display:block}.quick-label{display:block;padding:0 0 7px}
+ .stats{grid-template-columns:1fr 1fr}.panel{padding:14px;border-radius:18px}.info-grid{grid-template-columns:1fr}
+ h1{font-size:23px}.sub{font-size:12px}
+}
+@media print{
+ body{background:#fff}.header,.searchbar,.stats,.toolbar,.grid,.dialog-head .close,.dialog-actions{display:none!important}
+ .modal{display:block;position:static;background:#fff;padding:0}.dialog{box-shadow:none;max-height:none}.dialog-head{position:static}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="header">
+  <div class="brand">
+    <div class="logo">⚖️</div>
+    <div>
+      <h1>托育違規案例庫</h1>
+      <p class="sub">收錄居家托育、托嬰中心及公共托育／家園的法院判決、行政裁罰與訪視提醒</p>
+    </div>
+  </div>
+  <button class="back" onclick="returnToToolbox()">← 返回工具箱</button>
+</header>
+
+<main class="panel">
+  <div class="searchbar">
+    <input id="q" type="search" placeholder="搜尋獨留、不當對待、跌落、發展遲緩、法條或案情">
+    <select id="eventTopic">
+      <option value="">全部事件主題</option>
+      <option>不當對待／身心虐待</option>
+      <option>獨留／監督中斷</option>
+      <option>趴睡／睡眠安全</option>
+      <option>跌落／碰撞／骨折</option>
+      <option>燙傷</option>
+      <option>噎食／嗆奶</option>
+      <option>餵食／飲水不當</option>
+      <option>錯誤餵藥</option>
+      <option>延誤就醫／送醫</option>
+      <option>未通知家長／隱瞞</option>
+      <option>約束／限制活動</option>
+      <option>超收／未登記收托</option>
+      <option>人力配置／機構管理</option>
+      <option>監視器／紀錄缺失</option>
+      <option>未通報</option>
+      <option>接送／交通風險</option>
+      <option>互咬</option>
+      <option>溺水</option>
+      <option>發展遲緩（傷害結果）</option>
+    </select>
+    <select id="service">
+      <option value="">全部托育類型</option>
+      <option>居家托育</option><option>托嬰中心</option><option>公共托育／家園</option>
+    </select>
+    <select id="sort">
+      <option value="new">裁判日期：新到舊</option>
+      <option value="old">裁判日期：舊到新</option>
+      <option value="no">判決字號排序</option>
+    </select>
+  </div>
+  <div class="quick-topics">
+    <span class="quick-label">常用主題</span>
+    <div class="topic-chips" id="topicChips"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><strong id="total">0</strong><span>收錄事件</span></div>
+    <div class="stat"><strong id="homeCount">0</strong><span>居家托育</span></div>
+    <div class="stat"><strong id="centerCount">0</strong><span>托嬰中心</span></div>
+    <div class="stat"><strong id="publicCount">0</strong><span>公共托育／家園</span></div>
+  </div>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <div class="result-count" id="resultCount"></div>
+    <button class="btn" onclick="resetFilters()">清除篩選</button>
+  </div>
+  <section class="grid" id="grid"></section>
+</main>
+
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h2 id="mTitle"></h2>
+      <button class="close" onclick="closeModal()" aria-label="關閉">×</button>
+    </div>
+    <div class="dialog-body" id="mBody"></div>
+  </div>
+</div>
+
+<script src="cases.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const allCases=Array.isArray(window.CASES)?window.CASES:[];
+const eventTopicDefinitions=[
+ ["不當對待／身心虐待",/不當對待|不正當行為|身心虐待|虐待|粗魯|拍打|掌摑|毆打|掐臉|丟摔|劇烈搖晃/],
+ ["獨留／監督中斷",/獨留|監督中斷|離開現場|無人照顧/],
+ ["趴睡／睡眠安全",/趴睡|睡眠窒息|睡眠安全|棉被覆臉|床墊過軟|午睡巡視/],
+ ["跌落／碰撞／骨折",/跌落|墜落|跌床|撞傷|骨折|骨裂|夾傷/],
+ ["燙傷",/燙傷|熱水|高溫奶/],
+ ["噎食／嗆奶",/噎食|嗆奶/],
+ ["餵食／飲水不當",/強迫進食|強迫喝水|餵食不當|吐出後再餵|剝奪.*飲食|營養不足/],
+ ["錯誤餵藥",/錯誤餵藥|餵錯藥/],
+ ["延誤就醫／送醫",/延誤送醫|未就醫|延誤醫療|未積極就醫/],
+ ["未通知家長／隱瞞",/未通知家長|隱瞞|未告知家長|紀錄不實/],
+ ["約束／限制活動",/綑綁|約束|限制活動|長時間.*餐椅|罰站|壓制/],
+ ["超收／未登記收托",/超收|超額收托|未登記|未立案|違規收托|冒名/],
+ ["人力配置／機構管理",/師生比|人力不足|主管未專職|未配置主管|管理不周|管理失職|負責人責任|申報不實/],
+ ["監視器／紀錄缺失",/監視器|監視錄影|影像遺失|拒絕提供影像|紀錄不實/],
+ ["未通報",/未通報|延遲通報/],
+ ["接送／交通風險",/接送|交通風險|車輛/],
+ ["互咬",/互咬|咬傷同伴/],
+ ["溺水",/溺水|溺斃/],
+ ["發展遲緩（傷害結果）",/發展遲緩|早療|早期療育|發展篩檢/]
+];
+const quickTopicNames=["不當對待／身心虐待","獨留／監督中斷","趴睡／睡眠安全","跌落／碰撞／骨折","延誤就醫／送醫","超收／未登記收托","未通報","發展遲緩（傷害結果）"];
+function esc(v){return String(v??"").replace(/[&<>"']/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[s]))}
+function coreEventText(c){
+ return [c.title,c.status,c.outcome,c.summary,c.courtView,...(c.violations||[]),...(c.accidentTypes||[])].join(" ")
+}
+function eventTopics(c){
+ const text=coreEventText(c);
+ return eventTopicDefinitions.filter(([,pattern])=>pattern.test(text)).map(([name])=>name)
+}
+function processStages(c){
+ const text=searchable(c),stages=[];
+ if(c.dataType==="法院判決")stages.push("已有法院判決");
+ if(c.dataType==="行政裁罰事件"||text.includes("已裁罰"))stages.push("已裁罰");
+ if(/調查中|待追|待補|擬裁罰|司法調查/.test(text))stages.push("調查中／待追");
+ if(/未認定違規|未認定托育照護疏失|未見受虐傷勢/.test(text))stages.push("未認定違規");
+ if(c.dataType==="訴願決定"||/訴願|行政訴訟/.test(text))stages.push("訴願／行政救濟");
+ if(c.caseType==="死亡原因回溯")stages.push("事故回溯資料");
+ return [...new Set(stages)]
+}
+function searchable(c){
+ return [c.title,c.serviceType,c.dataType,c.caseType,c.court,c.caseNo,c.date,c.publishedDate,c.eventYear,c.status,c.outcome,c.summary,c.courtView,c.sourceNote,c.dataStatus,c.penaltyAuthority,c.penaltyAmount,c.penaltyStatus,
+ c.accidentResult,c.reliefResult,...(c.accidentTypes||[]),...(c.violations||[]),...(c.laws||[]),...(c.penaltyArticle||[]),...(c.keyPoints||[]),...(c.visitTips||[]),
+ ...(c.relatedCases||[]).map(x=>x.label)].join(" ").toLowerCase()
+}
+function accidentResult(c){
+ if(c.accidentResult)return c.accidentResult;
+ const text=searchable(c);
+ if(text.includes("未認定違規")||text.includes("未見受虐傷勢")||text.includes("未認定托育照護疏失"))return "未認定違規";
+ if(text.includes("調查中")||text.includes("待查")||text.includes("擬裁罰"))return "調查中";
+ if(text.includes("死亡")||text.includes("不治")||text.includes("溺斃")||text.includes("窒息死"))return "死亡";
+ if(text.includes("重傷")||text.includes("顱內出血")||text.includes("腦傷")||text.includes("骨折")||text.includes("骨裂"))return "重傷";
+ return (c.accidentTypes||[]).length?"受傷":"";
+}
+function reliefResult(c){
+ if(c.reliefResult)return c.reliefResult;
+ const text=searchable(c);
+ if(text.includes("部分不受理")||text.includes("部分駁回"))return "部分駁回／不受理";
+ if(text.includes("訴願駁回")||text.includes("原處分應予維持"))return "原處分維持";
+ if(text.includes("原處分撤銷")||text.includes("撤銷原處分"))return "原處分撤銷";
+ if(text.includes("訴願")||text.includes("行政訴訟"))return "後續待追";
+ return "";
+}
+function completeness(c){
+ if(c.verified&&c.dataStatus==="已核對")return "已核對";
+ const status=String(c.dataStatus||"");
+ if(/待補|待追|調查中/.test(status))return "待補／待追";
+ return "部分資料";
+}
+function filtered(){
+ const q=$("q").value.trim().toLowerCase(),topic=$("eventTopic").value,service=$("service").value;
+ let arr=allCases.filter(c=>(!q||searchable(c).includes(q))&&(!topic||eventTopics(c).includes(topic))&&(!service||c.serviceType===service));
+ const sort=$("sort").value;
+ arr.sort((a,b)=>sort==="old"?a.dateKey-b.dateKey:sort==="no"?a.caseNo.localeCompare(b.caseNo,"zh-Hant"):b.dateKey-a.dateKey);
+ return arr
+}
+function hasActiveSearch(){
+ return Boolean($("q").value.trim()||$("eventTopic").value||$("service").value)
+}
+function render(){
+ document.querySelectorAll(".topic-chip").forEach(btn=>btn.classList.toggle("active",btn.dataset.topic===$("eventTopic").value));
+ const active=hasActiveSearch();
+ $("toolbar").hidden=!active;
+ if(!active){
+  $("resultCount").textContent="";
+  $("grid").innerHTML="";
+  return
+ }
+ const arr=filtered();
+ $("resultCount").textContent=`找到 ${arr.length} 起案件事件`;
+ $("grid").innerHTML=arr.length?arr.map(c=>`
+ <article class="card">
+  <div class="badges">
+   <span class="badge green">${esc(c.serviceType)}</span>
+   <span class="badge purple">${esc(c.dataType||"法院判決")}</span>
+   ${eventTopics(c).slice(0,2).map(v=>`<span class="badge">${esc(v)}</span>`).join("")}
+   ${c.caseYear?`<span class="badge blue">案號年度${esc(c.caseYear)}</span>`:""}
+   ${c.dataStatus&&c.dataStatus!=="已核對"?`<span class="badge pending">${esc(c.dataStatus)}</span>`:""}
+   <span class="badge ${completeness(c)==="已核對"?"green":"pending"}">資料：${esc(completeness(c))}</span>
+   ${(c.accidentTypes||[]).slice(0,2).map(v=>`<span class="badge blue">${esc(v)}</span>`).join("")}
+   ${accidentResult(c)?`<span class="badge red">${esc(accidentResult(c))}</span>`:""}
+   ${reliefResult(c)?`<span class="badge pending">${esc(reliefResult(c))}</span>`:""}
+   ${(c.violations||[]).slice(0,2).map(v=>`<span class="badge red">${esc(v)}</span>`).join("")}
+  </div>
+  <h3>${esc(c.title)}</h3>
+  <div class="meta">${esc(c.court||c.penaltyAuthority||"機關待補")}｜${esc(c.caseNo||"字號待補")}<br>${c.dataType==="行政裁罰事件"?"裁罰／公告日期":c.dataType==="事故調查事件"?"事件／資料日期":c.dataType==="訴願決定"?"訴願決定日期":"裁判日期"}：${esc(c.date||"待補")}｜事件年度：${esc(c.eventYear||"待補")}${c.publishedDate?`｜資料公開：${esc(c.publishedDate)}`:""}</div>
+  <p class="summary">${esc(c.summary)}</p>
+  <div class="actions"><button class="primary" onclick="openCase('${esc(c.id)}')">查看完整整理</button></div>
+ </article>`).join(""):""
+}
+function stat(){
+ $("total").textContent=allCases.length;
+ $("homeCount").textContent=allCases.filter(c=>c.serviceType==="居家托育").length;
+ $("centerCount").textContent=allCases.filter(c=>c.serviceType==="托嬰中心").length;
+ $("publicCount").textContent=allCases.filter(c=>c.serviceType==="公共托育／家園").length
+}
+function list(items){return `<ul>${(items||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`}
+function related(items){
+ if(!items||!items.length)return `<p>目前未另列關聯裁判。</p>`;
+ return `<div class="related-list">${items.map(x=>`<div class="related-item">${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">🔗 ${esc(x.label)}</a>`:esc(x.label)}</div>`).join("")}</div>`
+}
+function openCase(id){
+ const c=allCases.find(x=>x.id===id);if(!c)return;
+ const isPenalty=c.dataType==="行政裁罰事件";
+ const isAccident=c.dataType==="事故調查事件";
+ const isRelief=c.dataType==="訴願決定";
+ const authority=c.court||c.penaltyAuthority||"待補";
+ const referenceNo=c.caseNo||"待補";
+ const dateLabel=isPenalty?"裁罰／公告日期":isAccident?"事件／資料日期":isRelief?"訴願決定日期":"裁判日期";
+ const resultTitle=isPenalty?"裁罰結果／主管機關說明":isAccident?"調查結果／目前進度":isRelief?"訴願結果／處分進度":"判決結果／主要爭點";
+ const viewTitle=isPenalty?"主管機關認定與說明":isAccident?"資料判讀":isRelief?"訴願機關見解":"法院見解";
+ const relatedTitle=isPenalty||isAccident||isRelief?"後續處分／關聯資料":"同案審級／關聯裁判";
+ const accidentInfo=(c.accidentTypes||[]).length?`
+  <div class="info"><b>事故類型</b>${esc(c.accidentTypes.join("、"))}</div>
+  <div class="info"><b>事故結果</b>${esc(accidentResult(c)||"待補")}</div>`:"";
+ const reliefInfo=reliefResult(c)?`<div class="info"><b>行政救濟結果</b>${esc(reliefResult(c))}</div>`:"";
+ const penaltyInfo=isPenalty?`
+  <div class="info"><b>裁罰機關</b>${esc(c.penaltyAuthority||authority)}</div>
+  <div class="info"><b>裁罰金額／處分</b>${esc(c.penaltyAmount||c.penaltyStatus||"待補")}</div>`:"";
+ const penaltySection=isPenalty?`
+ <div class="section"><h4>主管機關引用條文</h4>${list(c.penaltyArticle&&c.penaltyArticle.length?c.penaltyArticle:c.laws)}</div>`:"";
+ $("mTitle").textContent=c.title;
+ $("mBody").innerHTML=`
+ <div class="info-grid">
+  <div class="info"><b>資料類型</b>${esc(c.dataType||"法院判決")}</div>
+  <div class="info"><b>法院／主管機關</b>${esc(authority)}</div>
+  <div class="info"><b>判決字號／處分文號</b>${esc(referenceNo)}</div>
+  <div class="info"><b>${dateLabel}</b>${esc(c.date||"待補")}${c.publishedDate?`<br><small>資料公開：${esc(c.publishedDate)}</small>`:""}</div>
+  <div class="info"><b>處理階段／狀態</b>${esc(processStages(c).join("、")||"資料整理中")}｜${esc(c.status)}</div>
+  <div class="info"><b>托育類型／資料狀態</b>${esc(c.serviceType)}｜${esc(c.dataStatus||"已核對")}</div>
+  ${accidentInfo}
+  ${reliefInfo}
+  ${penaltyInfo}
+ </div>
+ <div class="section"><h4>${resultTitle}</h4><p>${esc(c.outcome)}</p></div>
+ <div class="section"><h4>事件摘要</h4><p>${esc(c.summary)}</p></div>
+ <div class="section"><h4>${viewTitle}</h4><p>${esc(c.courtView||"待補")}</p></div>
+ ${penaltySection}
+ <div class="section"><h4>適用法條與規範</h4>${list(c.laws)}</div>
+ <div class="section"><h4>違規與管理重點</h4>${list(c.keyPoints)}</div>
+ <div class="section"><h4>訪視輔導提醒</h4>${list(c.visitTips)}</div>
+ <div class="section"><h4>${relatedTitle}</h4>${related(c.relatedCases)}</div>
+ <div class="dialog-actions">
+  ${c.sourceUrl?`<a class="source" href="${esc(c.sourceUrl)}" target="_blank" rel="noopener">🔗 開啟${esc(c.sourceLabel||"資料來源")}</a>`:`<span class="btn">原始來源待補</span>`}
+  <button class="btn" onclick="copyCase('${esc(c.id)}')">複製案例整理</button>
+  <button class="btn" onclick="window.print()">列印此案例</button>
+ </div>
+ <div class="small-note">資料查核說明：${esc(c.sourceNote||"待補")}<br>${isPenalty?"本案為主管機關公布之行政裁罰或擬裁罰事件，並非刑事有罪判決。":isAccident?"本案為事故調查、死亡回溯或責任未明資料，不代表已認定違規或有罪。":isRelief?"本案為訴願或行政救濟資料；撤銷原處分不必然代表行為合法，仍須確認是否重作處分。":"本頁為裁判重點整理，不取代裁判全文。"}涉及現行法規適用時，請再核對最新修法內容。</div>`;
+ $("modal").classList.add("show");document.body.style.overflow="hidden"
+}
+function closeModal(){$("modal").classList.remove("show");document.body.style.overflow=""}
+function returnToToolbox(){
+ if(window.parent!==window&&typeof window.parent.backToMenu==="function"){
+  window.parent.backToMenu();
+  return
+ }
+ window.location.href="../"
+}
+function copyCase(id){
+ const c=allCases.find(x=>x.id===id);if(!c)return;
+ const isPenalty=c.dataType==="行政裁罰事件";
+ const isAccident=c.dataType==="事故調查事件";
+ const isRelief=c.dataType==="訴願決定";
+ const txt=`${c.title}
+資料類型：${c.dataType||"法院判決"}
+法院／主管機關：${c.court||c.penaltyAuthority||"待補"}
+判決字號／處分文號：${c.caseNo||"待補"}
+${isPenalty?"裁罰／公告日期":isAccident?"事件／資料日期":isRelief?"訴願決定日期":"裁判日期"}：${c.date||"待補"}
+托育類型：${c.serviceType}
+事件主題：${eventTopics(c).join("、")||"其他"}
+處理階段：${processStages(c).join("、")||"資料整理中"}
+狀態：${c.status}
+${reliefResult(c)?`行政救濟結果：${reliefResult(c)}
+`:""}
+${(c.accidentTypes||[]).length?`事故類型：${c.accidentTypes.join("、")}
+事故結果：${accidentResult(c)||"待補"}
+`:""}
+
+【${isPenalty?"裁罰結果／主管機關說明":isAccident?"調查結果／目前進度":isRelief?"訴願結果／處分進度":"判決結果／主要爭點"}】
+${c.outcome}
+
+【事件摘要】
+${c.summary}
+
+【${isPenalty?"主管機關認定與說明":isAccident?"資料判讀":isRelief?"訴願機關見解":"法院見解"}】
+${c.courtView||"待補"}
+
+${isPenalty?`【裁罰機關】
+${c.penaltyAuthority||"待補"}
+
+【裁罰金額／處分】
+${c.penaltyAmount||c.penaltyStatus||"待補"}
+
+【主管機關引用條文】
+${(c.penaltyArticle||[]).map(x=>"• "+x).join("\n")||"待補"}
+
+`:""}【適用法條】
+${(c.laws||[]).map(x=>"• "+x).join("\n")}
+
+【違規與管理重點】
+${(c.keyPoints||[]).map(x=>"• "+x).join("\n")}
+
+【訪視輔導提醒】
+${(c.visitTips||[]).map(x=>"• "+x).join("\n")}
+
+來源：${c.sourceUrl||"待補"}`;
+ navigator.clipboard.writeText(txt).then(()=>alert("已複製案例整理"))
+}
+function renderTopicChips(){
+ $("topicChips").innerHTML=quickTopicNames.map(name=>{
+  const count=allCases.filter(c=>eventTopics(c).includes(name)).length;
+  return `<button class="topic-chip" type="button" data-topic="${esc(name)}">${esc(name)}（${count}）</button>`
+ }).join("");
+ document.querySelectorAll(".topic-chip").forEach(btn=>btn.addEventListener("click",()=>{
+  $("eventTopic").value=$("eventTopic").value===btn.dataset.topic?"":btn.dataset.topic;
+  render()
+ }))
+}
+function resetFilters(){$("q").value="";$("eventTopic").value="";$("service").value="";$("sort").value="new";render()}
+["q","eventTopic","service","sort"].forEach(id=>$(id).addEventListener(id==="q"?"input":"change",render));
+$("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+renderTopicChips();stat();render();
+if("serviceWorker" in navigator){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js",{scope:"./",updateViaCache:"none"}))
+}
+</script>
+</body>
+</html>

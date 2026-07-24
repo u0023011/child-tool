@@ -799,6 +799,12 @@
               <div class="tool-count">已有 <strong id="count-childcare-law">讀取中</strong> 人次使用</div>
             </button>
 
+            <button type="button" class="tool-card admin-only" onclick="openTool('childcare-case-library/')">
+              <div class="tool-title">⚖️ 托育違規案例庫</div>
+              <div class="tool-desc">依具體事件主題查詢法院判決、行政裁罰及事故案例。</div>
+              <div class="tool-count">已有 <strong id="count-childcare-case-library">讀取中</strong> 人次使用</div>
+            </button>
+
             <button type="button" class="tool-card basic-allowed admin-allowed" onclick="openTool('age-tool/')">
               <div class="tool-title">👶 幼兒年齡檢核工具</div>
               <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
@@ -881,6 +887,7 @@
     const toolPermissions = {
       "age-tool/": ["basic", "admin"],
       "childcare-law/": ["admin"],
+      "childcare-case-library/": ["admin"],
       "report-date-tool/": ["admin"],
       "receipt-tool/": ["admin"],
       "report-generator/": ["admin"],
@@ -892,6 +899,11 @@
         counter: "childcare_law",
         name: "托育法規工具",
         cardId: "count-childcare-law"
+      },
+      "childcare-case-library/": {
+        counter: "childcare_case_library",
+        name: "托育違規案例庫",
+        cardId: "count-childcare-case-library"
       },
       "age-tool/": {
         counter: "age_tool",
