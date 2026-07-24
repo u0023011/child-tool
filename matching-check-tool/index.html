@@ -423,7 +423,7 @@ td { background: #fff; color: var(--ink); }
 .status-pill.confirmed { color: var(--success); background: var(--success-soft); }
 .status-pill.possible { color: var(--warning); background: var(--warning-soft); }
 .status-pill.unmatched { color: var(--muted); background: var(--muted-soft); }
-.status-pill.review { color: var(--review); background: var(--review-soft); }
+.status-pill.review, .status-pill.continuing { color: var(--review); background: var(--review-soft); }
 
 .empty-result {
   padding: 28px;
@@ -556,7 +556,7 @@ td { background: #fff; color: var(--ink); }
             <span>已註記媒合成功</span>
             <strong id="confirmedCount">0</strong>
           </button>
-          <button type="button" class="summary-card review" data-filter="continuing" aria-pressed="false" title="此為額外提醒，筆數可能與其他判定重複">
+          <button type="button" class="summary-card review" data-filter="continuing" aria-pressed="false" title="已收托但未註記者不會與本分類重複；已註記媒合成功者仍可同時提醒">
             <span>是否持續列管</span>
             <strong id="continuingCount">0</strong>
           </button>
@@ -611,7 +611,7 @@ td { background: #fff; color: var(--ink); }
         </section>
 
       </section>
-      <div class="version-note">PWA 整合版 1.4｜新增「是否持續列管」提醒</div>
+      <div class="version-note">PWA 整合版 1.5｜持續列管不再重複計入未註記</div>
     </section>
   </main>
   <script>
@@ -1073,6 +1073,18 @@ function buildComparison(matchingRows, subsidyRows) {
     if (best.parentMatch) evidenceParts.push("家長姓名相符");
     if (best.phoneMatch) evidenceParts.push("電話相符");
 
+    // 已確認收托但尚未完成媒合成功／結案註記，且申請日期含「持續」時，
+    // 改列為「是否持續列管」，不再重複放入「已收托但未註記」。
+    if (hasContinuingMark(matching) && !matchingAlreadyClosed) {
+      return createResult(
+        matching,
+        best.subsidy,
+        "continuing",
+        "是否持續列管",
+        `${evidenceParts.join("、")}；申請日期仍註記「持續」，請確認家長是否仍有其他媒合需求`
+      );
+    }
+
     if (matchingAlreadyClosed) {
       return createResult(matching, best.subsidy, "confirmed", "已註記媒合成功", evidenceParts.join("、"));
     }
@@ -1106,7 +1118,7 @@ function scoreCandidate(matching, subsidy) {
 function createResult(matching, subsidy, category, label, evidence) {
   const continuingReview = Boolean(
     subsidy &&
-    (category === "action" || category === "confirmed") &&
+    (category === "continuing" || category === "confirmed") &&
     hasContinuingMark(matching)
   );
 
@@ -1191,8 +1203,12 @@ function parseFlexibleDate(value) {
 function renderSummary() {
   const counts = { action: 0, confirmed: 0, possible: 0, unmatched: 0, continuing: 0 };
   state.results.forEach((item) => {
-    counts[item.category] += 1;
-    if (item.continuingReview) counts.continuing += 1;
+    if (Object.prototype.hasOwnProperty.call(counts, item.category)) {
+      counts[item.category] += 1;
+    }
+    if (item.continuingReview && item.category !== "continuing") {
+      counts.continuing += 1;
+    }
   });
   els.totalCount.textContent = state.results.length.toLocaleString("zh-TW");
   els.actionCount.textContent = counts.action.toLocaleString("zh-TW");
@@ -1253,7 +1269,7 @@ function renderTable(rows) {
     all: "顯示媒合名單中的全部幼兒。",
     action: "補助檔已有托育人員收托資料，但媒合名單尚未填寫媒合成功或結案日期。",
     confirmed: "補助檔已有收托資料，媒合名單也已註記媒合成功或結案。",
-    continuing: "已確認收托，且媒合名單的申請日期仍含「持續」。請確認是否仍有其他媒合需求；若無，請回原 Excel 手動刪除「持續」。此筆數可能與其他判定重複。",
+    continuing: "補助檔已有收托資料，且媒合名單的申請日期仍含「持續」。尚未完成成功／結案註記者只列在本分類，不再計入「已收托但未註記」；若已無其他需求，請回原 Excel 手動刪除「持續」。",
     possible: "兩份資料只有幼兒姓名相同，家長姓名或電話沒有相符，或補助檔有多筆同名資料，需人工確認。",
     unmatched: "媒合名單中的幼兒未出現在補助彙整或每月新收托資料。"
   };
