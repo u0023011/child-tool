@@ -28,6 +28,8 @@
   --warning-soft: #fff2d8;
   --muted: #7f756a;
   --muted-soft: #f0ece7;
+  --review: #7c5f7b;
+  --review-soft: #f3ebf1;
   --shadow: 0 8px 22px rgba(80, 55, 30, .12);
 }
 
@@ -237,7 +239,7 @@ h1 {
 .summary-grid {
   margin: 14px 0;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -294,6 +296,8 @@ h1 {
 .summary-card.warning strong { color: var(--warning); }
 .summary-card.muted { background: var(--muted-soft); border-color: #ddd5cd; }
 .summary-card.muted strong { color: var(--muted); }
+.summary-card.review { background: var(--review-soft); border-color: #ddccdc; }
+.summary-card.review strong { color: var(--review); }
 
 .result-card { overflow: hidden; }
 
@@ -419,6 +423,7 @@ td { background: #fff; color: var(--ink); }
 .status-pill.confirmed { color: var(--success); background: var(--success-soft); }
 .status-pill.possible { color: var(--warning); background: var(--warning-soft); }
 .status-pill.unmatched { color: var(--muted); background: var(--muted-soft); }
+.status-pill.review { color: var(--review); background: var(--review-soft); }
 
 .empty-result {
   padding: 28px;
@@ -551,6 +556,10 @@ td { background: #fff; color: var(--ink); }
             <span>已註記媒合成功</span>
             <strong id="confirmedCount">0</strong>
           </button>
+          <button type="button" class="summary-card review" data-filter="continuing" aria-pressed="false" title="此為額外提醒，筆數可能與其他判定重複">
+            <span>是否持續列管</span>
+            <strong id="continuingCount">0</strong>
+          </button>
           <button type="button" class="summary-card warning" data-filter="possible" aria-pressed="false">
             <span>僅姓名相同待確認</span>
             <strong id="possibleCount">0</strong>
@@ -579,8 +588,10 @@ td { background: #fff; color: var(--ink); }
               <thead>
                 <tr>
                   <th>判定</th>
+                  <th>持續列管</th>
                   <th>媒合工作表</th>
                   <th>編號</th>
+                  <th>申請日期</th>
                   <th>申請人</th>
                   <th>幼兒姓名</th>
                   <th>聯絡電話</th>
@@ -600,7 +611,7 @@ td { background: #fff; color: var(--ink); }
         </section>
 
       </section>
-      <div class="version-note">PWA 整合版 1.3｜點選上方分類卡片查看對應結果</div>
+      <div class="version-note">PWA 整合版 1.4｜新增「是否持續列管」提醒</div>
     </section>
   </main>
   <script>
@@ -698,6 +709,7 @@ document.addEventListener("DOMContentLoaded", () => {
     totalCount: document.getElementById("totalCount"),
     actionCount: document.getElementById("actionCount"),
     confirmedCount: document.getElementById("confirmedCount"),
+    continuingCount: document.getElementById("continuingCount"),
     possibleCount: document.getElementById("possibleCount"),
     unmatchedCount: document.getElementById("unmatchedCount"),
     summaryGrid: document.getElementById("summaryGrid"),
@@ -811,7 +823,8 @@ async function compareFiles() {
     els.resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
 
     const matched = state.results.filter((item) => item.category !== "unmatched").length;
-    showMessage(`比對完成：媒合名單 ${state.matchingRows.length} 筆，找到 ${matched} 筆可能或確定已收托資料。`, "success");
+    const continuingReviewCount = state.results.filter((item) => item.continuingReview).length;
+    showMessage(`比對完成：媒合名單 ${state.matchingRows.length} 筆，找到 ${matched} 筆可能或確定已收托資料；其中 ${continuingReviewCount} 筆需確認是否持續列管。`, "success");
   } catch (error) {
     console.error(error);
     els.resultArea.hidden = true;
@@ -1019,6 +1032,12 @@ function findSubsidyHeaderRow(rows) {
   return -1;
 }
 
+function hasContinuingMark(matching) {
+  // 「持續」目前由使用者註記在申請日期儲存格，例如：1150205（持續）。
+  // 僅將這個明確標記納入提醒，避免把一般敘述中的「持續追蹤」誤判。
+  return normalizeText(matching && matching.applicationDate).includes("持續");
+}
+
 function buildComparison(matchingRows, subsidyRows) {
   const subsidyByChild = new Map();
 
@@ -1085,10 +1104,21 @@ function scoreCandidate(matching, subsidy) {
 }
 
 function createResult(matching, subsidy, category, label, evidence) {
+  const continuingReview = Boolean(
+    subsidy &&
+    (category === "action" || category === "confirmed") &&
+    hasContinuingMark(matching)
+  );
+
   return {
     category,
     label,
     evidence,
+    continuingReview,
+    continuingLabel: continuingReview ? "需確認" : "",
+    continuingNote: continuingReview
+      ? "媒合名單的申請日期含「持續」。請確認家長是否仍有其他媒合需求；若已無需求，請回原 Excel 手動刪除「持續」。"
+      : "",
     matchingSheet: matching.sourceSheet,
     matchingRow: matching.sourceRow,
     number: matching.number,
@@ -1159,11 +1189,15 @@ function parseFlexibleDate(value) {
 }
 
 function renderSummary() {
-  const counts = { action: 0, confirmed: 0, possible: 0, unmatched: 0 };
-  state.results.forEach((item) => { counts[item.category] += 1; });
+  const counts = { action: 0, confirmed: 0, possible: 0, unmatched: 0, continuing: 0 };
+  state.results.forEach((item) => {
+    counts[item.category] += 1;
+    if (item.continuingReview) counts.continuing += 1;
+  });
   els.totalCount.textContent = state.results.length.toLocaleString("zh-TW");
   els.actionCount.textContent = counts.action.toLocaleString("zh-TW");
   els.confirmedCount.textContent = counts.confirmed.toLocaleString("zh-TW");
+  els.continuingCount.textContent = counts.continuing.toLocaleString("zh-TW");
   els.possibleCount.textContent = counts.possible.toLocaleString("zh-TW");
   els.unmatchedCount.textContent = counts.unmatched.toLocaleString("zh-TW");
 }
@@ -1187,7 +1221,8 @@ function applyFilters() {
   const keyword = normalizeText(els.searchInput.value);
 
   state.filteredResults = state.results.filter((item) => {
-    const categoryOk = state.currentFilter === "all" || item.category === state.currentFilter;
+    const categoryOk = state.currentFilter === "all"
+      || (state.currentFilter === "continuing" ? item.continuingReview : item.category === state.currentFilter);
     if (!categoryOk) return false;
     if (!keyword) return true;
 
@@ -1195,12 +1230,14 @@ function applyFilters() {
       item.label,
       item.matchingSheet,
       item.number,
+      item.applicationDate,
       item.applicant,
       item.childName,
       item.phone,
       item.caregiver,
       item.region,
-      item.evidence
+      item.evidence,
+      item.continuingNote
     ].map(normalizeText).join("|");
 
     return haystack.includes(keyword);
@@ -1216,6 +1253,7 @@ function renderTable(rows) {
     all: "顯示媒合名單中的全部幼兒。",
     action: "補助檔已有托育人員收托資料，但媒合名單尚未填寫媒合成功或結案日期。",
     confirmed: "補助檔已有收托資料，媒合名單也已註記媒合成功或結案。",
+    continuing: "已確認收托，且媒合名單的申請日期仍含「持續」。請確認是否仍有其他媒合需求；若無，請回原 Excel 手動刪除「持續」。此筆數可能與其他判定重複。",
     possible: "兩份資料只有幼兒姓名相同，家長姓名或電話沒有相符，或補助檔有多筆同名資料，需人工確認。",
     unmatched: "媒合名單中的幼兒未出現在補助彙整或每月新收托資料。"
   };
@@ -1226,8 +1264,12 @@ function renderTable(rows) {
     const tr = document.createElement("tr");
     tr.innerHTML = [
       `<td><span class="status-pill ${escapeHtml(item.category)}">${escapeHtml(item.label)}</span></td>`,
+      item.continuingReview
+        ? `<td><span class="status-pill review">需確認</span><br><small>若無需求，刪除「持續」</small></td>`
+        : `<td>—</td>`,
       `<td>${escapeHtml(item.matchingSheet)}<br><small>第 ${escapeHtml(item.matchingRow)} 列</small></td>`,
       `<td>${escapeHtml(displayValue(item.number))}</td>`,
+      `<td>${escapeHtml(displayValue(item.applicationDate))}</td>`,
       `<td>${escapeHtml(displayValue(item.applicant))}</td>`,
       `<td><strong>${escapeHtml(displayValue(item.childName))}</strong></td>`,
       `<td>${escapeHtml(displayValue(item.phone))}</td>`,
@@ -1248,6 +1290,8 @@ function exportResults() {
 
   const rows = state.results.map((item) => ({
     "判定": item.label,
+    "是否持續列管": item.continuingReview ? "需確認" : "",
+    "列管提醒": item.continuingNote,
     "媒合工作表": item.matchingSheet,
     "媒合檔列數": item.matchingRow,
     "媒合編號": item.number,
@@ -1273,7 +1317,7 @@ function exportResults() {
 
   const sheet = window.XLSX.utils.json_to_sheet(rows);
   sheet["!cols"] = [
-    { wch: 18 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
+    { wch: 18 }, { wch: 16 }, { wch: 48 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
     { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
     { wch: 28 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 14 },
     { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 },

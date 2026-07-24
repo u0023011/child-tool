@@ -1,4 +1,4 @@
-const CACHE_NAME = "child-tool-pwa-20260724-matching-v2";
+const CACHE_NAME = "child-tool-pwa-20260724-matching-v3";
 const CACHE_PREFIX = "child-tool-pwa-";
 
 const PRECACHE_URLS = [
