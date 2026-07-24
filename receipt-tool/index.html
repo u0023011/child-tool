@@ -472,6 +472,30 @@
 
     /* 收件紀錄 */
     .child-list{display:grid;gap:12px}
+    .roster-link-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .roster-import-box{margin-bottom:16px;padding:14px;border:1.5px dashed var(--line);border-radius:14px;background:var(--subcard)}
+    .roster-import-box summary{cursor:pointer;font-weight:900;color:#5b4126}
+    .roster-import-box textarea{margin-top:12px;min-height:120px}
+    .roster-status{margin-top:9px;color:var(--muted);font-size:14px;line-height:1.6}
+    .linked-autocomplete{position:relative}
+    .linked-autocomplete > input{padding-right:38px}
+    .linked-autocomplete::after{
+      content:"▼";position:absolute;right:14px;bottom:13px;
+      color:#5b4126;font-size:13px;pointer-events:none
+    }
+    .linked-suggestions{
+      position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:80;
+      max-height:240px;overflow:auto;padding:6px;
+      border:1.5px solid var(--line);border-radius:12px;
+      background:#fff;box-shadow:0 8px 22px rgba(55,38,20,.18)
+    }
+    .linked-suggestion{
+      display:block;width:100%;padding:10px 12px;border:0;border-radius:8px;
+      background:#fff;color:var(--text);text-align:left;font-weight:700
+    }
+    .linked-suggestion:hover,.linked-suggestion:focus{background:var(--primary-soft);outline:none}
+    .linked-suggestion-empty{padding:10px 12px;color:var(--muted);font-size:14px}
+    @media(max-width:650px){.roster-link-grid{grid-template-columns:1fr}}
     .child-card{
       border:1.5px solid var(--line);
       border-radius:16px;
@@ -1643,7 +1667,7 @@
             <button class="toggle" data-label="刑事紀錄同意書">刑事紀錄同意書</button>
             <button class="toggle" data-label="登記切結書">登記切結書</button>
             <button class="toggle" data-label="個資同意書">個資同意書</button>
-            <button type="button" class="toggle photo-count-toggle" data-label="大頭照" data-photo-count="">大頭照</button>
+            <button class="toggle photo-count-toggle" data-label="大頭照" data-photo-count="">大頭照</button>
           </div>
 
           <div class="section-label">其他</div>
@@ -1655,6 +1679,28 @@
 
       <section class="card">
         <h3 class="card-title"><span class="badge">2</span>收托資料</h3>
+        <details class="roster-import-box">
+          <summary>貼上 Excel 名單資料</summary>
+          <p class="helper">家長及幼兒資料維護(ca31010) →列印家長幼兒資料</p>
+          <textarea id="receiptRosterPaste" placeholder="在此貼上 Excel 資料"></textarea>
+          <div class="actions">
+            <button class="action primary" id="parseReceiptRoster" type="button">解析並儲存名單</button>
+            <button class="action danger" id="clearReceiptRoster" type="button">清除名單</button>
+          </div>
+          <div class="roster-status" id="receiptRosterStatus">尚未匯入名單。</div>
+        </details>
+        <div class="roster-link-grid">
+          <div class="field">
+            <label class="field-label" for="receiptArea">區域</label>
+            <input id="receiptArea" type="text" list="receiptAreaList" autocomplete="off" placeholder="可輸入關鍵字搜尋">
+            <datalist id="receiptAreaList"></datalist>
+          </div>
+          <div class="field">
+            <label class="field-label" for="receiptCaregiver">托育人員</label>
+            <input id="receiptCaregiver" type="text" list="receiptCaregiverList" autocomplete="off" placeholder="可直接輸入姓名">
+            <datalist id="receiptCaregiverList"></datalist>
+          </div>
+        </div>
         <div class="section-label">依托兒登錄資料</div>
         <div id="childList" class="child-list"></div>
         <div class="actions">
@@ -2113,13 +2159,12 @@
   <div class="id-card-modal-backdrop" id="photoCountModalBackdrop" aria-hidden="true">
     <div class="id-card-modal" role="dialog" aria-modal="true" aria-labelledby="photoCountModalTitle">
       <h3 id="photoCountModalTitle">選擇大頭照張數</h3>
-      <p>請選擇收到的大頭照數量。</p>
-      <div class="id-card-options" id="photoCountOptions" style="grid-template-columns:repeat(2,1fr)">
-        <button type="button" class="id-card-option" data-value="1">1張</button>
-        <button type="button" class="id-card-option" data-value="2">2張</button>
+      <p>請選擇本次收到的大頭照數量。</p>
+      <div class="id-card-options">
+        <button type="button" class="id-card-option photo-count-option" data-value="1">1 張</button>
+        <button type="button" class="id-card-option photo-count-option" data-value="2">2 張</button>
       </div>
       <div class="actions">
-        <button type="button" class="action primary wide" id="photoCountConfirm">確認</button>
         <button type="button" class="action ghost" id="photoCountCancel">取消</button>
       </div>
     </div>
@@ -2519,15 +2564,12 @@
 
     // 大頭照張數選擇視窗
     const photoCountButton=document.querySelector(".photo-count-toggle");
-    let selectedPhotoCount="";
 
     function openPhotoCountModal(){
-      selectedPhotoCount=photoCountButton.dataset.photoCount || "";
-
-      document.querySelectorAll("#photoCountOptions .id-card-option").forEach(option=>{
-        option.classList.toggle("active",option.dataset.value===selectedPhotoCount);
+      const selected=photoCountButton.dataset.photoCount || "";
+      document.querySelectorAll(".photo-count-option").forEach(option=>{
+        option.classList.toggle("active",option.dataset.value===selected);
       });
-
       $("photoCountModalBackdrop").classList.add("show");
       $("photoCountModalBackdrop").setAttribute("aria-hidden","false");
     }
@@ -2538,38 +2580,17 @@
     }
 
     photoCountButton.addEventListener("click",openPhotoCountModal);
-
-    document.querySelectorAll("#photoCountOptions .id-card-option").forEach(option=>{
+    document.querySelectorAll(".photo-count-option").forEach(option=>{
       option.addEventListener("click",()=>{
-        const wasActive=option.classList.contains("active");
-
-        document.querySelectorAll("#photoCountOptions .id-card-option").forEach(item=>{
-          item.classList.remove("active");
-        });
-
-        if(!wasActive){
-          option.classList.add("active");
-          selectedPhotoCount=option.dataset.value;
-        }else{
-          selectedPhotoCount="";
-        }
+        const count=option.dataset.value;
+        photoCountButton.dataset.photoCount=count;
+        photoCountButton.classList.add("active");
+        photoCountButton.setAttribute("aria-pressed","true");
+        photoCountButton.textContent=`大頭照（${count}張）`;
+        closePhotoCountModal();
       });
     });
-
-    $("photoCountConfirm").addEventListener("click",()=>{
-      const selected=document.querySelector("#photoCountOptions .id-card-option.active");
-      const count=selected ? selected.dataset.value : "";
-
-      photoCountButton.dataset.photoCount=count;
-      photoCountButton.classList.toggle("active",Boolean(count));
-      photoCountButton.setAttribute("aria-pressed",String(Boolean(count)));
-      photoCountButton.textContent=count ? `大頭照（${count}張）` : "大頭照";
-
-      closePhotoCountModal();
-    });
-
     $("photoCountCancel").addEventListener("click",closePhotoCountModal);
-
     $("photoCountModalBackdrop").addEventListener("click",event=>{
       if(event.target===$("photoCountModalBackdrop")) closePhotoCountModal();
     });
@@ -2583,6 +2604,170 @@
 
     const developmentAges = ["0.4","0.6","0.9","1","1.3","1.5","2","2.5","3","3.5","4","5","6"];
 
+    const receiptRosterKey="receiptLinkedRosterV1";
+    let receiptRoster=[];
+
+    function normalizeReceiptArea(value){
+      const raw=String(value||"").trim();
+      const district=raw.match(/^(.+?區)/);
+      return district ? district[1] : raw;
+    }
+
+    function uniqueSorted(values){
+      return [...new Set(values.map(x=>String(x||"").trim()).filter(Boolean))]
+        .sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+    }
+
+    function setDataList(id,values,keyword=""){
+      const list=$(id);
+      if(!list) return;
+      const key=String(keyword||"").trim().toLowerCase();
+      const filtered=key ? values.filter(x=>x.toLowerCase().includes(key)) : values;
+      list.innerHTML=filtered.map(value=>`<option value="${escapeHtml(value)}"></option>`).join("");
+    }
+
+    function matchingRosterRows(){
+      const area=$("receiptArea").value.trim();
+      const caregiver=$("receiptCaregiver").value.trim();
+      return receiptRoster.filter(row=>(!area || row.area===area) && (!caregiver || row.caregiver===caregiver));
+    }
+
+    function refreshReceiptLinkedLists(showAll={}){
+      const areaInput=$("receiptArea");
+      const caregiverInput=$("receiptCaregiver");
+      const areas=uniqueSorted(receiptRoster.map(x=>x.area));
+      setDataList("receiptAreaList",areas,showAll.area?"":areaInput.value);
+
+      const exactArea=areas.includes(areaInput.value.trim()) ? areaInput.value.trim() : "";
+      const caregivers=uniqueSorted(receiptRoster
+        .filter(x=>!exactArea || x.area===exactArea)
+        .map(x=>x.caregiver));
+      setDataList("receiptCaregiverList",caregivers,showAll.caregiver?"":caregiverInput.value);
+
+      const exactCaregiverRows=receiptRoster.filter(x=>x.caregiver===caregiverInput.value.trim());
+      const caregiverAreas=uniqueSorted(exactCaregiverRows.map(x=>x.area));
+      if(caregiverAreas.length===1 && areaInput.value.trim()!==caregiverAreas[0]){
+        areaInput.value=caregiverAreas[0];
+        setDataList("receiptAreaList",areas,areaInput.value);
+      }
+
+      const children=uniqueSorted(matchingRosterRows().map(x=>x.child));
+      document.querySelectorAll(".child-name").forEach(input=>{
+        const list=input.nextElementSibling;
+        if(list && list.tagName==="DATALIST"){
+          const key=showAll.child?"":input.value.trim().toLowerCase();
+          const filtered=key ? children.filter(x=>x.toLowerCase().includes(key)) : children;
+          list.innerHTML=filtered.map(value=>`<option value="${escapeHtml(value)}"></option>`).join("");
+        }
+      });
+    }
+
+    function parseReceiptRosterText(text){
+      const rows=String(text||"").replace(/\r/g,"").split("\n")
+        .map(line=>line.split("\t").map(cell=>cell.trim()))
+        .filter(row=>row.some(Boolean));
+      if(rows.length<2) throw new Error("請貼上包含標題列及資料列的 Excel 內容。");
+      const normalizeHeaders=row=>row.map(x=>x.replace(/[\s　]/g,""));
+      const findHeaderIn=(headers,aliases)=>headers.findIndex(h=>aliases.some(alias=>h===alias || h.includes(alias)));
+      const caregiverAliases=["托育人員姓名","托育人員","保母姓名","保母"];
+      const childAliases=["托兒姓名","幼兒姓名","托兒","幼兒"];
+      const headerRowIndex=rows.findIndex(row=>{
+        const candidate=normalizeHeaders(row);
+        return findHeaderIn(candidate,caregiverAliases)>=0 && findHeaderIn(candidate,childAliases)>=0;
+      });
+      if(headerRowIndex<0){
+        throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
+      }
+      const headers=normalizeHeaders(rows[headerRowIndex]);
+      const findHeader=aliases=>findHeaderIn(headers,aliases);
+      const areaIndex=findHeader(["區域","服務區域","行政區"]);
+      const caregiverIndex=findHeader(caregiverAliases);
+      const childIndex=findHeader(childAliases);
+      if(caregiverIndex<0 || childIndex<0){
+        throw new Error("找不到必要欄位，標題需包含：托育人員姓名、托兒姓名（或幼兒姓名）。");
+      }
+      const caregiverAreaMap=new Map();
+      uniqueSorted(receiptRoster.map(x=>x.caregiver)).forEach(caregiver=>{
+        const areas=uniqueSorted(receiptRoster.filter(x=>x.caregiver===caregiver).map(x=>x.area));
+        if(areas.length===1) caregiverAreaMap.set(caregiver,areas[0]);
+      });
+      const parsed=rows.slice(headerRowIndex+1).map(row=>({
+        area:areaIndex>=0
+          ? normalizeReceiptArea(row[areaIndex])
+          : "",
+        caregiver:(row[caregiverIndex]||"").trim(),
+        child:(row[childIndex]||"").trim()
+      })).filter(x=>x.caregiver && x.child);
+      const seen=new Set();
+      return parsed.filter(x=>{
+        const key=`${x.area}\u0001${x.caregiver}\u0001${x.child}`;
+        if(seen.has(key)) return false;
+        seen.add(key); return true;
+      });
+    }
+
+    function updateReceiptRosterStatus(){
+      const caregivers=uniqueSorted(receiptRoster.map(x=>x.caregiver)).length;
+      const children=uniqueSorted(receiptRoster.map(x=>x.child)).length;
+      const noArea=receiptRoster.filter(x=>!x.area).length;
+      $("receiptRosterStatus").textContent=receiptRoster.length
+        ? `已載入 ${receiptRoster.length} 筆關聯資料（${caregivers} 位托育人員、${children} 位托兒）${noArea?`；${noArea} 筆未提供區域，仍可用托育人員搜尋。`:"。"}`
+        : "尚未匯入名單。";
+    }
+
+    try{
+      const saved=JSON.parse(localStorage.getItem(receiptRosterKey)||"[]");
+      if(Array.isArray(saved)){
+        receiptRoster=saved.map(row=>({...row,area:row.area==="未分類"?"":normalizeReceiptArea(row.area)}));
+        localStorage.setItem(receiptRosterKey,JSON.stringify(receiptRoster));
+      }
+    }catch(error){ receiptRoster=[]; }
+
+    function attachLinkedAutocomplete(input,getOptions,onSelect){
+      input.removeAttribute("list");
+      const host=input.closest(".field")||input.parentElement;
+      host.classList.add("linked-autocomplete");
+      const dropdown=document.createElement("div");
+      dropdown.className="linked-suggestions";
+      dropdown.hidden=true;
+      host.appendChild(dropdown);
+
+      const close=()=>{dropdown.hidden=true;dropdown.innerHTML="";};
+      const open=showAll=>{
+        const all=uniqueSorted(getOptions());
+        const key=showAll?"":input.value.trim().toLowerCase();
+        const options=key?all.filter(x=>x.toLowerCase().includes(key)):all;
+        dropdown.innerHTML=options.length
+          ? options.map(value=>`<button type="button" class="linked-suggestion" data-value="${escapeHtml(value)}">${escapeHtml(value)}</button>`).join("")
+          : `<div class="linked-suggestion-empty">沒有符合的資料</div>`;
+        dropdown.hidden=false;
+      };
+
+      input.addEventListener("focus",()=>open(true));
+      input.addEventListener("click",()=>open(true));
+      input.addEventListener("input",()=>open(false));
+      input.addEventListener("keydown",event=>{
+        if(event.key==="Escape") close();
+        if(event.key==="ArrowDown"){
+          event.preventDefault();
+          if(dropdown.hidden) open(true);
+          dropdown.querySelector(".linked-suggestion")?.focus();
+        }
+      });
+      dropdown.addEventListener("mousedown",event=>event.preventDefault());
+      dropdown.addEventListener("click",event=>{
+        const option=event.target.closest(".linked-suggestion");
+        if(!option) return;
+        input.value=option.dataset.value||"";
+        close();
+        if(onSelect) onSelect(input.value);
+      });
+      document.addEventListener("mousedown",event=>{
+        if(!host.contains(event.target)) close();
+      });
+      input._closeLinkedSuggestions=close;
+    }
+
     function addChild(){
       const box = document.createElement("div");
       box.className = "child-card";
@@ -2590,7 +2775,8 @@
         <div class="child-head">
           <div class="field">
             <label class="field-label">托兒姓名</label>
-            <input type="text" class="child-name">
+            <input type="text" class="child-name" list="child-name-list-${Date.now()}-${Math.random().toString(36).slice(2)}" autocomplete="off" placeholder="可輸入關鍵字搜尋">
+            <datalist id="child-name-list-${Date.now()}-${Math.random().toString(36).slice(2)}"></datalist>
           </div>
           <div></div>
           <button type="button" class="action danger remove-child">刪除</button>
@@ -2642,10 +2828,70 @@
       });
 
       $("childList").appendChild(box);
+      const childInput=box.querySelector(".child-name");
+      const childList=box.querySelector("datalist");
+      childInput.removeAttribute("list");
+      childInput.addEventListener("input",()=>{
+        refreshReceiptLinkedLists();
+      });
+      childInput.addEventListener("focus",()=>refreshReceiptLinkedLists({child:true}));
+      attachLinkedAutocomplete(
+        childInput,
+        ()=>uniqueSorted(matchingRosterRows().map(x=>x.child)),
+        ()=>refreshReceiptLinkedLists()
+      );
+      refreshReceiptLinkedLists();
     }
 
     addChild();
     $("addChild").addEventListener("click",addChild);
+    $("receiptArea").addEventListener("input",()=>{
+      refreshReceiptLinkedLists();
+    });
+    $("receiptArea").addEventListener("change",refreshReceiptLinkedLists);
+    $("receiptArea").addEventListener("focus",()=>refreshReceiptLinkedLists({area:true}));
+    $("receiptCaregiver").addEventListener("input",()=>{
+      refreshReceiptLinkedLists();
+    });
+    $("receiptCaregiver").addEventListener("change",refreshReceiptLinkedLists);
+    $("receiptCaregiver").addEventListener("focus",()=>refreshReceiptLinkedLists({caregiver:true}));
+    attachLinkedAutocomplete(
+      $("receiptArea"),
+      ()=>uniqueSorted(receiptRoster.map(x=>x.area)),
+      ()=>refreshReceiptLinkedLists()
+    );
+    attachLinkedAutocomplete(
+      $("receiptCaregiver"),
+      ()=>{
+        const area=$("receiptArea").value.trim();
+        return uniqueSorted(receiptRoster.filter(x=>!area||x.area===area).map(x=>x.caregiver));
+      },
+      ()=>refreshReceiptLinkedLists()
+    );
+    $("parseReceiptRoster").addEventListener("click",()=>{
+      try{
+        receiptRoster=parseReceiptRosterText($("receiptRosterPaste").value);
+        localStorage.setItem(receiptRosterKey,JSON.stringify(receiptRoster));
+        updateReceiptRosterStatus();
+        refreshReceiptLinkedLists();
+        const noArea=receiptRoster.filter(x=>!x.area).length;
+        showToast(noArea ? "名單解析完成，可直接搜尋托育人員" : "名單解析完成");
+      }catch(error){
+        alert(error.message||"名單解析失敗，請檢查資料格式。");
+      }
+    });
+    $("clearReceiptRoster").addEventListener("click",()=>{
+      if(!confirm("確定要清除已儲存的名單嗎？")) return;
+      receiptRoster=[];
+      localStorage.removeItem(receiptRosterKey);
+      $("receiptRosterPaste").value="";
+      $("receiptArea").value="";
+      $("receiptCaregiver").value="";
+      updateReceiptRosterStatus();
+      refreshReceiptLinkedLists();
+    });
+    updateReceiptRosterStatus();
+    refreshReceiptLinkedLists();
 
     const receiptItemOutputNames={
       "異動單":"異動單"
@@ -2661,9 +2907,9 @@
       const childLines=[];
 
       document.querySelectorAll('[data-group="general"] .toggle.active').forEach(btn=>{
-        if(btn.dataset.label==="大頭照"){
-          const count=btn.dataset.photoCount || "1";
-          general.push(`大頭照*${count}`);
+        if(btn.classList.contains("photo-count-toggle")){
+          const count=Number(btn.dataset.photoCount);
+          if(count>0) general.push(`大頭照*${count}`);
         }else{
           general.push(btn.dataset.label);
         }
@@ -2719,9 +2965,9 @@
       const header=opening;
       const lines=[];
 
-      if(general.length) lines.push(`${header}「${joinChinese(general)}」。`);
-      else if(childLines.length) lines.push(header);
-      else lines.push(`${header}資料。`);
+      lines.push(header);
+      if(general.length) lines.push(`「${joinChinese(general)}」。`);
+      else if(!childLines.length) lines.push("資料。");
 
       lines.push(...childLines);
 
@@ -2738,22 +2984,21 @@
     });
     $("receiptReset").addEventListener("click",()=>{
       $("opening").value="今日收件：";
+      $("receiptArea").value="";
+      $("receiptCaregiver").value="";
       document.querySelectorAll('#section-receipt .toggle.active').forEach(x=>x.classList.remove("active"));
       document.querySelectorAll('#section-receipt .id-card-toggle').forEach(btn=>{
         btn.dataset.idPersons="";
         btn.textContent="身分證影本";
       });
-      const photoButton=document.querySelector(".photo-count-toggle");
-      if(photoButton){
-        photoButton.dataset.photoCount="";
-        photoButton.classList.remove("active");
-        photoButton.setAttribute("aria-pressed","false");
-        photoButton.textContent="大頭照";
-      }
+      photoCountButton.dataset.photoCount="";
+      photoCountButton.textContent="大頭照";
+      photoCountButton.setAttribute("aria-pressed","false");
       $("receiptResult").value="";
       $("registrationDetails").open=false;
       $("childList").innerHTML="";
       addChild();
+      refreshReceiptLinkedLists();
     });
 
     // 媒合資訊
@@ -3225,20 +3470,12 @@
       if(children.length===1){
         if(children[0].age) lines.push(`幼兒年齡：${children[0].age}`);
         if(children[0].gender) lines.push(`幼兒性別：${children[0].gender}`);
-        if(children[0].reminder){
-          lines.push("");
-          lines.push("⚠️【特殊提醒】");
-          lines.push(children[0].reminder);
-        }
+        if(children[0].reminder) lines.push(`特殊提醒：${children[0].reminder}`);
       }else if(children.length>1){
         children.forEach((child,index)=>{
           const details=[child.age,child.gender].filter(Boolean).join("／");
           lines.push(`幼兒${index+1}：${details || "未填年齡及性別"}`);
-          if(child.reminder){
-            lines.push("⚠️【特殊提醒】");
-            lines.push(child.reminder);
-          }
-          if(index<children.length-1) lines.push("");
+          if(child.reminder) lines.push(`幼兒${index+1}特殊提醒：${child.reminder}`);
         });
       }
 
