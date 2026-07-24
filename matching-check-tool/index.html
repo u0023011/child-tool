@@ -854,13 +854,29 @@ function sheetRows(workbook, sheetName) {
 
 function parseMatchingWorkbook(workbook) {
   const records = [];
-  const excludedWords = ["登打規則", "定義", "說明", "範例", "已結"];
+
+  // 不讀取舊版工作頁；只讀取其餘名稱含「開案」或「未結」的新版工作頁。
+  // 連字號、全形連字號與空白差異都視為同一個名稱。
+  const excludedWords = ["登打規則", "說明", "範例", "已結"];
+  const excludedSheetNames = new Set([
+    "115年開案",
+    "114年未結"
+  ]);
+
+  const sheetKey = (sheetName) => normalizeText(sheetName)
+    .replace(/[‐‑‒–—―－-]/g, "");
+
   const activeSheets = workbook.SheetNames.filter((sheetName) => {
     const name = normalizeText(sheetName);
+    const key = sheetKey(sheetName);
+
+    if (excludedSheetNames.has(key)) return false;
     if (excludedWords.some((word) => name.includes(normalizeText(word)))) return false;
+
     return name.includes("開案") || name.includes("未結");
   });
-  const sheetsToRead = activeSheets.length ? activeSheets : workbook.SheetNames;
+
+  const sheetsToRead = activeSheets;
 
   sheetsToRead.forEach((sheetName) => {
     const normalizedSheetName = normalizeText(sheetName);
