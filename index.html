@@ -829,6 +829,12 @@
               <div class="tool-count">已有 <strong id="count-report-generator">讀取中</strong> 人次使用</div>
             </button>
 
+            <button type="button" class="tool-card admin-only" onclick="openTool('matching-check-tool/')">
+              <div class="tool-title">🔍 媒合收托比對工具</div>
+              <div class="tool-desc">比對家長媒合名單與補助彙整，找出已由托育人員收托的幼兒。</div>
+              <div class="tool-count">已有 <strong id="count-matching-check-tool">讀取中</strong> 人次使用</div>
+            </button>
+
             <button type="button" class="tool-card admin-only" onclick="openTool('training-hours-tool/')">
               <div class="tool-title">📚 在職課程時數工具</div>
               <div class="tool-desc">依證書生效日產生年度區間，整理課程並匯出 Excel。</div>
@@ -891,6 +897,7 @@
       "report-date-tool/": ["admin"],
       "receipt-tool/": ["admin"],
       "report-generator/": ["admin"],
+      "matching-check-tool/": ["admin"],
       "training-hours-tool/": ["admin"]
     };
 
@@ -924,6 +931,11 @@
         counter: "report_generator",
         name: "報表生成器",
         cardId: "count-report-generator"
+      },
+      "matching-check-tool/": {
+        counter: "matching_check_tool",
+        name: "媒合收托比對工具",
+        cardId: "count-matching-check-tool"
       },
       "training-hours-tool/": {
         counter: "training_hours_tool",

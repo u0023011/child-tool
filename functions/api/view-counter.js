@@ -6,7 +6,8 @@ const COUNTER_KEYS = {
   report_date_tool: "tool_report_date_tool_views",
   receipt_tool: "tool_receipt_tool_views",
   report_generator: "tool_report_generator_views",
-  training_hours_tool: "tool_training_hours_tool_views"
+  training_hours_tool: "tool_training_hours_tool_views",
+  matching_check_tool: "tool_matching_check_tool_views"
 };
 
 function getCounterKey(request) {

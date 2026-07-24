@@ -1,0 +1,1403 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#9a7b4f">
+  <link rel="manifest" href="../manifest.json">
+  <title>媒合收托比對工具</title>
+  <style>
+* { box-sizing: border-box; }
+
+:root {
+  --bg: #f5ecdf;
+  --card: #ffffff;
+  --card-soft: #fffdf8;
+  --ink: #3f3328;
+  --ink-soft: #7a6b5b;
+  --brown: #9a7b4f;
+  --brown-deep: #7b5b32;
+  --brown-title: #8b6a3f;
+  --line: #eadcc6;
+  --line-strong: #d8c7ae;
+  --danger: #b13b2e;
+  --danger-soft: #fae9e5;
+  --success: #47745e;
+  --success-soft: #e8f2ec;
+  --warning: #a06b18;
+  --warning-soft: #fff2d8;
+  --muted: #7f756a;
+  --muted-soft: #f0ece7;
+  --shadow: 0 8px 22px rgba(80, 55, 30, .12);
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+body { min-height: 100vh; }
+button, input { font-family: inherit; }
+button { cursor: pointer; }
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.shell {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.hero-card,
+.upload-card,
+.action-card,
+.result-card,
+.rule-card {
+  background: var(--card);
+  border: 1px solid rgba(154, 123, 79, .16);
+  box-shadow: var(--shadow);
+  border-radius: 24px;
+}
+
+.hero-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+}
+
+.hero-icon {
+  flex: 0 0 70px;
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px rgba(154, 123, 79, .18);
+  font-size: 36px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  color: var(--brown-title);
+  font-size: 28px;
+  letter-spacing: .03em;
+}
+
+.hero-card p,
+.upload-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.privacy-note {
+  margin: 14px 0;
+  padding: 13px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  align-items: center;
+  border-radius: 16px;
+  color: var(--brown-deep);
+  background: rgba(255, 253, 248, .82);
+  border: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.privacy-note span { color: var(--ink-soft); }
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.upload-card {
+  position: relative;
+  padding: 22px;
+}
+
+.step-badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--brown-deep);
+  font-weight: 900;
+}
+
+.upload-card h2,
+.rule-card h2 {
+  margin: 0 44px 8px 0;
+  color: var(--brown-deep);
+  font-size: 20px;
+}
+
+.file-drop {
+  min-height: 168px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 2px dashed var(--line-strong);
+  border-radius: 18px;
+  background: var(--card-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--brown-deep);
+  transition: .18s ease;
+}
+
+.file-drop:hover,
+.file-drop.dragover {
+  border-color: var(--brown);
+  background: #fbf5eb;
+  transform: translateY(-1px);
+}
+
+.file-drop input { display: none; }
+.file-icon { font-size: 34px; }
+.file-drop strong { font-size: 17px; }
+.file-hint { color: var(--ink-soft); font-size: 14px; }
+
+.file-status {
+  margin-top: 12px;
+  min-height: 23px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.file-status.ready { color: var(--success); font-weight: 800; }
+.file-status.error { color: var(--danger); font-weight: 800; }
+
+.action-card {
+  margin-top: 14px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, 180px);
+  gap: 12px;
+}
+
+.primary-btn,
+.secondary-btn,
+.export-btn,
+.filter-btn {
+  border: 0;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.primary-btn,
+.secondary-btn {
+  min-height: 50px;
+  font-size: 17px;
+}
+
+.primary-btn { background: var(--brown); color: #fff; }
+.primary-btn:disabled { opacity: .45; cursor: not-allowed; }
+.secondary-btn { background: #eee4d5; color: var(--brown-deep); }
+
+.primary-btn:active,
+.secondary-btn:active,
+.export-btn:active,
+.filter-btn:active { transform: translateY(1px); }
+
+.message {
+  grid-column: 1 / -1;
+  display: none;
+  padding: 11px 13px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.message.show { display: block; }
+.message.info { background: #f3ecdf; color: var(--brown-deep); }
+.message.error { background: var(--danger-soft); color: var(--danger); }
+.message.success { background: var(--success-soft); color: var(--success); }
+
+.summary-grid {
+  margin: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-card {
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 12px rgba(80, 55, 30, .07);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, outline-color .16s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(80, 55, 30, .12);
+}
+
+.summary-card.active {
+  outline: 3px solid var(--brown);
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+
+.summary-card:focus-visible {
+  outline: 3px solid var(--brown-deep);
+  outline-offset: 3px;
+}
+
+.summary-card span {
+  display: block;
+  min-height: 42px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.summary-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--brown-deep);
+  font-size: 30px;
+}
+
+.summary-card.alert { background: var(--danger-soft); border-color: #efc9c1; }
+.summary-card.alert strong { color: var(--danger); }
+.summary-card.success { background: var(--success-soft); border-color: #cfe1d6; }
+.summary-card.success strong { color: var(--success); }
+.summary-card.warning { background: var(--warning-soft); border-color: #ecd7aa; }
+.summary-card.warning strong { color: var(--warning); }
+.summary-card.muted { background: var(--muted-soft); border-color: #ddd5cd; }
+.summary-card.muted strong { color: var(--muted); }
+
+.result-card { overflow: hidden; }
+
+.result-toolbar {
+  padding: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-btn {
+  min-height: 38px;
+  padding: 0 13px;
+  background: #f1e8dc;
+  color: var(--brown-deep);
+}
+
+.filter-btn.active {
+  background: var(--brown);
+  color: #fff;
+}
+
+.search-wrap {
+  min-width: 280px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 13px;
+  border: 1.5px solid var(--line-strong);
+  background: #fffdf9;
+}
+
+.search-wrap input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.search-wrap:focus-within {
+  border-color: var(--brown);
+  box-shadow: 0 0 0 4px rgba(154, 123, 79, .12);
+}
+
+.export-btn {
+  min-height: 42px;
+  padding: 0 15px;
+  background: var(--brown-deep);
+  color: #fff;
+}
+
+.table-note {
+  padding: 10px 18px;
+  background: #fffaf1;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow: auto;
+  max-height: 620px;
+}
+
+table {
+  width: 100%;
+  min-width: 1460px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th, td {
+  padding: 11px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-right: 1px solid #eee4d5;
+  border-bottom: 1px solid #eee4d5;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #efe4d5;
+  color: var(--brown-deep);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+tbody tr:hover td { background: #fffaf3; }
+td { background: #fff; color: var(--ink); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.status-pill.action { color: var(--danger); background: var(--danger-soft); }
+.status-pill.confirmed { color: var(--success); background: var(--success-soft); }
+.status-pill.possible { color: var(--warning); background: var(--warning-soft); }
+.status-pill.unmatched { color: var(--muted); background: var(--muted-soft); }
+
+.empty-result {
+  padding: 28px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.rule-card {
+  margin-top: 14px;
+  padding: 20px;
+}
+
+.rule-card h2 { margin-right: 0; }
+.rule-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rule-grid div {
+  padding: 14px;
+  border-radius: 15px;
+  background: var(--card-soft);
+  border: 1px solid var(--line);
+}
+
+.rule-grid strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--brown-deep);
+}
+
+.rule-grid span {
+  color: var(--ink-soft);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+@media (max-width: 980px) {
+  .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rule-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .page { padding: 12px; }
+  .hero-card { padding: 19px; border-radius: 22px; align-items: flex-start; }
+  .hero-icon { flex-basis: 54px; width: 54px; height: 54px; border-radius: 17px; font-size: 28px; }
+  h1 { font-size: 23px; }
+  .upload-grid { grid-template-columns: 1fr; }
+  .upload-card { padding: 18px; border-radius: 22px; }
+  .action-card { grid-template-columns: 1fr; padding: 14px; }
+  .message { grid-column: auto; }
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .result-toolbar { align-items: stretch; }
+  .toolbar-actions { width: 100%; }
+  .toolbar-actions { display: grid; grid-template-columns: 1fr; }
+  .search-wrap { min-width: 0; width: 100%; }
+  .export-btn { width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  .summary-card span { min-height: 40px; }
+  .summary-card strong { font-size: 27px; }
+}
+
+  
+.version-note { padding: 14px 4px 4px; text-align: center; color: var(--ink-soft); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="shell">
+      <header class="hero-card">
+        <div class="hero-icon" aria-hidden="true">🔍</div>
+        <div>
+          <h1>媒合收托比對工具</h1>
+        </div>
+      </header>
+
+      <section class="privacy-note" aria-label="隱私說明">
+        <strong>🔒 檔案只在目前瀏覽器內讀取</strong>
+        <span>不會上傳到網站伺服器；Excel 內被篩選或隱藏的資料列也會納入比對。</span>
+      </section>
+
+      <section class="upload-grid">
+        <article class="upload-card" id="matchingCard">
+          <div class="step-badge">1</div>
+          <h2>家長媒合及轉介資料</h2>
+          <label class="file-drop" for="matchingFile" id="matchingDrop">
+            <input id="matchingFile" type="file" accept=".xlsx,.xls,.xlsm">
+            <span class="file-icon">📄</span>
+            <strong>選擇媒合名單</strong>
+            <span class="file-hint">或把 Excel 拖曳到這裡</span>
+          </label>
+          <div class="file-status" id="matchingStatus">尚未選擇檔案</div>
+        </article>
+
+        <article class="upload-card" id="subsidyCard">
+          <div class="step-badge">2</div>
+          <h2>補助彙整＋每月新收托</h2>
+          <label class="file-drop" for="subsidyFile" id="subsidyDrop">
+            <input id="subsidyFile" type="file" accept=".xlsx,.xls,.xlsm">
+            <span class="file-icon">📋</span>
+            <strong>選擇補助彙整</strong>
+            <span class="file-hint">或把 Excel 拖曳到這裡</span>
+          </label>
+          <div class="file-status" id="subsidyStatus">尚未選擇檔案</div>
+        </article>
+      </section>
+
+      <section class="action-card">
+        <button type="button" class="primary-btn" id="compareBtn" disabled>開始比對</button>
+        <button type="button" class="secondary-btn" id="resetBtn">清除重來</button>
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section id="resultArea" hidden>
+        <div class="summary-grid" id="summaryGrid" aria-label="點選分類查看對應結果">
+          <button type="button" class="summary-card active" data-filter="all" aria-pressed="true">
+            <span>媒合名單全部</span>
+            <strong id="totalCount">0</strong>
+          </button>
+          <button type="button" class="summary-card alert" data-filter="action" aria-pressed="false">
+            <span>已收托但未註記</span>
+            <strong id="actionCount">0</strong>
+          </button>
+          <button type="button" class="summary-card success" data-filter="confirmed" aria-pressed="false">
+            <span>已註記媒合成功</span>
+            <strong id="confirmedCount">0</strong>
+          </button>
+          <button type="button" class="summary-card warning" data-filter="possible" aria-pressed="false">
+            <span>僅姓名相同待確認</span>
+            <strong id="possibleCount">0</strong>
+          </button>
+          <button type="button" class="summary-card muted" data-filter="unmatched" aria-pressed="false">
+            <span>補助檔未找到</span>
+            <strong id="unmatchedCount">0</strong>
+          </button>
+        </div>
+
+        <section class="result-card">
+          <div class="result-toolbar">
+            <div class="toolbar-actions">
+              <label class="search-wrap">
+                <span>🔎</span>
+                <input id="searchInput" type="search" placeholder="搜尋幼兒、家長或托育人員">
+              </label>
+              <button type="button" class="export-btn" id="exportBtn">匯出比對結果</button>
+            </div>
+          </div>
+
+          <div class="table-note" id="tableNote"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>判定</th>
+                  <th>媒合工作表</th>
+                  <th>編號</th>
+                  <th>申請人</th>
+                  <th>幼兒姓名</th>
+                  <th>聯絡電話</th>
+                  <th>托育人員</th>
+                  <th>收托區域</th>
+                  <th>補助起始</th>
+                  <th>補助截止</th>
+                  <th>收托狀態</th>
+                  <th>比對依據</th>
+                </tr>
+              </thead>
+              <tbody id="resultBody"></tbody>
+            </table>
+          </div>
+
+          <div class="empty-result" id="emptyResult" hidden>目前篩選條件沒有資料。</div>
+        </section>
+
+      </section>
+      <div class="version-note">PWA 整合版 1.3｜點選上方分類卡片查看對應結果</div>
+    </section>
+  </main>
+  <script>
+"use strict";
+
+// 此頁不保存密碼；登入仍由首頁 /api/login 後端驗證。
+// 未由托育工具箱管理權限進入時，返回首頁重新登入。
+(function enforcePortalSession() {
+  try {
+    const loggedIn = sessionStorage.getItem("toolLogin") === "ok";
+    const role = sessionStorage.getItem("toolRole");
+    if (!loggedIn || role !== "admin") {
+      if (window.top && window.top !== window.self) {
+        window.top.location.replace("../");
+      } else {
+        window.location.replace("../");
+      }
+    }
+  } catch (error) {
+    window.location.replace("../");
+  }
+})();
+
+const state = {
+  matchingFile: null,
+  subsidyFile: null,
+  matchingRows: [],
+  subsidyRows: [],
+  results: [],
+  filteredResults: [],
+  currentFilter: "all"
+};
+
+const els = {};
+
+const XLSX_SCRIPT_URLS = [
+  "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+];
+let xlsxLoadPromise = null;
+
+function loadExternalScript(url) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-xlsx-src="${url}"]`);
+    if (existing) {
+      if (window.XLSX) resolve();
+      else existing.addEventListener("load", resolve, { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = url;
+    script.async = true;
+    script.dataset.xlsxSrc = url;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`無法載入：${url}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureXLSX() {
+  if (window.XLSX) return window.XLSX;
+  if (xlsxLoadPromise) return xlsxLoadPromise;
+
+  xlsxLoadPromise = (async () => {
+    for (const url of XLSX_SCRIPT_URLS) {
+      try {
+        await loadExternalScript(url);
+        if (window.XLSX) return window.XLSX;
+      } catch (error) {
+        console.warn(error);
+      }
+    }
+    throw new Error("Excel 讀取元件無法載入。請確認目前有網路連線，再重新整理頁面。");
+  })();
+
+  try {
+    return await xlsxLoadPromise;
+  } catch (error) {
+    xlsxLoadPromise = null;
+    throw error;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  Object.assign(els, {
+    matchingFile: document.getElementById("matchingFile"),
+    subsidyFile: document.getElementById("subsidyFile"),
+    matchingDrop: document.getElementById("matchingDrop"),
+    subsidyDrop: document.getElementById("subsidyDrop"),
+    matchingStatus: document.getElementById("matchingStatus"),
+    subsidyStatus: document.getElementById("subsidyStatus"),
+    compareBtn: document.getElementById("compareBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    message: document.getElementById("message"),
+    resultArea: document.getElementById("resultArea"),
+    totalCount: document.getElementById("totalCount"),
+    actionCount: document.getElementById("actionCount"),
+    confirmedCount: document.getElementById("confirmedCount"),
+    possibleCount: document.getElementById("possibleCount"),
+    unmatchedCount: document.getElementById("unmatchedCount"),
+    summaryGrid: document.getElementById("summaryGrid"),
+    searchInput: document.getElementById("searchInput"),
+    exportBtn: document.getElementById("exportBtn"),
+    tableNote: document.getElementById("tableNote"),
+    resultBody: document.getElementById("resultBody"),
+    emptyResult: document.getElementById("emptyResult")
+  });
+
+  bindFileInput(els.matchingFile, els.matchingDrop, "matching");
+  bindFileInput(els.subsidyFile, els.subsidyDrop, "subsidy");
+
+  els.compareBtn.addEventListener("click", compareFiles);
+  els.resetBtn.addEventListener("click", resetAll);
+  els.exportBtn.addEventListener("click", exportResults);
+  els.searchInput.addEventListener("input", applyFilters);
+
+  els.summaryGrid.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-filter]");
+    if (!card) return;
+    state.currentFilter = card.dataset.filter;
+    updateSummarySelection(card);
+    applyFilters();
+  });
+
+  // 預先載入 Excel 元件；即使載入較慢，選檔按鈕仍可正常操作。
+  ensureXLSX().catch(() => {});
+});
+
+function bindFileInput(input, dropZone, type) {
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (file) setFile(type, file);
+  });
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.remove("dragover");
+    });
+  });
+
+  dropZone.addEventListener("drop", (event) => {
+    const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    if (!file) return;
+    setFile(type, file);
+  });
+}
+
+function setFile(type, file) {
+  if (!/\.(xlsx|xls|xlsm)$/i.test(file.name)) {
+    setStatus(type, "請選擇 Excel 檔案（xlsx、xls 或 xlsm）。", "error");
+    return;
+  }
+
+  if (type === "matching") state.matchingFile = file;
+  if (type === "subsidy") state.subsidyFile = file;
+
+  setStatus(type, `已選擇：${file.name}`, "ready");
+  hideMessage();
+  updateCompareButton();
+}
+
+function setStatus(type, text, className) {
+  const target = type === "matching" ? els.matchingStatus : els.subsidyStatus;
+  target.textContent = text;
+  target.className = `file-status${className ? ` ${className}` : ""}`;
+}
+
+function updateCompareButton() {
+  els.compareBtn.disabled = !(state.matchingFile && state.subsidyFile);
+}
+
+async function compareFiles() {
+  if (!state.matchingFile || !state.subsidyFile) return;
+
+  els.compareBtn.disabled = true;
+  els.compareBtn.textContent = "比對中…";
+  showMessage("正在讀取兩份 Excel，請勿關閉頁面。", "info");
+
+  try {
+    await ensureXLSX();
+    const [matchingBook, subsidyBook] = await Promise.all([
+      readWorkbook(state.matchingFile),
+      readWorkbook(state.subsidyFile)
+    ]);
+
+    state.matchingRows = parseMatchingWorkbook(matchingBook);
+    state.subsidyRows = parseSubsidyWorkbook(subsidyBook);
+
+    if (!state.matchingRows.length) {
+      throw new Error("媒合檔找不到有效資料。請確認工作表中有「幼兒姓名」欄位，且至少有一筆幼兒資料。");
+    }
+    if (!state.subsidyRows.length) {
+      throw new Error("補助檔找不到有效資料。請確認工作表中有「姓名」與「托育人員」欄位，且至少有一筆收托資料。");
+    }
+
+    state.results = buildComparison(state.matchingRows, state.subsidyRows);
+    renderSummary();
+    resetFilters();
+    applyFilters();
+    els.resultArea.hidden = false;
+    els.resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    const matched = state.results.filter((item) => item.category !== "unmatched").length;
+    showMessage(`比對完成：媒合名單 ${state.matchingRows.length} 筆，找到 ${matched} 筆可能或確定已收托資料。`, "success");
+  } catch (error) {
+    console.error(error);
+    els.resultArea.hidden = true;
+    showMessage(error && error.message ? error.message : "檔案讀取失敗，請確認 Excel 格式後再試一次。", "error");
+  } finally {
+    els.compareBtn.textContent = "開始比對";
+    updateCompareButton();
+  }
+}
+
+function readWorkbook(file) {
+  const getBuffer = file.arrayBuffer
+    ? file.arrayBuffer()
+    : new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("檔案讀取失敗。"));
+        reader.readAsArrayBuffer(file);
+      });
+
+  return getBuffer.then((buffer) => window.XLSX.read(buffer, {
+    type: "array",
+    cellDates: true,
+    cellNF: false,
+    cellText: true
+  }));
+}
+
+function sheetRows(workbook, sheetName) {
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) return [];
+  return XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
+    raw: false,
+    blankrows: false,
+    skipHidden: false
+  });
+}
+
+function parseMatchingWorkbook(workbook) {
+  const records = [];
+  const excludedWords = ["登打規則", "定義", "說明", "範例", "已結"];
+  const activeSheets = workbook.SheetNames.filter((sheetName) => {
+    const name = normalizeText(sheetName);
+    if (excludedWords.some((word) => name.includes(normalizeText(word)))) return false;
+    return name.includes("開案") || name.includes("未結");
+  });
+  const sheetsToRead = activeSheets.length ? activeSheets : workbook.SheetNames;
+
+  sheetsToRead.forEach((sheetName) => {
+    const normalizedSheetName = normalizeText(sheetName);
+    if (excludedWords.some((word) => normalizedSheetName.includes(normalizeText(word)))) return;
+    const rows = sheetRows(workbook, sheetName);
+    if (!rows.length) return;
+
+    const headerIndex = findHeaderRow(rows, ["幼兒姓名", "申請人姓名"]);
+    if (headerIndex < 0) return;
+
+    const headers = rows[headerIndex].map(normalizeHeader);
+    const columns = {
+      number: findColumn(headers, ["編號"]),
+      applicationDate: findColumn(headers, ["申請日期"]),
+      applicant: findColumn(headers, ["申請人姓名"]),
+      child: findColumn(headers, ["幼兒姓名"]),
+      phone: findColumn(headers, ["聯絡電話", "0902465718"]),
+      closeDate: findColumn(headers, ["結案日期知悉時間", "結案日期"]),
+      success: findColumn(headers, ["媒合成功"]),
+      matchStatus: findColumn(headers, ["媒合狀況日期一媒二媒", "媒合狀況"]),
+      followUp: findColumn(headers, ["後續追蹤聯繫處遇過程", "後續追蹤"]),
+      note: findColumn(headers, ["備註各種需求全日托夜托反紅", "備註"])
+    };
+
+    rows.slice(headerIndex + 1).forEach((row, offset) => {
+      const childName = valueAt(row, columns.child);
+      if (!normalizeName(childName)) return;
+
+      records.push({
+        sourceSheet: sheetName,
+        sourceRow: headerIndex + offset + 2,
+        number: valueAt(row, columns.number),
+        applicationDate: valueAt(row, columns.applicationDate),
+        applicant: valueAt(row, columns.applicant),
+        childName,
+        phone: valueAt(row, columns.phone),
+        closeDate: valueAt(row, columns.closeDate),
+        success: valueAt(row, columns.success),
+        matchStatus: valueAt(row, columns.matchStatus),
+        followUp: valueAt(row, columns.followUp),
+        note: valueAt(row, columns.note)
+      });
+    });
+  });
+
+  return deduplicate(records, (item) => [
+    normalizeName(item.childName),
+    normalizeName(item.applicant),
+    normalizePhone(item.phone),
+    normalizeText(item.applicationDate),
+    normalizeText(item.number)
+  ].join("|"));
+}
+
+function parseSubsidyWorkbook(workbook) {
+  const records = [];
+
+  workbook.SheetNames.forEach((sheetName) => {
+    const rows = sheetRows(workbook, sheetName);
+    if (!rows.length) return;
+
+    const headerIndex = findSubsidyHeaderRow(rows);
+    if (headerIndex < 0) return;
+
+    const headers = rows[headerIndex].map(normalizeHeader);
+    const columns = {
+      number: findColumn(headers, ["編號"]),
+      applicant: findColumn(headers, ["申請人"]),
+      child: findColumn(headers, ["收托兒姓名", "幼兒姓名", "姓名"]),
+      childId: findColumn(headers, ["身分證字號"]),
+      caregiver: findColumn(headers, ["托育人員"]),
+      subsidyStart: findColumn(headers, ["補助起始"]),
+      subsidyEnd: findColumn(headers, ["補助截止"]),
+      homePhone: findColumn(headers, ["家用電話"]),
+      motherName: findColumn(headers, ["母親姓名"]),
+      motherPhone: findColumn(headers, ["母親電話"]),
+      fatherName: findColumn(headers, ["父親姓名"]),
+      fatherPhone: findColumn(headers, ["父親電話"]),
+      region: findColumn(headers, ["收托區域"]),
+      contractDate: findColumn(headers, ["契約簽訂日期"]),
+      careStart: findColumn(headers, ["收托日"])
+    };
+
+    rows.slice(headerIndex + 1).forEach((row, offset) => {
+      const childName = valueAt(row, columns.child);
+      const caregiver = valueAt(row, columns.caregiver);
+      if (!normalizeName(childName)) return;
+      if (!normalizeName(caregiver)) return;
+
+      records.push({
+        sourceSheet: sheetName,
+        sourceRow: headerIndex + offset + 2,
+        number: valueAt(row, columns.number),
+        applicant: valueAt(row, columns.applicant),
+        childName,
+        childId: valueAt(row, columns.childId),
+        caregiver,
+        subsidyStart: valueAt(row, columns.subsidyStart),
+        subsidyEnd: valueAt(row, columns.subsidyEnd),
+        homePhone: valueAt(row, columns.homePhone),
+        motherName: valueAt(row, columns.motherName),
+        motherPhone: valueAt(row, columns.motherPhone),
+        fatherName: valueAt(row, columns.fatherName),
+        fatherPhone: valueAt(row, columns.fatherPhone),
+        region: valueAt(row, columns.region),
+        contractDate: valueAt(row, columns.contractDate),
+        careStart: valueAt(row, columns.careStart)
+      });
+    });
+  });
+
+  return deduplicate(records, (item) => [
+    normalizeName(item.childName),
+    normalizeName(item.caregiver),
+    normalizeText(item.childId),
+    normalizeText(item.subsidyStart),
+    normalizeText(item.careStart)
+  ].join("|"));
+}
+
+function findHeaderRow(rows, requiredHeaders) {
+  const limit = Math.min(rows.length, 15);
+  for (let index = 0; index < limit; index += 1) {
+    const headers = rows[index].map(normalizeHeader);
+    const ok = requiredHeaders.every((required) => headers.some((header) => header === required || header.includes(required)));
+    if (ok) return index;
+  }
+  return -1;
+}
+
+function findSubsidyHeaderRow(rows) {
+  const limit = Math.min(rows.length, 15);
+  for (let index = 0; index < limit; index += 1) {
+    const headers = rows[index].map(normalizeHeader);
+    const hasCaregiver = headers.some((header) => header === "托育人員");
+    const hasChild = headers.some((header) => ["姓名", "收托兒姓名", "幼兒姓名"].includes(header));
+    const hasSubsidy = headers.some((header) => header.includes("補助起始") || header.includes("收托日"));
+    if (hasCaregiver && hasChild && hasSubsidy) return index;
+  }
+  return -1;
+}
+
+function buildComparison(matchingRows, subsidyRows) {
+  const subsidyByChild = new Map();
+
+  subsidyRows.forEach((row) => {
+    const key = normalizeName(row.childName);
+    if (!subsidyByChild.has(key)) subsidyByChild.set(key, []);
+    subsidyByChild.get(key).push(row);
+  });
+
+  return matchingRows.map((matching) => {
+    const childKey = normalizeName(matching.childName);
+    const candidates = subsidyByChild.get(childKey) || [];
+
+    if (!candidates.length) {
+      return createResult(matching, null, "unmatched", "補助檔未找到", "幼兒姓名未出現在補助彙整");
+    }
+
+    const scored = candidates.map((subsidy) => scoreCandidate(matching, subsidy));
+    scored.sort((a, b) => b.score - a.score);
+    const best = scored[0];
+    const topCount = scored.filter((item) => item.score === best.score).length;
+    const hasStrongEvidence = best.parentMatch || best.phoneMatch;
+    const matchingAlreadyClosed = isMarked(matching.success) || hasValue(matching.closeDate);
+
+    if (!hasStrongEvidence || (topCount > 1 && best.score < 5)) {
+      const evidence = candidates.length > 1
+        ? `幼兒姓名相同，但補助檔有 ${candidates.length} 筆同名資料`
+        : "僅幼兒姓名相同，家長姓名與電話未能再次確認";
+      return createResult(matching, best.subsidy, "possible", "僅姓名相同待確認", evidence);
+    }
+
+    const evidenceParts = ["幼兒姓名相同"];
+    if (best.parentMatch) evidenceParts.push("家長姓名相符");
+    if (best.phoneMatch) evidenceParts.push("電話相符");
+
+    if (matchingAlreadyClosed) {
+      return createResult(matching, best.subsidy, "confirmed", "已註記媒合成功", evidenceParts.join("、"));
+    }
+
+    return createResult(matching, best.subsidy, "action", "已收托但未註記", `${evidenceParts.join("、")}；媒合名單尚未註記成功或結案`);
+  });
+}
+
+function scoreCandidate(matching, subsidy) {
+  const matchingApplicant = normalizeName(matching.applicant);
+  const subsidyParents = [subsidy.applicant, subsidy.motherName, subsidy.fatherName]
+    .map(normalizeName)
+    .filter(Boolean);
+
+  const matchingPhone = normalizePhone(matching.phone);
+  const subsidyPhones = [subsidy.homePhone, subsidy.motherPhone, subsidy.fatherPhone]
+    .map(normalizePhone)
+    .filter(Boolean);
+
+  const parentMatch = Boolean(matchingApplicant && subsidyParents.includes(matchingApplicant));
+  const phoneMatch = Boolean(matchingPhone && subsidyPhones.some((phone) => phoneEquals(matchingPhone, phone)));
+
+  let score = 1;
+  if (parentMatch) score += 3;
+  if (phoneMatch) score += 4;
+  if (normalizeName(subsidy.caregiver)) score += 1;
+
+  return { subsidy, parentMatch, phoneMatch, score };
+}
+
+function createResult(matching, subsidy, category, label, evidence) {
+  return {
+    category,
+    label,
+    evidence,
+    matchingSheet: matching.sourceSheet,
+    matchingRow: matching.sourceRow,
+    number: matching.number,
+    applicationDate: matching.applicationDate,
+    applicant: matching.applicant,
+    childName: matching.childName,
+    phone: matching.phone,
+    matchingSuccess: matching.success,
+    closeDate: matching.closeDate,
+    matchStatus: matching.matchStatus,
+    caregiver: subsidy ? subsidy.caregiver : "",
+    subsidySheet: subsidy ? subsidy.sourceSheet : "",
+    subsidyRow: subsidy ? subsidy.sourceRow : "",
+    subsidyApplicant: subsidy ? subsidy.applicant : "",
+    childId: subsidy ? subsidy.childId : "",
+    region: subsidy ? subsidy.region : "",
+    subsidyStart: subsidy ? subsidy.subsidyStart : "",
+    subsidyEnd: subsidy ? subsidy.subsidyEnd : "",
+    careStart: subsidy ? subsidy.careStart : "",
+    careStatus: subsidy ? determineCareStatus(subsidy.subsidyEnd) : ""
+  };
+}
+
+function determineCareStatus(endValue) {
+  if (!hasValue(endValue)) return "收托中／未填截止日";
+  const date = parseFlexibleDate(endValue);
+  if (!date) return "已填截止日";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date >= today ? "收托中" : "補助已截止";
+}
+
+function parseFlexibleDate(value) {
+  if (!hasValue(value)) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  const text = String(value).trim();
+  const digits = text.replace(/\D/g, "");
+  let year;
+  let month;
+  let day;
+
+  if (digits.length === 7) {
+    year = Number(digits.slice(0, 3)) + 1911;
+    month = Number(digits.slice(3, 5));
+    day = Number(digits.slice(5, 7));
+  } else if (digits.length === 8) {
+    const firstFour = Number(digits.slice(0, 4));
+    if (firstFour > 1900) {
+      year = firstFour;
+      month = Number(digits.slice(4, 6));
+      day = Number(digits.slice(6, 8));
+    } else {
+      return null;
+    }
+  } else {
+    const parts = text.split(/[./\-]/).map((part) => Number(part)).filter((part) => Number.isFinite(part));
+    if (parts.length >= 3) {
+      year = parts[0] < 1911 ? parts[0] + 1911 : parts[0];
+      month = parts[1];
+      day = parts[2];
+    }
+  }
+
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function renderSummary() {
+  const counts = { action: 0, confirmed: 0, possible: 0, unmatched: 0 };
+  state.results.forEach((item) => { counts[item.category] += 1; });
+  els.totalCount.textContent = state.results.length.toLocaleString("zh-TW");
+  els.actionCount.textContent = counts.action.toLocaleString("zh-TW");
+  els.confirmedCount.textContent = counts.confirmed.toLocaleString("zh-TW");
+  els.possibleCount.textContent = counts.possible.toLocaleString("zh-TW");
+  els.unmatchedCount.textContent = counts.unmatched.toLocaleString("zh-TW");
+}
+
+function resetFilters() {
+  state.currentFilter = "all";
+  els.searchInput.value = "";
+  const allCard = els.summaryGrid.querySelector('[data-filter="all"]');
+  updateSummarySelection(allCard);
+}
+
+function updateSummarySelection(activeCard) {
+  els.summaryGrid.querySelectorAll("[data-filter]").forEach((card) => {
+    const selected = card === activeCard;
+    card.classList.toggle("active", selected);
+    card.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
+}
+
+function applyFilters() {
+  const keyword = normalizeText(els.searchInput.value);
+
+  state.filteredResults = state.results.filter((item) => {
+    const categoryOk = state.currentFilter === "all" || item.category === state.currentFilter;
+    if (!categoryOk) return false;
+    if (!keyword) return true;
+
+    const haystack = [
+      item.label,
+      item.matchingSheet,
+      item.number,
+      item.applicant,
+      item.childName,
+      item.phone,
+      item.caregiver,
+      item.region,
+      item.evidence
+    ].map(normalizeText).join("|");
+
+    return haystack.includes(keyword);
+  });
+
+  renderTable(state.filteredResults);
+}
+
+function renderTable(rows) {
+  els.resultBody.innerHTML = "";
+  els.emptyResult.hidden = rows.length > 0;
+  const filterDescriptions = {
+    all: "顯示媒合名單中的全部幼兒。",
+    action: "補助檔已有托育人員收托資料，但媒合名單尚未填寫媒合成功或結案日期。",
+    confirmed: "補助檔已有收托資料，媒合名單也已註記媒合成功或結案。",
+    possible: "兩份資料只有幼兒姓名相同，家長姓名或電話沒有相符，或補助檔有多筆同名資料，需人工確認。",
+    unmatched: "媒合名單中的幼兒未出現在補助彙整或每月新收托資料。"
+  };
+  els.tableNote.textContent = `目前顯示 ${rows.length} 筆｜${filterDescriptions[state.currentFilter] || ""}`;
+
+  const fragment = document.createDocumentFragment();
+  rows.forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = [
+      `<td><span class="status-pill ${escapeHtml(item.category)}">${escapeHtml(item.label)}</span></td>`,
+      `<td>${escapeHtml(item.matchingSheet)}<br><small>第 ${escapeHtml(item.matchingRow)} 列</small></td>`,
+      `<td>${escapeHtml(displayValue(item.number))}</td>`,
+      `<td>${escapeHtml(displayValue(item.applicant))}</td>`,
+      `<td><strong>${escapeHtml(displayValue(item.childName))}</strong></td>`,
+      `<td>${escapeHtml(displayValue(item.phone))}</td>`,
+      `<td>${escapeHtml(displayValue(item.caregiver))}</td>`,
+      `<td>${escapeHtml(displayValue(item.region))}</td>`,
+      `<td>${escapeHtml(displayValue(item.subsidyStart))}</td>`,
+      `<td>${escapeHtml(displayValue(item.subsidyEnd))}</td>`,
+      `<td>${escapeHtml(displayValue(item.careStatus))}</td>`,
+      `<td>${escapeHtml(displayValue(item.evidence))}</td>`
+    ].join("");
+    fragment.appendChild(tr);
+  });
+  els.resultBody.appendChild(fragment);
+}
+
+function exportResults() {
+  if (!window.XLSX || !state.results.length) return;
+
+  const rows = state.results.map((item) => ({
+    "判定": item.label,
+    "媒合工作表": item.matchingSheet,
+    "媒合檔列數": item.matchingRow,
+    "媒合編號": item.number,
+    "申請日期": item.applicationDate,
+    "申請人": item.applicant,
+    "幼兒姓名": item.childName,
+    "聯絡電話": item.phone,
+    "媒合成功原欄位": item.matchingSuccess,
+    "結案日期原欄位": item.closeDate,
+    "媒合狀況": item.matchStatus,
+    "托育人員": item.caregiver,
+    "補助工作表": item.subsidySheet,
+    "補助檔列數": item.subsidyRow,
+    "補助申請人": item.subsidyApplicant,
+    "幼兒身分證字號": maskId(item.childId),
+    "收托區域": item.region,
+    "補助起始": item.subsidyStart,
+    "補助截止": item.subsidyEnd,
+    "收托日": item.careStart,
+    "收托狀態": item.careStatus,
+    "比對依據": item.evidence
+  }));
+
+  const sheet = window.XLSX.utils.json_to_sheet(rows);
+  sheet["!cols"] = [
+    { wch: 18 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
+    { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
+    { wch: 28 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 14 },
+    { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+    { wch: 20 }, { wch: 36 }
+  ];
+
+  const workbook = window.XLSX.utils.book_new();
+  window.XLSX.utils.book_append_sheet(workbook, sheet, "比對結果");
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  window.XLSX.writeFile(workbook, `媒合收托比對結果_${stamp}.xlsx`);
+}
+
+function resetAll() {
+  state.matchingFile = null;
+  state.subsidyFile = null;
+  state.matchingRows = [];
+  state.subsidyRows = [];
+  state.results = [];
+  state.filteredResults = [];
+  state.currentFilter = "all";
+
+  els.matchingFile.value = "";
+  els.subsidyFile.value = "";
+  setStatus("matching", "尚未選擇檔案", "");
+  setStatus("subsidy", "尚未選擇檔案", "");
+  els.resultArea.hidden = true;
+  els.resultBody.innerHTML = "";
+  hideMessage();
+  updateCompareButton();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function findColumn(headers, aliases) {
+  for (const alias of aliases) {
+    const normalizedAlias = normalizeHeader(alias);
+    const exactIndex = headers.findIndex((header) => header === normalizedAlias);
+    if (exactIndex >= 0) return exactIndex;
+  }
+  for (const alias of aliases) {
+    const normalizedAlias = normalizeHeader(alias);
+    const partialIndex = headers.findIndex((header) => header.includes(normalizedAlias));
+    if (partialIndex >= 0) return partialIndex;
+  }
+  return -1;
+}
+
+function valueAt(row, index) {
+  if (index < 0 || index >= row.length) return "";
+  const value = row[index];
+  return value === null || value === undefined ? "" : String(value).trim();
+}
+
+function normalizeHeader(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[\s　]/g, "")
+    .replace(/[（）()：:；;、，,。\.／/\\\-—_]/g, "")
+    .replace(/Ex\d+/gi, "")
+    .trim();
+}
+
+function normalizeText(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s　]/g, "")
+    .trim();
+}
+
+function normalizeName(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[\s　]/g, "")
+    .replace(/[，,。．.、;；:：()（）\[\]【】]/g, "")
+    .trim();
+}
+
+function normalizePhone(value) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  return digits.length >= 8 ? digits : "";
+}
+
+function phoneEquals(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const length = Math.min(8, a.length, b.length);
+  return length >= 8 && a.slice(-length) === b.slice(-length);
+}
+
+function hasValue(value) {
+  const text = normalizeText(value);
+  return Boolean(text && text !== "null" && text !== "undefined");
+}
+
+function isMarked(value) {
+  const text = normalizeText(value);
+  if (!text) return false;
+  return !["0", "否", "no", "n", "未", "未成功"].includes(text);
+}
+
+function deduplicate(items, keyBuilder) {
+  const map = new Map();
+  items.forEach((item) => {
+    const key = keyBuilder(item);
+    if (!map.has(key)) map.set(key, item);
+  });
+  return [...map.values()];
+}
+
+function displayValue(value) {
+  return hasValue(value) ? String(value) : "—";
+}
+
+function maskId(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  if (text.length <= 5) return "*".repeat(text.length);
+  return `${text.slice(0, text.length - 5)}*****`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function showMessage(text, type) {
+  els.message.textContent = text;
+  els.message.className = `message show ${type || "info"}`;
+}
+
+function hideMessage() {
+  els.message.textContent = "";
+  els.message.className = "message";
+}
+
+  </script>
+</body>
+</html>
