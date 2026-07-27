@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>日期計算工具</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#7b5c35">
 <style>
 :root{
@@ -452,12 +452,20 @@ button{border:0;border-radius:14px;padding:14px 18px;font-size:18px;font-weight:
 
 
 <script>
-const role = sessionStorage.getItem("toolRole");
-if (window.top === window.self && !(role === "admin")) {
+let role = sessionStorage.getItem("toolRole");
+try {
+  if (window.top !== window.self && window.parent.sessionStorage) {
+    role = window.parent.sessionStorage.getItem("toolRole") || role;
+  }
+} catch (e) {}
+
+if (window.top === window.self && role !== "admin") {
   window.location.href = "../";
 }
-if (window.top !== window.self && !(role === "admin")) {
-  window.top.location.href = "../";
+if (window.top !== window.self && role !== "admin") {
+  document.addEventListener("DOMContentLoaded", function () {
+    document.body.innerHTML = '<div style="padding:32px;text-align:center;font-family:Microsoft JhengHei,Arial,sans-serif;color:#6b4f35"><h2>登入狀態已失效</h2><p>請返回首頁重新登入。</p></div>';
+  });
 }
 </script>
 
@@ -1175,7 +1183,9 @@ async function copyEnterovirusMessage(){
 
 async function copyText(id){const text=qs(id).textContent;if(!text.trim())return;try{await navigator.clipboard.writeText(text);alert("已複製結果。")}catch(e){alert("手機瀏覽器不支援自動複製，請長按文字手動複製。")}}
 changeCaseType();
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js"))}
+if("serviceWorker" in navigator && window.top === window.self){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"))
+}
 </script>
 
 <div class="roc-picker-backdrop" id="rocPickerBackdrop" onclick="closeRocPicker(event)">

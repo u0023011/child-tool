@@ -793,49 +793,49 @@
           
           
           <div class="tool-grid">
-            <button type="button" class="tool-card admin-only" onclick="openTool('childcare-law/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('childcare-law/index.html')">
               <div class="tool-title">📖 托育法規工具</div>
               <div class="tool-desc">查詢托育法規、違規及罰則。</div>
               <div class="tool-count">已有 <strong id="count-childcare-law">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card admin-only" onclick="openTool('childcare-case-library/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('childcare-case-library/index.html')">
               <div class="tool-title">⚖️ 托育違規案例庫</div>
               <div class="tool-desc">依具體事件主題查詢法院判決、行政裁罰及事故案例。</div>
               <div class="tool-count">已有 <strong id="count-childcare-case-library">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card basic-allowed admin-allowed" onclick="openTool('age-tool/')">
+            <button type="button" class="tool-card basic-allowed admin-allowed" onclick="openTool('age-tool/index.html')">
               <div class="tool-title">👶 幼兒年齡檢核工具</div>
               <div class="tool-desc">快速查詢幼兒年齡、月齡與發展階段。</div>
               <div class="tool-count">已有 <strong id="count-age-tool">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card admin-only" onclick="openTool('report-date-tool/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('report-date-tool/index.html')">
               <div class="tool-title">📅 回報日期計算工具</div>
               <div class="tool-desc">計算新收托、結束收托、補助申請與準公共退出日期。</div>
               <div class="tool-count">已有 <strong id="count-report-date-tool">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card admin-only" onclick="openTool('receipt-tool/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('receipt-tool/index.html')">
               <div class="tool-title">🧾 訊息生成器</div>
               <div class="tool-desc">產生收件、托育媒合及在職通知訊息。</div>
               <div class="tool-count">已有 <strong id="count-receipt-tool">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card admin-only" onclick="openTool('report-generator/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('report-generator/index.html')">
               <div class="tool-title">📊 報表生成器</div>
               <div class="tool-desc">貼上 Excel 工作頁資料，自動整理並產生統計報表。</div>
               <div class="tool-count">已有 <strong id="count-report-generator">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card admin-only" onclick="openTool('matching-check-tool/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('matching-check-tool/index.html')">
               <div class="tool-title">🔍 媒合收托比對工具</div>
               <div class="tool-desc">比對家長媒合名單與補助彙整，找出已由托育人員收托的幼兒。</div>
               <div class="tool-count">已有 <strong id="count-matching-check-tool">讀取中</strong> 人次使用</div>
             </button>
 
-            <button type="button" class="tool-card admin-only" onclick="openTool('training-hours-tool/')">
+            <button type="button" class="tool-card admin-only" onclick="openTool('training-hours-tool/index.html')">
               <div class="tool-title">📚 在職課程時數工具</div>
               <div class="tool-desc">依證書生效日產生年度區間，整理課程並匯出 Excel。</div>
               <div class="tool-count">已有 <strong id="count-training-hours-tool">讀取中</strong> 人次使用</div>
@@ -891,53 +891,53 @@
     }
 
     const toolPermissions = {
-      "age-tool/": ["basic", "admin"],
-      "childcare-law/": ["admin"],
-      "childcare-case-library/": ["admin"],
-      "report-date-tool/": ["admin"],
-      "receipt-tool/": ["admin"],
-      "report-generator/": ["admin"],
-      "matching-check-tool/": ["admin"],
-      "training-hours-tool/": ["admin"]
+      "age-tool/index.html": ["basic", "admin"],
+      "childcare-law/index.html": ["admin"],
+      "childcare-case-library/index.html": ["admin"],
+      "report-date-tool/index.html": ["admin"],
+      "receipt-tool/index.html": ["admin"],
+      "report-generator/index.html": ["admin"],
+      "matching-check-tool/index.html": ["admin"],
+      "training-hours-tool/index.html": ["admin"]
     };
 
     const counterMap = {
-      "childcare-law/": {
+      "childcare-law/index.html": {
         counter: "childcare_law",
         name: "托育法規工具",
         cardId: "count-childcare-law"
       },
-      "childcare-case-library/": {
+      "childcare-case-library/index.html": {
         counter: "childcare_case_library",
         name: "托育違規案例庫",
         cardId: "count-childcare-case-library"
       },
-      "age-tool/": {
+      "age-tool/index.html": {
         counter: "age_tool",
         name: "幼兒年齡檢核工具",
         cardId: "count-age-tool"
       },
-      "report-date-tool/": {
+      "report-date-tool/index.html": {
         counter: "report_date_tool",
         name: "回報日期計算工具",
         cardId: "count-report-date-tool"
       },
-      "receipt-tool/": {
+      "receipt-tool/index.html": {
         counter: "receipt_tool",
         name: "訊息生成器",
         cardId: "count-receipt-tool"
       },
-      "report-generator/": {
+      "report-generator/index.html": {
         counter: "report_generator",
         name: "報表生成器",
         cardId: "count-report-generator"
       },
-      "matching-check-tool/": {
+      "matching-check-tool/index.html": {
         counter: "matching_check_tool",
         name: "媒合收托比對工具",
         cardId: "count-matching-check-tool"
       },
-      "training-hours-tool/": {
+      "training-hours-tool/index.html": {
         counter: "training_hours_tool",
         name: "在職課程時數工具",
         cardId: "count-training-hours-tool"
@@ -979,7 +979,7 @@
 
       for (const path of Object.keys(counterMap)) {
         const allowedRoles = toolPermissions[path] || [];
-        const cfg = counterMap[path];
+        const cfg = counterMap[path] || counterMap[normalizeToolPath(path)] || counterMap[normalizeToolPath(path) + 'index.html'];
         const el = document.getElementById(cfg.cardId);
 
         if (!el) continue;
@@ -994,8 +994,12 @@
       }
     }
 
+    function normalizeToolPath(path) {
+      return String(path || "").replace(/index\.html(?:\?.*)?$/, "");
+    }
+
     async function loadToolUsage(path) {
-      const cfg = counterMap[path];
+      const cfg = counterMap[path] || counterMap[normalizeToolPath(path)] || counterMap[normalizeToolPath(path) + 'index.html'];
       if (!cfg || !toolUsageCounter || !toolUsageName || !toolUsageCount) return;
 
       toolUsageName.textContent = cfg.name;
@@ -1084,7 +1088,8 @@
       menuArea.style.display = "none";
       toolArea.style.display = "block";
       backBtn.style.display = "block";
-      toolFrame.src = path;
+      const separator = path.includes("?") ? "&" : "?";
+      toolFrame.src = path + separator + "v=20260727-1";
       loadToolUsage(path);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -1104,6 +1109,17 @@
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+
+
+    toolFrame.addEventListener("error", function () {
+      toolArea.style.display = "block";
+      toolFrame.removeAttribute("src");
+      toolFrame.srcdoc = `
+        <div style="font-family:Microsoft JhengHei,Arial,sans-serif;padding:40px;text-align:center;color:#6b4f35">
+          <h2>工具載入失敗</h2>
+          <p>請確認子資料夾內有 index.html，並重新部署網站。</p>
+        </div>`;
+    });
 
     passwordInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") login();
