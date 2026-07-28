@@ -2782,6 +2782,11 @@
           <button type="button" class="action danger remove-child">刪除</button>
         </div>
 
+        <div class="child-shortcuts" style="display: flex; gap: 8px; margin-bottom: 12px; margin-top: -10px;">
+          <button type="button" class="action shortcut-new" style="flex: 1; background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; padding: 6px 12px;">新收托 (快捷鍵)</button>
+          <button type="button" class="action shortcut-stop" style="flex: 1; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 6px 12px;">停托 (快捷鍵)</button>
+        </div>
+
         <div class="child-qty-grid">
           ${["異動單","契約書","臨托契約書"].map(label=>`
             <label class="child-qty-box">
@@ -2825,6 +2830,33 @@
         panel.hidden=open;
         toggle.setAttribute("aria-expanded",String(!open));
         toggle.querySelector(".development-inline-note").textContent=open?"點擊展開 ▼":"點擊收合 ▲";
+      });
+
+      
+      box.querySelector(".shortcut-new").addEventListener("click", () => {
+        box.querySelectorAll("input[type='number']").forEach(input => input.value = "");
+        box.querySelectorAll(".toggle").forEach(btn => btn.classList.remove("active"));
+        
+        const transferInput = box.querySelector("input[data-child-qty='異動單']");
+        if (transferInput) transferInput.value = "1";
+        const contractInput = box.querySelector("input[data-child-qty='契約書']");
+        if (contractInput) contractInput.value = "2";
+
+        ["補助申報表", "戶口名簿", "郵局影本"].forEach(label => {
+          const btn = box.querySelector(`.toggle[data-label='${label}']`);
+          if (btn) btn.classList.add("active");
+        });
+      });
+
+      box.querySelector(".shortcut-stop").addEventListener("click", () => {
+        box.querySelectorAll("input[type='number']").forEach(input => input.value = "");
+        box.querySelectorAll(".toggle").forEach(btn => btn.classList.remove("active"));
+
+        const transferInput = box.querySelector("input[data-child-qty='異動單']");
+        if (transferInput) transferInput.value = "1";
+
+        const stopSubsidyBtn = box.querySelector(".toggle[data-label='停止補助申報表']");
+        if (stopSubsidyBtn) stopSubsidyBtn.classList.add("active");
       });
 
       $("childList").appendChild(box);
