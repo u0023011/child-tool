@@ -1,4 +1,4 @@
-const CACHE_NAME = "child-tool-pwa-20260730-enterovirus-v1";
+const CACHE_NAME = "child-tool-pwa-20260730-enterovirus-v2";
 const CACHE_PREFIX = "child-tool-pwa-";
 
 const PRECACHE_URLS = [
@@ -12,6 +12,8 @@ const PRECACHE_URLS = [
   "./childcare-law/",
   "./childcare-case-library/",
   "./report-date-tool/",
+  "./enterovirus-report/",
+  "./enterovirus-report/index.html",
   "./receipt-tool/",
   "./report-generator/",
   "./training-hours-tool/",

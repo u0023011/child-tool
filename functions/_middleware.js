@@ -69,6 +69,7 @@ export async function onRequest(context) {
     { prefix: "/childcare-law", roles: ["admin"] },
     { prefix: "/childcare-case-library", roles: ["admin"] },
     { prefix: "/report-date-tool", roles: ["admin"] },
+    { prefix: "/enterovirus-report", roles: ["admin"] },
     { prefix: "/receipt-tool", roles: ["admin"] },
     { prefix: "/report-generator", roles: ["admin"] },
     { prefix: "/training-hours-tool", roles: ["admin"] }
