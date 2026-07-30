@@ -286,6 +286,32 @@
       color:#5c4329;
     }
 
+    button.section-label.subsidy-group-toggle{
+      display:block;
+      padding:0;
+      border:0;
+      background:transparent;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .subsidy-group-toggle::after{
+      content:"（點擊全選）";
+      margin-left:6px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .subsidy-group-toggle.active{
+      color:var(--ok);
+    }
+
+    .subsidy-group-toggle.active::after{
+      content:"（再次點擊取消）";
+      color:var(--ok);
+    }
+
     input[type="text"],
     input[type="number"],
     input[type="date"],
@@ -508,6 +534,40 @@
       grid-template-columns:minmax(160px,280px) 1fr auto;
       gap:10px;
       align-items:end;
+    }
+
+    .child-preset-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .child-preset{
+      border:1.5px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      background:#fff;
+      font-weight:900;
+    }
+
+    .child-preset-new{
+      color:#007b78;
+      border-color:#91d9d5;
+      background:#e8f8f7;
+    }
+
+    .child-preset-stop{
+      color:#c52f37;
+      border-color:#f2b5ba;
+      background:#fff0f1;
+    }
+
+    .child-preset.active{
+      color:#fff;
+      background:var(--primary);
+      border-color:var(--primary);
+      box-shadow:0 3px 8px rgba(75,48,24,.18);
     }
 
     .child-qty-grid{
@@ -1649,8 +1709,8 @@
         <div class="collapse-content">
           <div class="section-label">申請書</div>
           <div class="toggle-grid" data-group="general">
-            <button class="toggle" data-label="新登記申請書">新登記</button>
-            <button class="toggle" data-label="屆期換證申請書">屆期換證</button>
+            <button class="toggle registration-preset-toggle" data-label="新登記申請書">新登記</button>
+            <button class="toggle registration-preset-toggle" data-label="屆期換證申請書">屆期換證</button>
             <button class="toggle" data-label="換發申請書">換發</button>
             <button class="toggle" data-label="恢復申請書">恢復</button>
             <button class="toggle" data-label="停止申請書">停止</button>
@@ -1677,8 +1737,40 @@
         </div>
       </details>
 
+      <details class="card collapsible-card" id="subsidyApplicationDetails">
+        <summary class="collapse-summary">
+          <h3 class="card-title"><span class="badge">2</span>補助申請</h3>
+          <span class="collapse-status"><span class="collapse-action-text">點擊展開</span><span class="collapse-arrow">▼</span></span>
+        </summary>
+
+        <div class="collapse-content">
+          <button type="button" class="section-label subsidy-group-toggle" data-subsidy-target="medical">體檢補助</button>
+          <div class="toggle-grid" data-group="general" data-subsidy-group="medical">
+            <button class="toggle" data-label="體檢補助申請表">體檢補助申請表</button>
+            <button class="toggle" data-label="郵局帳戶影本">郵局帳戶影本</button>
+            <button class="toggle financial-other-toggle" data-label="其他金融機構" data-financial-name="">其他金融機構</button>
+            <button class="toggle" data-label="收據">收據</button>
+          </div>
+
+          <button type="button" class="section-label subsidy-group-toggle" data-subsidy-target="delay">發緩補助</button>
+          <div class="toggle-grid" data-group="general" data-subsidy-group="delay">
+            <button class="toggle" data-label="發緩補助申請表">申請表</button>
+            <button class="toggle" data-label="發緩補助照顧費名冊">照顧費名冊</button>
+            <button class="toggle" data-label="發緩補助領據">領據</button>
+          </div>
+
+          <button type="button" class="section-label subsidy-group-toggle" data-subsidy-target="quasi">準公獎助金</button>
+          <div class="toggle-grid" data-group="general" data-subsidy-group="quasi">
+            <button class="toggle" data-label="準公獎助金申請表">申請表</button>
+            <button class="toggle" data-label="準公獎助金領據">領據</button>
+            <button class="toggle" data-label="準公獎助金存摺">存摺</button>
+            <button class="toggle" data-label="準公獎助金考核表">考核表</button>
+          </div>
+        </div>
+      </details>
+
       <section class="card">
-        <h3 class="card-title"><span class="badge">2</span>收托資料</h3>
+        <h3 class="card-title"><span class="badge">3</span>收托資料</h3>
         <details class="roster-import-box">
           <summary>貼上 Excel 名單資料</summary>
           <p class="helper">家長及幼兒資料維護(ca31010) →列印家長幼兒資料</p>
@@ -1710,7 +1802,7 @@
 
       <section class="card">
         <div class="receipt-output-head">
-          <h3 class="card-title"><span class="badge">3</span>產出訊息</h3>
+          <h3 class="card-title"><span class="badge">4</span>產出訊息</h3>
           <div class="opening-inline">
             <label for="opening">訊息開頭</label>
             <input id="opening" type="text" value="今日收件：">
@@ -2170,6 +2262,19 @@
     </div>
   </div>
 
+  <div class="id-card-modal-backdrop" id="financialOtherModalBackdrop" aria-hidden="true">
+    <div class="id-card-modal" role="dialog" aria-modal="true" aria-labelledby="financialOtherModalTitle">
+      <h3 id="financialOtherModalTitle">輸入其他金融機構</h3>
+      <p>請輸入金融機構名稱。</p>
+      <input id="financialOtherInput" type="text" placeholder="例如：臺灣銀行">
+      <div class="actions">
+        <button type="button" class="action primary wide" id="financialOtherConfirm">確認</button>
+        <button type="button" class="action danger" id="financialOtherClear">取消選取</button>
+        <button type="button" class="action ghost" id="financialOtherCancel">返回</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">已複製</div>
 
   <script>
@@ -2297,7 +2402,7 @@
     // 共用複選按鈕
     function bindMultiButtons(root){
       root.querySelectorAll(".choice,.toggle,.weekday").forEach(btn=>{
-        if(btn.classList.contains("photo-count-toggle")) return;
+        if(btn.classList.contains("photo-count-toggle") || btn.classList.contains("financial-other-toggle")) return;
         if(btn.dataset.bound) return;
         btn.dataset.bound="1";
         btn.addEventListener("click",()=>{
@@ -2307,6 +2412,42 @@
       });
     }
     bindMultiButtons(document);
+
+    function setButtonActive(button,active){
+      button.classList.toggle("active",active);
+      button.setAttribute("aria-pressed",String(active));
+    }
+
+    function applyRegistrationPreset(active){
+      const labels=[
+        "體檢表","良民證","環境自評表","刑事紀錄同意書",
+        "登記切結書","個資同意書"
+      ];
+
+      labels.forEach(label=>{
+        const button=document.querySelector(`#registrationDetails .toggle[data-label="${label}"]`);
+        if(button) setButtonActive(button,active);
+      });
+
+      const photoButton=document.querySelector(".photo-count-toggle");
+      if(photoButton){
+        setButtonActive(photoButton,active);
+        photoButton.dataset.photoCount=active?"2":"";
+        photoButton.textContent=active?"大頭照（2張）":"大頭照";
+      }
+    }
+
+    document.querySelectorAll(".registration-preset-toggle").forEach(button=>{
+      button.addEventListener("click",()=>{
+        const active=button.classList.contains("active");
+        if(active){
+          document.querySelectorAll(".registration-preset-toggle").forEach(other=>{
+            if(other!==button) setButtonActive(other,false);
+          });
+        }
+        applyRegistrationPreset(active);
+      });
+    });
 
 
     // 民國日期選擇器
@@ -2595,6 +2736,75 @@
       if(event.target===$("photoCountModalBackdrop")) closePhotoCountModal();
     });
 
+    // 其他金融機構輸入視窗
+    const financialOtherButton=document.querySelector(".financial-other-toggle");
+
+    function openFinancialOtherModal(){
+      $("financialOtherInput").value=financialOtherButton.dataset.financialName || "";
+      $("financialOtherModalBackdrop").classList.add("show");
+      $("financialOtherModalBackdrop").setAttribute("aria-hidden","false");
+      setTimeout(()=>$("financialOtherInput").focus(),0);
+    }
+
+    function closeFinancialOtherModal(){
+      $("financialOtherModalBackdrop").classList.remove("show");
+      $("financialOtherModalBackdrop").setAttribute("aria-hidden","true");
+    }
+
+    function confirmFinancialOther(){
+      const name=$("financialOtherInput").value.trim();
+      if(!name){
+        alert("請輸入金融機構名稱。");
+        $("financialOtherInput").focus();
+        return;
+      }
+      financialOtherButton.dataset.financialName=name;
+      financialOtherButton.classList.add("active");
+      financialOtherButton.setAttribute("aria-pressed","true");
+      financialOtherButton.textContent=`其他金融機構（${name}）`;
+      closeFinancialOtherModal();
+    }
+
+    financialOtherButton.addEventListener("click",openFinancialOtherModal);
+    $("financialOtherConfirm").addEventListener("click",confirmFinancialOther);
+    $("financialOtherInput").addEventListener("keydown",event=>{
+      if(event.key==="Enter") confirmFinancialOther();
+    });
+    $("financialOtherClear").addEventListener("click",()=>{
+      financialOtherButton.dataset.financialName="";
+      financialOtherButton.classList.remove("active");
+      financialOtherButton.setAttribute("aria-pressed","false");
+      financialOtherButton.textContent="其他金融機構";
+      closeFinancialOtherModal();
+    });
+    $("financialOtherCancel").addEventListener("click",closeFinancialOtherModal);
+    $("financialOtherModalBackdrop").addEventListener("click",event=>{
+      if(event.target===$("financialOtherModalBackdrop")) closeFinancialOtherModal();
+    });
+
+    // 補助申請小類別：一鍵全選／再次點擊取消
+    document.querySelectorAll(".subsidy-group-toggle").forEach(groupButton=>{
+      groupButton.addEventListener("click",()=>{
+        const group=document.querySelector(
+          `[data-subsidy-group="${groupButton.dataset.subsidyTarget}"]`
+        );
+        if(!group) return;
+
+        const shouldSelect=!groupButton.classList.contains("active");
+        setButtonActive(groupButton,shouldSelect);
+
+        group.querySelectorAll(".toggle").forEach(button=>{
+          if(button.classList.contains("financial-other-toggle")){
+            button.dataset.financialName="";
+            button.textContent="其他金融機構";
+            setButtonActive(button,false);
+          }else{
+            setButtonActive(button,shouldSelect);
+          }
+        });
+      });
+    });
+
     // 收件紀錄
     const childOptions = [
       "異動單","契約書","臨托契約書","補助申報表","戶口名簿",
@@ -2782,9 +2992,9 @@
           <button type="button" class="action danger remove-child">刪除</button>
         </div>
 
-        <div class="child-shortcuts" style="display: flex; gap: 8px; margin-top: 15px; margin-bottom: 15px;">
-          <button type="button" class="action shortcut-new" style="flex: 1; background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; padding: 8px 12px; cursor: pointer;">新收托</button>
-          <button type="button" class="action shortcut-stop" style="flex: 1; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 8px 12px; cursor: pointer;">停托</button>
+        <div class="child-preset-grid">
+          <button type="button" class="child-preset child-preset-new" data-preset="new">新收托</button>
+          <button type="button" class="child-preset child-preset-stop" data-preset="stop">停托</button>
         </div>
 
         <div class="child-qty-grid">
@@ -2823,6 +3033,45 @@
         }
       });
 
+      const presetButtons=[...box.querySelectorAll(".child-preset")];
+      const presetToggleLabels=["補助申報表","戶口名簿","郵局影本","停止補助申報表"];
+
+      function clearChildPreset(){
+        presetButtons.forEach(button=>setButtonActive(button,false));
+        ["異動單","契約書","臨托契約書"].forEach(label=>{
+          const input=box.querySelector(`[data-child-qty="${label}"]`);
+          if(input) input.value="";
+        });
+        presetToggleLabels.forEach(label=>{
+          const button=box.querySelector(`.child-toggles .toggle[data-label="${label}"]`);
+          if(button) setButtonActive(button,false);
+        });
+      }
+
+      presetButtons.forEach(button=>{
+        button.addEventListener("click",()=>{
+          const wasActive=button.classList.contains("active");
+          clearChildPreset();
+          if(wasActive) return;
+
+          setButtonActive(button,true);
+          const changeInput=box.querySelector('[data-child-qty="異動單"]');
+          if(changeInput) changeInput.value="1";
+
+          if(button.dataset.preset==="new"){
+            const contractInput=box.querySelector('[data-child-qty="契約書"]');
+            if(contractInput) contractInput.value="2";
+            ["補助申報表","戶口名簿","郵局影本"].forEach(label=>{
+              const target=box.querySelector(`.child-toggles .toggle[data-label="${label}"]`);
+              if(target) setButtonActive(target,true);
+            });
+          }else{
+            const stopTarget=box.querySelector('.child-toggles .toggle[data-label="停止補助申報表"]');
+            if(stopTarget) setButtonActive(stopTarget,true);
+          }
+        });
+      });
+
       const toggle=box.querySelector(".development-inline-toggle");
       const panel=box.querySelector(".development-inline-panel");
       toggle.addEventListener("click",()=>{
@@ -2830,33 +3079,6 @@
         panel.hidden=open;
         toggle.setAttribute("aria-expanded",String(!open));
         toggle.querySelector(".development-inline-note").textContent=open?"點擊展開 ▼":"點擊收合 ▲";
-      });
-
-      
-      box.querySelector(".shortcut-new").addEventListener("click", () => {
-        box.querySelectorAll("input[type='number']").forEach(input => input.value = "");
-        box.querySelectorAll(".toggle").forEach(btn => btn.classList.remove("active"));
-        
-        const transferInput = box.querySelector("input[data-child-qty='異動單']");
-        if (transferInput) transferInput.value = "1";
-        const contractInput = box.querySelector("input[data-child-qty='契約書']");
-        if (contractInput) contractInput.value = "2";
-
-        ["補助申報表", "戶口名簿", "郵局影本"].forEach(label => {
-          const btn = box.querySelector(`.toggle[data-label='${label}']`);
-          if (btn) btn.classList.add("active");
-        });
-      });
-
-      box.querySelector(".shortcut-stop").addEventListener("click", () => {
-        box.querySelectorAll("input[type='number']").forEach(input => input.value = "");
-        box.querySelectorAll(".toggle").forEach(btn => btn.classList.remove("active"));
-
-        const transferInput = box.querySelector("input[data-child-qty='異動單']");
-        if (transferInput) transferInput.value = "1";
-
-        const stopSubsidyBtn = box.querySelector(".toggle[data-label='停止補助申報表']");
-        if (stopSubsidyBtn) stopSubsidyBtn.classList.add("active");
       });
 
       $("childList").appendChild(box);
@@ -2942,6 +3164,9 @@
         if(btn.classList.contains("photo-count-toggle")){
           const count=Number(btn.dataset.photoCount);
           if(count>0) general.push(`大頭照*${count}`);
+        }else if(btn.classList.contains("financial-other-toggle")){
+          const name=btn.dataset.financialName.trim();
+          if(name) general.push(`其他金融機構（${name}）`);
         }else{
           general.push(btn.dataset.label);
         }
@@ -3019,6 +3244,10 @@
       $("receiptArea").value="";
       $("receiptCaregiver").value="";
       document.querySelectorAll('#section-receipt .toggle.active').forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll('#section-receipt .subsidy-group-toggle.active').forEach(x=>{
+        x.classList.remove("active");
+        x.setAttribute("aria-pressed","false");
+      });
       document.querySelectorAll('#section-receipt .id-card-toggle').forEach(btn=>{
         btn.dataset.idPersons="";
         btn.textContent="身分證影本";
@@ -3026,8 +3255,12 @@
       photoCountButton.dataset.photoCount="";
       photoCountButton.textContent="大頭照";
       photoCountButton.setAttribute("aria-pressed","false");
+      financialOtherButton.dataset.financialName="";
+      financialOtherButton.textContent="其他金融機構";
+      financialOtherButton.setAttribute("aria-pressed","false");
       $("receiptResult").value="";
       $("registrationDetails").open=false;
+      $("subsidyApplicationDetails").open=false;
       $("childList").innerHTML="";
       addChild();
       refreshReceiptLinkedLists();
