@@ -7,7 +7,8 @@ const COUNTER_KEYS = {
   receipt_tool: "tool_receipt_tool_views",
   report_generator: "tool_report_generator_views",
   training_hours_tool: "tool_training_hours_tool_views",
-  matching_check_tool: "tool_matching_check_tool_views"
+  matching_check_tool: "tool_matching_check_tool_views",
+  enterovirus_report: "tool_enterovirus_report_views"
 };
 
 function getCounterKey(request) {

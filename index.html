@@ -817,6 +817,12 @@
               <div class="tool-count">已有 <strong id="count-report-date-tool">讀取中</strong> 人次使用</div>
             </button>
 
+            <button type="button" class="tool-card admin-only" onclick="openExternalTool('https://enterovirus-report.u0023011.chatgpt.site', 'enterovirus-report')">
+              <div class="tool-title">📋 腸病毒通報紀錄</div>
+              <div class="tool-desc">快速帶入托育人員、幼兒及家長資料，產生腸病毒事件通報紀錄。</div>
+              <div class="tool-count">已有 <strong id="count-enterovirus-report">讀取中</strong> 人次使用</div>
+            </button>
+
             <button type="button" class="tool-card admin-only" onclick="openTool('receipt-tool/index.html')">
               <div class="tool-title">🧾 訊息生成器</div>
               <div class="tool-desc">產生收件、托育媒合及在職通知訊息。</div>
@@ -898,7 +904,8 @@
       "receipt-tool/index.html": ["admin"],
       "report-generator/index.html": ["admin"],
       "matching-check-tool/index.html": ["admin"],
-      "training-hours-tool/index.html": ["admin"]
+      "training-hours-tool/index.html": ["admin"],
+      "enterovirus-report": ["admin"]
     };
 
     const counterMap = {
@@ -941,6 +948,11 @@
         counter: "training_hours_tool",
         name: "在職課程時數工具",
         cardId: "count-training-hours-tool"
+      },
+      "enterovirus-report": {
+        counter: "enterovirus_report",
+        name: "腸病毒通報紀錄",
+        cardId: "count-enterovirus-report"
       }
     };
 
@@ -1092,6 +1104,34 @@
       toolFrame.src = path + separator + "v=20260727-1";
       loadToolUsage(path);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function openExternalTool(url, permissionKey) {
+      const role = sessionStorage.getItem("toolRole");
+      const allowedRoles = toolPermissions[permissionKey] || [];
+
+      if (sessionStorage.getItem("toolLogin") !== "ok" || !allowedRoles.includes(role)) {
+        alert("此密碼無法使用這個工具。");
+        return;
+      }
+
+      const cfg = counterMap[permissionKey];
+      const openedWindow = window.open(url, "_blank", "noopener,noreferrer");
+
+      if (!openedWindow) {
+        window.location.href = url;
+      }
+
+      if (cfg) {
+        fetchCounter(cfg.counter, true)
+          .then(function (data) {
+            const cardEl = document.getElementById(cfg.cardId);
+            if (cardEl) {
+              cardEl.textContent = Number(data.count || 0).toLocaleString("zh-TW");
+            }
+          })
+          .catch(function () {});
+      }
     }
 
     function backToMenu() {
