@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "childcare-case-library-";
-const CACHE_NAME = `${CACHE_PREFIX}v20260724-1`;
+const CACHE_NAME = `${CACHE_PREFIX}v20260729-104`;
 const PUBLIC_ASSETS = [
   "./manifest.json",
   "./icon-192.png",
