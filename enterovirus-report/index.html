@@ -39775,8 +39775,6 @@ Actual: ` +
             educationStatus: "",
             caregiverPhone: "",
             caregiverAddress: "",
-            reportDate: "",
-            reportTime: "",
             onsetDate: "",
             feverStatus: "",
             maxTemp: "38.5",
@@ -39813,7 +39811,7 @@ Actual: ` +
             n.setDate(e.getDate() + 7),
             {
               ...xN,
-              reportDate: jr(e),
+              caseDate: jr(e),
               leaveFrom: jr(e),
               leaveTo: jr(n),
               parentContactDate: jr(e),
@@ -40819,7 +40817,7 @@ Actual: ` +
             S = () => {
               let U = NN(e.childName),
                 se = "\u6258\u80B2\u4EBA\u54E1",
-                C = [pn(e.reportDate), Jc(e.reportTime)]
+                C = [pn(e.caseDate), Jc(e.caseTime)]
                   .filter(Boolean)
                   .join(""),
                 G = yl(e.onsetDate),
@@ -42222,33 +42220,6 @@ Actual: ` +
                                   (0, B.jsxs)("div", {
                                     className: "fields three",
                                     children: [
-                                      (0, B.jsxs)("label", {
-                                        children: [
-                                          (0, B.jsx)("span", {
-                                            children:
-                                              "\u6258\u80B2\u4EBA\u54E1\u901A\u5831\u4E2D\u5FC3\u65E5\u671F",
-                                          }),
-                                          (0, B.jsx)(zn, {
-                                            label:
-                                              "\u6258\u80B2\u4EBA\u54E1\u901A\u5831\u4E2D\u5FC3\u65E5\u671F",
-                                            value: e.reportDate,
-                                            onChange: (U) => u("reportDate", U),
-                                          }),
-                                        ],
-                                      }),
-                                      (0, B.jsxs)("label", {
-                                        children: [
-                                          (0, B.jsx)("span", {
-                                            children:
-                                              "\u901A\u5831\u6642\u9593",
-                                          }),
-                                          (0, B.jsx)(HN, {
-                                            label: "\u901A\u5831\u6642\u9593",
-                                            value: e.reportTime,
-                                            onChange: (U) => u("reportTime", U),
-                                          }),
-                                        ],
-                                      }),
                                       (0, B.jsxs)("label", {
                                         children: [
                                           (0, B.jsx)("span", {
