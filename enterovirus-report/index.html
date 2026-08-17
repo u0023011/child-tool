@@ -40110,7 +40110,7 @@ Actual: ` +
                 caregiverBirthDate: normalizeImportedDate(
                   a.caregiverBirthDate,
                 ),
-                systemDate: normalizeImportedDate(a.systemDate),
+                systemDate: normalizeImportValue(a.systemDate),
                 educationStatus: normalizeEducationStatus(a.educationStatus),
               },
               l =
@@ -40207,9 +40207,10 @@ Actual: ` +
                     y.subsidyEndDate,
                   ),
                 },
-                v =
-                  w.childId ||
-                  `${normalizeImportKey(w.caregiverName)}|${normalizeImportKey(w.childName)}`;
+                childIdentity = w.childId
+                  ? w.childId
+                  : `${normalizeImportKey(w.childName)}|${normalizeImportKey(w.childBirthDate)}|${normalizeImportKey(w.careStartDate)}`,
+                v = `${normalizePersonLookup(w.caregiverName)}|${childIdentity}`;
               l.has(v) || l.set(v, w);
             });
           });
@@ -40650,9 +40651,10 @@ Actual: ` +
                     })
                     .map((G, A) => ({
                       ...G,
-                      optionKey:
+                      optionKey: `${normalizePersonLookup(G.caregiverName)}|${
                         G.childId ||
-                        `${normalizeImportKey(G.childName)}-${A + 1}`,
+                        `${normalizeImportKey(G.childName)}|${normalizeImportKey(G.childBirthDate)}|${normalizeImportKey(G.careStartDate)}`
+                      }`,
                     }))
                 : [];
             }, [
@@ -40779,7 +40781,7 @@ Actual: ` +
                   caregiverSex: re,
                   caregiverBirthDate: Y.caregiverBirthDate,
                   caregiverId: Y.caregiverId,
-                  systemDate: normalizeImportedDate(Y.systemDate),
+                  systemDate: normalizeImportValue(Y.systemDate),
                   systemNumber: Y.systemNumber,
                   educationStatus: Y.educationStatus,
                   caregiverPhone: Y.caregiverPhone,
@@ -41173,7 +41175,7 @@ Actual: ` +
                           span: 2,
                           size: 18,
                         }),
-                        $(pn(e.systemDate, !1)),
+                        $(e.systemDate),
                         $("\u7CFB\u7D71\u7DE8\u865F", { center: !0, size: 18 }),
                         $(e.systemNumber),
                       ],
@@ -42155,11 +42157,12 @@ Actual: ` +
                                         children:
                                           "\u52A0\u5165\u7CFB\u7D71\u65E5\u671F",
                                       }),
-                                      (0, B.jsx)(zn, {
-                                        label:
-                                          "\u52A0\u5165\u7CFB\u7D71\u65E5\u671F",
+                                      (0, B.jsx)("input", {
                                         value: e.systemDate,
-                                        onChange: (U) => u("systemDate", U),
+                                        placeholder:
+                                          "\u4F9D Excel \u6B04\u4F4D\u5167\u5BB9\u539F\u6A23\u986F\u793A",
+                                        onChange: (U) =>
+                                          u("systemDate", U.target.value),
                                       }),
                                     ],
                                   }),
