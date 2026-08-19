@@ -441,7 +441,7 @@ if (!isStandaloneFile && window.top !== window.self && !(role === "admin")) {
   <div class="quiz-head">
     <div>
       <h2 class="quiz-title">📚 兒托法違規與罰則練習</h2>
-      <div class="quiz-note">每次隨機 3 題，只針對《兒童托育服務法》出題。<strong>優先從罰則反推違規條件</strong>，並把身分、前置程序、期限、收托人數及後續處理等成立要件寫清楚；不考死背條號。</div>
+      <div class="quiz-note">每次 3 題，只針對《兒童托育服務法》出題。<strong>採低重複輪播：同一輪題庫全部走過前不重複題目，並優先避開最近 2 組出現過的主題</strong>；題型以罰則反推違規條件與實務情境交錯，並把身分、前置程序、期限、收托人數及後續處理等成立要件寫清楚。</div>
     </div>
     <button type="button" class="quiz-refresh" onclick="refreshLawQuiz()">🔄 換 3 題</button>
   </div>
@@ -1435,6 +1435,30 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
   let quizAnswered=[];
   let quizCorrectCount=0;
 
+  /* v40：題目輪播紀錄
+     - 同一輪題庫尚未全部出完前，不重複已出現的題目
+     - 優先避開最近 2 組（6 題）出現過的主題
+     - 使用 sessionStorage，重新整理頁面後同一瀏覽器分頁仍可延續輪播
+  */
+  const QUIZ_HISTORY_KEY="childcareLawQuizHistoryV40";
+  let quizSeenIds=new Set();
+  let quizRecentGroups=[];
+
+  try{
+    const saved=JSON.parse(sessionStorage.getItem(QUIZ_HISTORY_KEY)||"{}");
+    if(Array.isArray(saved.seenIds)) quizSeenIds=new Set(saved.seenIds);
+    if(Array.isArray(saved.recentGroups)) quizRecentGroups=saved.recentGroups.slice(-6);
+  }catch(_){}
+
+  function saveQuizHistory(){
+    try{
+      sessionStorage.setItem(QUIZ_HISTORY_KEY,JSON.stringify({
+        seenIds:Array.from(quizSeenIds),
+        recentGroups:quizRecentGroups.slice(-6)
+      }));
+    }catch(_){}
+  }
+
   function quizShuffle(arr){
     const a=arr.slice();
     for(let i=a.length-1;i>0;i--){
@@ -1947,34 +1971,87 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
   }
 
   /* 每組固定至少2題「罰則 → 違規條件」，第3題用情境題；同時避免3題都來自同一法條群 */
+  /* v40：低重複輪播抽題
+     原本每次都重新從完整題庫亂數抽取，因此即使「當次3題不重複」，
+     下一次刷新仍很容易再次抽到相同題目或相同主題。
+     現改為「整輪題庫輪播」：所有題目至少走過一次後，才開始下一輪。
+  */
   function pickThree(){
     const picked=[];
     const usedGroups=new Set();
-    const penalties=quizShuffle(quizBank.filter(x=>x.type==="penalty"));
-    const scenarios=quizShuffle(quizBank.filter(x=>x.type==="scenario"));
+    const validIds=new Set(quizBank.map(x=>x.id));
 
-    for(const item of penalties){
-      if(usedGroups.has(item.group))continue;
-      usedGroups.add(item.group);
-      picked.push(item);
-      if(picked.length===2)break;
+    /* 清掉舊版本題庫已不存在的紀錄 */
+    quizSeenIds=new Set(Array.from(quizSeenIds).filter(id=>validIds.has(id)));
+
+    function remainingItems(){
+      return quizBank.filter(x=>!quizSeenIds.has(x.id) && !picked.some(p=>p.id===x.id));
     }
 
-    for(const item of scenarios){
-      if(usedGroups.has(item.group))continue;
-      usedGroups.add(item.group);
-      picked.push(item);
-      break;
-    }
+    function chooseCandidate(pool, preferredType){
+      const shuffled=quizShuffle(pool);
+      const recentSet=new Set(quizRecentGroups);
 
-    /* 保險起見：若未滿3題，再由全部題庫補足不同題目 */
-    if(picked.length<3){
-      for(const item of quizShuffle(quizBank)){
-        if(picked.includes(item))continue;
-        picked.push(item);
-        if(picked.length===3)break;
+      /* 依序放寬條件：
+         1. 題型符合＋本組不同主題＋避開最近主題
+         2. 題型符合＋本組不同主題
+         3. 本組不同主題＋避開最近主題
+         4. 本組不同主題
+         5. 最後才允許同主題
+      */
+      const rules=[
+        x=>x.type===preferredType && !usedGroups.has(x.group) && !recentSet.has(x.group),
+        x=>x.type===preferredType && !usedGroups.has(x.group),
+        x=>!usedGroups.has(x.group) && !recentSet.has(x.group),
+        x=>!usedGroups.has(x.group),
+        x=>true
+      ];
+      for(const rule of rules){
+        const found=shuffled.find(rule);
+        if(found)return found;
       }
+      return null;
     }
+
+    while(picked.length<3){
+      let pool=remainingItems();
+
+      /* 本輪全部出完後才開新一輪。
+         若上一輪只剩1～2題，會先把剩餘題目出完，再從新一輪補足3題。 */
+      if(pool.length===0){
+        quizSeenIds.clear();
+        pool=quizBank.filter(x=>!picked.some(p=>p.id===x.id));
+      }
+
+      const penaltyLeft=pool.filter(x=>x.type==="penalty").length;
+      const scenarioLeft=pool.filter(x=>x.type==="scenario").length;
+
+      /* 每組至少盡量保留「罰則反推」與「實務情境」兩種題型；
+         第3題依剩餘題型數量自動平衡，不再固定每次都抽2題罰則。 */
+      let preferredType;
+      if(picked.length===0){
+        preferredType=penaltyLeft>0 ? "penalty" : "scenario";
+      }else if(picked.length===1){
+        const firstType=picked[0].type;
+        preferredType=firstType==="penalty" && scenarioLeft>0 ? "scenario"
+                     : firstType==="scenario" && penaltyLeft>0 ? "penalty"
+                     : (scenarioLeft>=penaltyLeft ? "scenario" : "penalty");
+      }else{
+        preferredType=scenarioLeft>=penaltyLeft ? "scenario" : "penalty";
+      }
+
+      const chosen=chooseCandidate(pool,preferredType);
+      if(!chosen)break;
+
+      picked.push(chosen);
+      usedGroups.add(chosen.group);
+      quizSeenIds.add(chosen.id);
+    }
+
+    /* 記住最近兩組的主題，下一次刷新優先避開 */
+    quizRecentGroups=quizRecentGroups.concat(picked.map(x=>x.group)).slice(-6);
+    saveQuizHistory();
+
     return quizShuffle(picked);
   }
 
