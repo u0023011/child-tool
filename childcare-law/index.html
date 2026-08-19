@@ -441,7 +441,7 @@ if (!isStandaloneFile && window.top !== window.self && !(role === "admin")) {
   <div class="quiz-head">
     <div>
       <h2 class="quiz-title">📚 兒托法違規與罰則練習</h2>
-      <div class="quiz-note">每次隨機 3 題，只針對《兒童托育服務法》出題。題目以違規情境為主，練習「發生這種違規會怎麼處罰」，不考條號或法條原文。</div>
+      <div class="quiz-note">每次隨機 3 題，只針對《兒童托育服務法》出題。<strong>優先從罰則反推違規條件</strong>，並把身分、前置程序、期限、收托人數及後續處理等成立要件寫清楚；不考死背條號。</div>
     </div>
     <button type="button" class="quiz-refresh" onclick="refreshLawQuiz()">🔄 換 3 題</button>
   </div>
@@ -1429,15 +1429,9 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
 </script>
 
 <script>
-/* v38：兒童托育服務法－只考「違規情境 → 處罰」 */
+/* v39：兒童托育服務法－罰則優先、構成要件精準題庫 */
 (function(){
   let currentQuiz=[];
-
-  function quizStripHtml(value){
-    const box=document.createElement("div");
-    box.innerHTML=String(value||"").replace(/<br\s*\/?>/gi,"。 ");
-    return (box.textContent||box.innerText||"").replace(/\s+/g," ").trim();
-  }
 
   function quizShuffle(arr){
     const a=arr.slice();
@@ -1457,131 +1451,333 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
       .replace(/'/g,"&#039;");
   }
 
-  function futureText(it){
-    return quizStripHtml(it && it.future ? it.future : "");
-  }
-
-  /* 僅使用兒托法欄位，而且只取有明確罰鍰金額的題目 */
-  function quizPool(){
-    if(typeof items==="undefined" || !Array.isArray(items))return [];
-    return items.filter(it=>{
-      if(!it || !it.future || !quizStripHtml(it.title))return false;
-      const t=futureText(it);
-      if(!t || t.includes("準公共作業要點第8點為現行"))return false;
-      return /(?:新臺幣)?(?:6,000元|\d+萬元)以上(?:\d+萬元)以下罰鍰/.test(t);
-    });
-  }
-
-  function penaltySummary(it){
-    const t=futureText(it);
-    const id=String(it.id||"");
-    const title=quizStripHtml(it.title);
-
-    /* 未登記收托：一般居家與收托達5人以上分開記 */
-    if(id==="A01"){
-      return "未登記提供居家托育：處1萬～5萬元罰鍰並限期改善；若收托人數達5人以上，可能加重為6萬～30萬元，重大或多次未改善並可能停止收托。";
+  /*
+    題庫以兒托法已公布條文為基礎，聚焦居家托育。
+    題目優先用「罰則／處分 → 判斷正確違規條件」，
+    並將容易混淆的第75條、第71/78條、第78/79條、第17/83/84條拆開。
+  */
+  const quizBank=[
+    {
+      id:"P75-1", group:"75未登記", type:"penalty",
+      question:"《兒童托育服務法》規定：處新臺幣2萬元以上10萬元以下罰鍰，並令停止收托及立即轉介其收托兒童，另得公布姓名。下列哪一種情形，最符合這項罰則的完整成立條件？",
+      correct:"行為人不具居家托育人員資格，卻違反第13條第1項規定提供居家托育服務。",
+      wrong:[
+        "行為人具居家托育人員資格，但尚未辦理登記即提供服務，且是第一次被查獲。",
+        "已登記居家托育人員違反收托人數規定，但實際收托人數未達5人。",
+        "已登記居家托育人員於檢查時規避、妨礙或拒絕主管機關監督。"
+      ],
+      basis:"第13條第1項、第75條第1項",
+      condition:"行為人『不具居家托育人員資格』，仍提供居家托育服務。資格欠缺與單純『具資格但未登記』是不同情形。",
+      penalty:"處2萬～10萬元罰鍰；命停止收托及立即轉介收托兒童；另得公布姓名。",
+      note:"最容易和『具資格但未登記』混淆。後者第一次查獲是1萬～5萬元並限期辦理登記，不是直接套本題罰則。"
+    },
+    {
+      id:"P75-2", group:"75未登記", type:"scenario",
+      question:"甲已具居家托育人員資格，但尚未依第13條第1項辦理登記，就開始提供居家托育服務；目前是主管機關第一次查獲，尚未發生『限期辦理登記後仍逾期未辦』的情形。依兒托法，何者最正確？",
+      correct:"處1萬～5萬元罰鍰，並令其限期辦理居家托育服務登記。",
+      wrong:[
+        "處2萬～10萬元罰鍰，並立即強制轉介全部收托兒童，不需先限期辦理登記。",
+        "處6萬～30萬元罰鍰，並直接廢止其登記。",
+        "先口頭勸導即可，第一次查獲不處罰鍰。"
+      ],
+      basis:"第13條第1項、第75條第2項前段",
+      condition:"行為人『具資格』，但未辦理登記而提供居家托育；或已依第13條第2項申請暫停收托，卻在暫停期間仍提供居家托育服務。",
+      penalty:"第一次成立時，處1萬～5萬元罰鍰，並令限期辦理居家托育服務登記。",
+      note:"這裡尚未進入『屆期仍未辦理登記』的第二階段，所以不能先套2萬～10萬元及一個月內轉介。"
+    },
+    {
+      id:"P75-3", group:"75未登記", type:"scenario",
+      question:"乙具居家托育人員資格但未登記即收托，已被主管機關依第75條第2項處罰並限期辦理居家托育服務登記；期限屆滿後，乙仍未辦理登記。此時何者最符合兒托法？",
+      correct:"處2萬～10萬元罰鍰，並令其於1個月內轉介收托兒童，另得公布姓名。",
+      wrong:[
+        "仍只處1萬～5萬元罰鍰並再次限期登記，沒有轉介規定。",
+        "直接處6萬～30萬元並永久不得再辦理登記。",
+        "只要沒有新增收托兒童，就不再處罰。"
+      ],
+      basis:"第75條第2項後段",
+      condition:"前提是已屬『具資格未登記／暫停期間仍提供服務』，且主管機關已命限期辦理登記，但期限屆滿仍未辦理。",
+      penalty:"處2萬～10萬元罰鍰；命1個月內轉介收托兒童；另得公布姓名。",
+      note:"這是第75條的第二階段法律效果，和第一次查獲的1萬～5萬元不同。"
+    },
+    {
+      id:"P75-4", group:"75未登記", type:"penalty",
+      question:"《兒童托育服務法》第75條規定：處2萬～10萬元罰鍰並按次處罰，主管機關並應強制轉介『增加收托』的兒童。下列何者是這項罰則的關鍵條件？",
+      correct:"具資格但未登記者已被命限期辦理登記，卻在該限期辦理登記期間又增加收托兒童。",
+      wrong:[
+        "任何已登記托育人員，只要收托人數增加1人就一律適用。",
+        "不具托育資格者第一次提供居家托育服務。",
+        "托育人員已完成登記，但忘記將服務證書懸掛在明顯處。"
+      ],
+      basis:"第75條第5項",
+      condition:"必須是在第75條第2項『限期辦理登記』的期間內，居家托育人員仍增加收托兒童。",
+      penalty:"處2萬～10萬元罰鍰並按次處罰；主管機關應強制轉介其增加收托的兒童。",
+      note:"不是一般的『收托人數異動』就適用，而是有明確的前置條件：正處於限期辦理登記期間。"
+    },
+    {
+      id:"P75-5", group:"75未登記", type:"scenario",
+      question:"主管機關已依第75條第1項或第2項命未合法提供居家托育服務者轉介兒童，但行為人拒不配合轉介命令。依兒托法，何者最正確？",
+      correct:"處2萬～10萬元罰鍰，主管機關並應強制轉介其收托兒童。",
+      wrong:[
+        "僅再命限期改善，不得處罰鍰。",
+        "處1萬～5萬元，且只能由家長自行尋找轉托。",
+        "一律處6萬～30萬元，並直接永久禁止從事托育。"
+      ],
+      basis:"第75條第4項",
+      condition:"已有依第75條第1項或第2項作成的轉介命令，行為人仍拒不配合。",
+      penalty:"處2萬～10萬元罰鍰；主管機關並應強制轉介其收托兒童。",
+      note:"此題考的是『不配合轉介命令』，不是最初的未登記行為本身。"
+    },
+    {
+      id:"P71-1", group:"收托人數", type:"penalty",
+      question:"兒托法對某類收托人數違規加重處罰為：6萬～30萬元，並令限期改善；屆期未改善按次處罰；情節重大或經處罰3次仍未改善者，廢止登記。下列哪一項是這個加重罰則的收托人數條件？",
+      correct:"違反第13條第5項所定辦法中的收托人數規定，而且實際收托人數達5人以上。",
+      wrong:[
+        "只要任何一次收托異動未通報，不論實際收托幾人。",
+        "違反收托人數規定，但收托人數未達5人。",
+        "只要同時照顧2名未滿2歲兒童，就當然適用6萬～30萬元。"
+      ],
+      basis:"第71條第1款",
+      condition:"除須違反施行後第13條第5項授權辦法的收托人數規定外，還要有『收托人數5人以上』這個加重條件。",
+      penalty:"6萬～30萬元＋限期改善；屆期未改善按次處罰；情節重大或經處罰3次仍未改善，廢止登記。",
+      note:"若違反收托人數規定但未達第71條的『5人以上』條件，原則上應回到第78條第1項第2款的1萬～5萬元級距判斷。"
+    },
+    {
+      id:"P78-count", group:"收托人數", type:"scenario",
+      question:"某居家托育人員確實違反第13條第5項所定辦法中的收托人數規定，但實際收托人數未達第71條『5人以上』的加重條件。依兒托法罰則架構，何者最符合？",
+      correct:"依第78條處1萬～5萬元罰鍰並令限期改善；屆期未改善按次處罰，情節重大或經處罰3次仍未改善者，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      wrong:[
+        "仍一律依第71條處6萬～30萬元，不必看是否達5人以上。",
+        "僅輔導改善，兒托法對未達5人的收托人數違規完全沒有罰鍰。",
+        "直接依第75條處2萬～10萬元並強制轉介。"
+      ],
+      basis:"第78條第1項第2款；第71條第1款為5人以上加重規定",
+      condition:"已違反收托人數規定，但不符合第71條『收托人數5人以上』的加重構成要件。",
+      penalty:"1萬～5萬元＋限期改善；屆期未改善按次處罰；重大或3次仍未改善，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      note:"第78條本身沒有寫『未滿5人』，是因為達5人以上時另由第71條加重處罰；出題時必須把這個分流條件寫清楚。"
+    },
+    {
+      id:"P78-inspect", group:"拒檢", type:"scenario",
+      question:"已登記的居家托育人員本人，在主管機關或居家托育服務中心依法監督、檢查時，規避、妨礙、拒絕，或於檢查時藉故藏匿兒童。依兒托法，何者最正確？",
+      correct:"處1萬～5萬元罰鍰並令限期改善；屆期未改善按次處罰，重大或經處罰3次仍未改善者，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      wrong:[
+        "僅處6,000～3萬元，且一定要先限期改善屆期未改善才可處罰。",
+        "處2萬～10萬元並強制轉介，這與未登記收托相同。",
+        "只要第一次拒絕檢查就直接廢止登記。"
+      ],
+      basis:"第13條第4項、第78條第1項第1款",
+      condition:"行為人是『居家托育人員本人』，並有規避、妨礙、拒絕監督檢查或檢查時藏匿兒童的行為。",
+      penalty:"1萬～5萬元＋限期改善；屆期未改善按次處罰；重大或3次仍未改善，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      note:"若行為人不是居家托育人員，而是同住家人等其他人，應另看第79條。"
+    },
+    {
+      id:"P79-inspect", group:"拒檢", type:"penalty",
+      question:"兒托法有一項罰則是『處1萬～5萬元罰鍰』，但條文本身沒有像第78條一樣再寫限期改善、按次處罰、重大或3次廢止登記。下列哪一種情形最符合？",
+      correct:"居家托育人員以外之人，規避、妨礙或拒絕對托育服務登記處所的檢查，或檢查時藉故藏匿兒童。",
+      wrong:[
+        "居家托育人員本人拒絕主管機關或居家托育服務中心監督檢查。",
+        "居家托育人員未與家長訂定書面契約。",
+        "居家托育人員未於收托兒童當日前完成專業責任保險。"
+      ],
+      basis:"第13條第4項、第79條",
+      condition:"行為人須是『居家托育人員以外之任何人』，並有規避、妨礙、拒絕檢查或藏匿兒童行為。",
+      penalty:"處1萬～5萬元罰鍰。",
+      note:"同樣是拒檢／藏匿兒童，托育人員本人適用第78條，其他人則適用第79條，後續效果不同。"
+    },
+    {
+      id:"P78-contract", group:"契約", type:"scenario",
+      question:"居家托育人員完全沒有依第17條第1項與送托兒童的法定代理人或實際照顧者訂定書面契約。依兒托法，何者正確？",
+      correct:"處1萬～5萬元罰鍰並令限期改善；屆期未改善按次處罰，重大或經處罰3次仍未改善者，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      wrong:[
+        "一定要先限期改善，屆期未改善後才處6,000～3萬元，第一次不得處罰鍰。",
+        "只要口頭約定即可，不屬兒托法罰則。",
+        "處3萬～15萬元，因為契約屬於個資保密事項。"
+      ],
+      basis:"第17條第1項前段、第78條第1項第4款",
+      condition:"核心是『根本未訂定書面契約』。",
+      penalty:"1萬～5萬元＋限期改善；屆期未改善按次處罰；重大或3次仍未改善，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      note:"不要和『有簽契約但內容違反定型化契約規定』（第83條）或『未交契約影本給中心』（第84條）混在一起。"
+    },
+    {
+      id:"P83-contract", group:"契約", type:"penalty",
+      question:"兒托法針對居家托育人員有一種契約違規：主管機關先令限期改善；屆期未改善才處6,000～3萬元罰鍰，並按次處罰。下列何者最符合這項規定？",
+      correct:"已訂定書面契約，但契約內容違反中央主管機關依第17條第2項所定定型化契約範本、應記載或不得記載事項。",
+      wrong:[
+        "完全未與家長訂定任何書面契約。",
+        "已簽契約但未把影本交給居家托育服務中心。",
+        "契約已合法完成，只是家長延後繳交托育費。"
+      ],
+      basis:"第17條第2項、第83條第2項",
+      condition:"有書面契約，但『契約內容』違反法定定型化契約範本、應記載或不得記載事項。",
+      penalty:"先限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。",
+      note:"和『完全沒簽書面契約』不同；完全沒簽是第78條，成立時即進入1萬～5萬元罰鍰及限改。"
+    },
+    {
+      id:"P84-copy", group:"契約", type:"scenario",
+      question:"居家托育人員已依法與家長簽妥書面契約，契約內容也沒有問題，但未依第17條第1項後段把契約影本交付居家托育服務中心。依兒托法應如何處理？",
+      correct:"先令限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。",
+      wrong:[
+        "立即處1萬～5萬元，因為等同完全未訂定書面契約。",
+        "立即處3萬～15萬元，並廢止登記。",
+        "沒有任何法律效果，只是行政提醒事項。"
+      ],
+      basis:"第17條第1項後段、第84條第1項第2款",
+      condition:"書面契約已成立，但欠缺的是『交付契約影本予居家托育服務中心』這一步。",
+      penalty:"先限期改善；屆期未改善才處6,000～3萬元，並按次處罰。",
+      note:"這題和『完全沒簽契約』的第78條是不同罰則級距與程序。"
+    },
+    {
+      id:"P78-insurance", group:"專業義務", type:"scenario",
+      question:"居家托育人員在收托兒童當日前，尚未完成投保專業責任保險，就開始收托。依兒托法，何者最符合？",
+      correct:"處1萬～5萬元罰鍰並令限期改善；屆期未改善按次處罰，重大或經處罰3次仍未改善者，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      wrong:[
+        "先限期改善，屆期未改善後才可處6,000～3萬元。",
+        "處2萬～10萬元並一律立即強制轉介。",
+        "只要事故尚未發生，就沒有罰則。"
+      ],
+      basis:"第18條第1項、第78條第1項第5款",
+      condition:"應在『收托兒童當日前』完成專業責任保險；未完成即開始收托即成立。",
+      penalty:"1萬～5萬元＋限期改善；屆期未改善按次處罰；重大或3次仍未改善，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      note:"關鍵不是事故有沒有發生，而是收托前是否已完成投保。"
+    },
+    {
+      id:"P78-focus", group:"專心托育", type:"penalty",
+      question:"兒托法規定：處1萬～5萬元罰鍰並令限期改善，屆期未改善按次處罰，重大或經處罰3次仍未改善得公布姓名及廢止登記。若題目是在考『專心托育義務』，下列哪一種情形最完整符合？",
+      correct:"托育服務時間兼任其他職務、經營事業或從事影響托育的活動；或使6歲以下／需特別看護之收托兒童獨處、由不適當之人代為照顧；或有其他足以影響托育服務致損及兒童安全的行為。",
+      wrong:[
+        "家長臨時晚到10分鐘接小孩，只要托育人員仍照顧兒童。",
+        "托育人員依法完成18小時在職研習，但未將研習證明貼在牆上。",
+        "托育人員將服務證書懸掛位置由客廳移到玄關，但仍足資辨識。"
+      ],
+      basis:"第19條、第78條第1項第6款",
+      condition:"必須是在托育服務時間／處所違反第19條的專心托育義務，例如兼職、使特定兒童獨處或交由不適當人員照顧等。",
+      penalty:"1萬～5萬元＋限期改善；屆期未改善按次處罰；重大或3次仍未改善，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      note:"題幹會把第19條列舉的具體行為寫出來，避免只用『未專心托育』這種過度籠統的文字。"
+    },
+    {
+      id:"P78-report", group:"通報", type:"scenario",
+      question:"居家托育人員在執行業務時，知悉涉及第57條第1項所定違法事件，卻未依第59條第1項於24小時內向直轄市、縣（市）主管機關通報。依兒托法，何者最符合？",
+      correct:"處1萬～5萬元罰鍰並令限期改善；屆期未改善按次處罰，重大或經處罰3次仍未改善者，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      wrong:[
+        "只要事後有向家長口頭說明，即不屬違規。",
+        "先限期改善，屆期未改善後才處6,000～3萬元。",
+        "一律處6萬～60萬元，因為所有通報遲延都視為身心虐待。"
+      ],
+      basis:"第59條第1項、第78條第1項第7款",
+      condition:"托育相關人員或中心工作人員執行業務時知悉第57條第1項所定違法事件，應向地方主管機關通報，最遲不得超過24小時；本題行為人為居家托育人員。",
+      penalty:"1萬～5萬元＋限期改善；屆期未改善按次處罰；重大或3次仍未改善，得公布姓名及廢止登記；依第78條廢止登記者，自廢止日起1年內不得再辦理登記。",
+      note:"通報對象是直轄市、縣（市）主管機關；單純告知家長或中心不能取代法定通報。"
+    },
+    {
+      id:"P74-cert", group:"證書個資", type:"penalty",
+      question:"兒托法規定：托育專業人員或工作人員不得將托育服務證書或資格證書租借他人使用。違反者的罰則，下列何者最正確？",
+      correct:"處3萬～15萬元罰鍰，並令限期改善；屆期未改善者按次處罰。",
+      wrong:[
+        "處1萬～5萬元，且第一次只能口頭勸導。",
+        "處2萬～10萬元，並一律強制轉介所有收托兒童。",
+        "先限期改善，屆期未改善才處6,000～3萬元。"
+      ],
+      basis:"第62條第1項、第74條第1項第2款",
+      condition:"托育專業人員或工作人員將自己的托育服務證書或資格證書租借他人使用。",
+      penalty:"3萬～15萬元＋限期改善；屆期未改善按次處罰。",
+      note:"證書『租借』有獨立罰則，不要套用未登記收托第75條。"
+    },
+    {
+      id:"P74-secret", group:"證書個資", type:"scenario",
+      question:"托育相關人員未經兒童法定代理人或實際照顧者同意，也沒有其他法律規定要求提供，卻洩漏兒童或其法定代理人／實際照顧者的資料。依兒托法，何者最符合？",
+      correct:"處3萬～15萬元罰鍰，並令限期改善；屆期未改善者按次處罰。",
+      wrong:[
+        "處1萬～5萬元並一律廢止登記。",
+        "只屬職業倫理問題，兒托法沒有罰鍰。",
+        "先限期改善，屆期未改善才處6,000～3萬元。"
+      ],
+      basis:"第65條、第74條第1項第3款",
+      condition:"托育相關人員對兒童及其法定代理人或實際照顧者資料負保密義務；經同意或法律要求提供者除外。",
+      penalty:"3萬～15萬元＋限期改善；屆期未改善按次處罰。",
+      note:"出題會把保密義務的例外一起寫入，避免把依法通報、依法提供資料誤判成洩密。"
+    },
+    {
+      id:"P84-training", group:"研習訓練", type:"scenario",
+      question:"托育專業人員未完成第63條規定的年度18小時專業知能研習，或未在規定期間完成兒童基本救命術等訓練；且該未完成情形可歸責於本人。依兒托法，何者最正確？",
+      correct:"先令限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。",
+      wrong:[
+        "一發現時立即處1萬～5萬元，不需先限期改善。",
+        "一律處3萬～15萬元並公布姓名。",
+        "只影響換證，兒托法完全沒有罰則。"
+      ],
+      basis:"第63條、第84條第1項第5款至第7款及第2項",
+      condition:"包括每年18小時專業知能研習、規定期限內8小時以上兒童基本救命術，以及每2年再完成8小時基本救命術、3小時以上事故傷害預防及處理與1次以上緊急救護情境演習。且若不可歸責於托育專業人員，經查證屬實，不予處罰。",
+      penalty:"先限期改善；屆期未改善，6,000～3萬元並按次處罰。",
+      note:"本題特別加入『可歸責』條件；第84條明定不可歸責且經查證屬實者不予處罰。"
+    },
+    {
+      id:"P85-cooperate", group:"訪視配合", type:"penalty",
+      question:"兒托法第85條規定：無正當理由違反第68條第1項配合義務者，處6,000～3萬元罰鍰，並按次處罰。下列哪一種情形最符合？",
+      correct:"主管機關或受委託人員依法辦理訪視、輔導、檢查、補助或調查時，相關人員無正當理由拒不配合或拒絕提供相關資料。",
+      wrong:[
+        "居家托育人員本人於登記處所檢查時藉故藏匿兒童，且符合第13條第4項拒檢。",
+        "具資格但未登記即開始收托，第一次被查獲。",
+        "未與家長簽訂書面契約。"
+      ],
+      basis:"第68條第1項、第85條",
+      condition:"須是主管機關或受委託者依法辦理訪視、輔導、檢查、補助或調查時，相關人員『無正當理由』不配合或不提供資料。",
+      penalty:"6,000～3萬元罰鍰，並按次處罰。",
+      note:"若具體行為已同時構成第13條第4項的拒檢或藏匿兒童，居家托育人員本人另有第78條的專門罰則，應先辨識構成要件。"
+    },
+    {
+      id:"P81-manage", group:"管理辦法", type:"scenario",
+      question:"居家托育人員違反未來依第13條第5項所定辦法中的『輔導或管理』規定，主管機關已命限期改善，但屆期仍未改善。依兒托法第81條，何者最符合？",
+      correct:"處6,000～3萬元罰鍰並按次處罰；情節重大或經處罰3次仍未改善者，廢止登記，且自廢止日起1年內不得再辦理登記。",
+      wrong:[
+        "第一次違反輔導或管理規定即一律處6萬～30萬元。",
+        "只要屆期未改善就直接永久不得再從事托育。",
+        "處2萬～10萬元並強制轉介，適用第75條。"
+      ],
+      basis:"第13條第5項、第81條",
+      condition:"違反的是第13條第5項授權辦法中的『輔導或管理』規定，且已經主管機關命限期改善後仍未改善。",
+      penalty:"6,000～3萬元＋按次處罰；重大或3次仍未改善，廢止登記；廢止日起1年內不得再登記。",
+      note:"第81條本身就要求『先限期改善、屆期未改善』，與第78條某些成立時即處罰鍰的違規不同。"
     }
-
-    /* 收托人數違規：未滿5人與5人以上有不同級距 */
-    if(["B04","B05","B06","B07"].includes(id)){
-      return "違反收托人數規定：未滿5人處1萬～5萬元並限期改善；收托5人以上加重為6萬～30萬元，重大或多次未改善可能停止收托。";
-    }
-
-    /* 書面契約本身未簽：第78條級距 */
-    if(id==="C07" || title.includes("未與家長訂定書面契約")){
-      return "處1萬～5萬元罰鍰並限期改善；屆期未改善得按次處罰，情節重大或經處罰三次仍未改善，得公布姓名及廢止登記。";
-    }
-
-    /* 契約影本未交中心、訓練未完成：第84條級距 */
-    if(id==="C09" || id==="C19"){
-      return "先命限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。";
-    }
-
-    if(id==="A11"){
-      return "處2萬～10萬元罰鍰，並可能命停止收托及轉介兒童。";
-    }
-
-    if(id==="A12"){
-      return "處3萬～15萬元罰鍰；如另涉及其他違規，再依相關規定處理。";
-    }
-
-    if(id==="C25"){
-      return "情節重大者可能處6萬～60萬元罰鍰，並公布姓名；如符合不適任情形，並可能不得再擔任托育人員。";
-    }
-
-    if(t.includes("6,000元以上3萬元以下")){
-      return "先命限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。";
-    }
-
-    if(t.includes("1萬元以上5萬元以下")){
-      return "處1萬～5萬元罰鍰並限期改善；屆期未改善得按次處罰，情節重大或經處罰三次仍未改善，得公布姓名及廢止登記。";
-    }
-
-    if(t.includes("3萬元以上15萬元以下")){
-      return "處3萬～15萬元罰鍰；如另涉及其他違規，再依相關規定處理。";
-    }
-
-    if(t.includes("2萬元以上10萬元以下")){
-      return "處2萬～10萬元罰鍰，並可能命停止收托及轉介兒童。";
-    }
-
-    if(t.includes("6萬元以上60萬元以下")){
-      return "情節重大者可能處6萬～60萬元罰鍰，並公布姓名；如符合不適任情形，並可能不得再擔任托育人員。";
-    }
-
-    return "依兒童托育服務法相關罰則辦理。";
-  }
-
-  function articleRefs(it){
-    const t=futureText(it);
-    const found=t.match(/第\d+(?:-\d+)?條/g) || [];
-    const unique=[];
-    found.forEach(x=>{ if(!unique.includes(x))unique.push(x); });
-    return unique.slice(0,4).join("、") || "兒童托育服務法相關規定";
-  }
-
-  function lawPoint(it){
-    const t=futureText(it);
-    if(!t)return "";
-    const cut=t.search(/罰則(?:一|二|三)?[：:]|罰則提醒[：:]/);
-    const main=cut>=0 ? t.slice(0,cut) : t;
-    return main.length>190 ? main.slice(0,189)+"…" : main;
-  }
-
-  function uniquePenaltyChoices(item,correct){
-    const seen=new Set([correct]);
-    const result=[];
-    const others=quizShuffle(quizPool().filter(x=>x.id!==item.id));
-    for(const candidate of others){
-      const value=penaltySummary(candidate);
-      if(!value || value==="依兒童托育服務法相關罰則辦理。" || seen.has(value))continue;
-      seen.add(value);
-      result.push(value);
-      if(result.length===3)break;
-    }
-    return result;
-  }
+  ];
 
   function buildQuestion(item){
-    const correct=penaltySummary(item);
-    const prompt=`違規情境：「${quizStripHtml(item.title)}」。依《兒童托育服務法》，下列哪一項處罰／處理最符合？`;
-    const distractors=uniquePenaltyChoices(item,correct);
-    return {item,prompt,correct,options:quizShuffle([correct].concat(distractors)).slice(0,4)};
+    return {
+      item,
+      prompt:item.question,
+      correct:item.correct,
+      options:quizShuffle([item.correct].concat(item.wrong)).slice(0,4)
+    };
   }
 
-  /* 每組盡量出不同罰鍰級距，避免3題答案都長得一樣 */
-  function pickThreeDifferentPenaltyTypes(pool){
-    const shuffled=quizShuffle(pool);
+  /* 每組固定至少2題「罰則 → 違規條件」，第3題用情境題；同時避免3題都來自同一法條群 */
+  function pickThree(){
     const picked=[];
-    const used=new Set();
-    for(const item of shuffled){
-      const key=penaltySummary(item);
-      if(!key || key==="依兒童托育服務法相關罰則辦理。" || used.has(key))continue;
-      used.add(key);
+    const usedGroups=new Set();
+    const penalties=quizShuffle(quizBank.filter(x=>x.type==="penalty"));
+    const scenarios=quizShuffle(quizBank.filter(x=>x.type==="scenario"));
+
+    for(const item of penalties){
+      if(usedGroups.has(item.group))continue;
+      usedGroups.add(item.group);
       picked.push(item);
-      if(picked.length===3)break;
+      if(picked.length===2)break;
     }
-    return picked;
+
+    for(const item of scenarios){
+      if(usedGroups.has(item.group))continue;
+      usedGroups.add(item.group);
+      picked.push(item);
+      break;
+    }
+
+    /* 保險起見：若未滿3題，再由全部題庫補足不同題目 */
+    if(picked.length<3){
+      for(const item of quizShuffle(quizBank)){
+        if(picked.includes(item))continue;
+        picked.push(item);
+        if(picked.length===3)break;
+      }
+    }
+    return quizShuffle(picked);
   }
 
   function renderLawQuiz(){
@@ -1592,17 +1788,7 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
     if(message)message.textContent="";
     if(score){score.classList.remove("show");score.textContent="";}
 
-    const pool=quizPool();
-    const distinctPenaltyCount=new Set(pool.map(penaltySummary).filter(x=>x!=="依兒童托育服務法相關罰則辦理。")).size;
-    if(pool.length<4 || distinctPenaltyCount<4){
-      target.innerHTML='<div class="empty">目前兒托法可供「違規情境＋處罰」出題的資料不足，至少需要 4 種不同罰則。</div>';
-      currentQuiz=[];
-      return;
-    }
-
-    const picked=pickThreeDifferentPenaltyTypes(pool);
-    currentQuiz=picked.map(buildQuestion);
-
+    currentQuiz=pickThree().map(buildQuestion);
     target.innerHTML=currentQuiz.map((q,qi)=>{
       const letters=["A","B","C","D"];
       const opts=q.options.map((opt,oi)=>`<label class="quiz-option" data-q="${qi}" data-value="${quizEscape(opt)}"><input type="radio" name="lawQuiz${qi}" value="${quizEscape(opt)}"><span><strong>${letters[oi]}.</strong> ${quizEscape(opt)}</span></label>`).join("");
@@ -1645,13 +1831,19 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
       const explain=document.getElementById(`lawQuizExplain${qi}`);
       if(explain){
         const answerText=selected===q.correct?"✅ 答對":"❌ 答錯";
-        explain.innerHTML=`<strong>${answerText}</strong><br><strong>違規情境：</strong>${quizEscape(quizStripHtml(q.item.title))}<br><strong>正確處罰／處理：</strong>${quizEscape(q.correct)}<br><strong>兒托法依據：</strong>${quizEscape(articleRefs(q.item))}<br><strong>規定重點：</strong>${quizEscape(lawPoint(q.item))}`;
+        const it=q.item;
+        explain.innerHTML=`<strong>${answerText}</strong><br>
+          <strong>正確答案：</strong>${quizEscape(q.correct)}<br>
+          <strong>兒托法依據：</strong>${quizEscape(it.basis)}<br>
+          <strong>成立條件：</strong>${quizEscape(it.condition)}<br>
+          <strong>正確罰則／處理：</strong>${quizEscape(it.penalty)}<br>
+          <strong>易混淆提醒：</strong>${quizEscape(it.note)}`;
         explain.classList.add("show");
       }
     });
 
     if(scoreBox){
-      const remark=score===3?"全部答對！違規和罰則配對很熟 🎯":score===2?"答對 2 題，錯的那個罰鍰級距再看一次。":score===1?"答對 1 題，先記『什麼違規 → 罰多少 → 後續會怎樣』。":"這組先看解析，下一組再挑戰。";
+      const remark=score===3?"全部答對！已經是在做『構成要件＋罰則』的實務判斷了 🎯":score===2?"答對 2 題，再看一次錯題的前置條件與處分階段。":score===1?"答對 1 題，建議先抓『誰違規 → 什麼前提 → 罰多少 → 後續怎麼處理』。":"這組先看解析；新法罰則分流很多，條件抓準比背金額更重要。";
       scoreBox.textContent=`本次得分：${score} / 3｜${remark}`;
       scoreBox.classList.add("show");
     }
