@@ -440,8 +440,8 @@ if (!isStandaloneFile && window.top !== window.self && !(role === "admin")) {
 <div class="quiz-section" id="lawQuizSection">
   <div class="quiz-head">
     <div>
-      <h2 class="quiz-title">📚 法規隨機練習</h2>
-      <div class="quiz-note">每次隨機 3 題。完成全部題目後送出，即可查看分數、正確答案與法規解析。</div>
+      <h2 class="quiz-title">📚 兒托法違規與罰則練習</h2>
+      <div class="quiz-note">每次隨機 3 題，只針對《兒童托育服務法》出題。題目以違規情境為主，練習「發生這種違規會怎麼處罰」，不考條號或法條原文。</div>
     </div>
     <button type="button" class="quiz-refresh" onclick="refreshLawQuiz()">🔄 換 3 題</button>
   </div>
@@ -1429,7 +1429,7 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
 </script>
 
 <script>
-/* v36：從既有 items 法規資料自動產生隨機 3 題 */
+/* v38：兒童托育服務法－只考「違規情境 → 處罰」 */
 (function(){
   let currentQuiz=[];
 
@@ -1437,14 +1437,6 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
     const box=document.createElement("div");
     box.innerHTML=String(value||"").replace(/<br\s*\/?>/gi,"。 ");
     return (box.textContent||box.innerText||"").replace(/\s+/g," ").trim();
-  }
-
-  function quizShort(value,maxLen){
-    const text=quizStripHtml(value);
-    if(!text)return "";
-    const first=text.split(/(?<=[。！？；])/)[0] || text;
-    if(first.length<=maxLen)return first;
-    return first.slice(0,maxLen-1)+"…";
   }
 
   function quizShuffle(arr){
@@ -1465,25 +1457,104 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
       .replace(/'/g,"&#039;");
   }
 
-  function quizPool(){
-    if(typeof items==="undefined" || !Array.isArray(items))return [];
-    return items.filter(it=>
-      it && !it.futureOnly && !it.neutral &&
-      quizStripHtml(it.title).length>0 &&
-      quizStripHtml(it.law).length>0 &&
-      quizStripHtml(it.summary).length>0
-    );
+  function futureText(it){
+    return quizStripHtml(it && it.future ? it.future : "");
   }
 
-  function uniqueDistractors(item, valueFn, correct){
-    const pool=quizPool();
-    const preferred=quizShuffle(pool.filter(x=>x.id!==item.id && x.cat===item.cat));
-    const others=quizShuffle(pool.filter(x=>x.id!==item.id && x.cat!==item.cat));
+  /* 僅使用兒托法欄位，而且只取有明確罰鍰金額的題目 */
+  function quizPool(){
+    if(typeof items==="undefined" || !Array.isArray(items))return [];
+    return items.filter(it=>{
+      if(!it || !it.future || !quizStripHtml(it.title))return false;
+      const t=futureText(it);
+      if(!t || t.includes("準公共作業要點第8點為現行"))return false;
+      return /(?:新臺幣)?(?:6,000元|\d+萬元)以上(?:\d+萬元)以下罰鍰/.test(t);
+    });
+  }
+
+  function penaltySummary(it){
+    const t=futureText(it);
+    const id=String(it.id||"");
+    const title=quizStripHtml(it.title);
+
+    /* 未登記收托：一般居家與收托達5人以上分開記 */
+    if(id==="A01"){
+      return "未登記提供居家托育：處1萬～5萬元罰鍰並限期改善；若收托人數達5人以上，可能加重為6萬～30萬元，重大或多次未改善並可能停止收托。";
+    }
+
+    /* 收托人數違規：未滿5人與5人以上有不同級距 */
+    if(["B04","B05","B06","B07"].includes(id)){
+      return "違反收托人數規定：未滿5人處1萬～5萬元並限期改善；收托5人以上加重為6萬～30萬元，重大或多次未改善可能停止收托。";
+    }
+
+    /* 書面契約本身未簽：第78條級距 */
+    if(id==="C07" || title.includes("未與家長訂定書面契約")){
+      return "處1萬～5萬元罰鍰並限期改善；屆期未改善得按次處罰，情節重大或經處罰三次仍未改善，得公布姓名及廢止登記。";
+    }
+
+    /* 契約影本未交中心、訓練未完成：第84條級距 */
+    if(id==="C09" || id==="C19"){
+      return "先命限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。";
+    }
+
+    if(id==="A11"){
+      return "處2萬～10萬元罰鍰，並可能命停止收托及轉介兒童。";
+    }
+
+    if(id==="A12"){
+      return "處3萬～15萬元罰鍰；如另涉及其他違規，再依相關規定處理。";
+    }
+
+    if(id==="C25"){
+      return "情節重大者可能處6萬～60萬元罰鍰，並公布姓名；如符合不適任情形，並可能不得再擔任托育人員。";
+    }
+
+    if(t.includes("6,000元以上3萬元以下")){
+      return "先命限期改善；屆期未改善，處6,000～3萬元罰鍰，並按次處罰。";
+    }
+
+    if(t.includes("1萬元以上5萬元以下")){
+      return "處1萬～5萬元罰鍰並限期改善；屆期未改善得按次處罰，情節重大或經處罰三次仍未改善，得公布姓名及廢止登記。";
+    }
+
+    if(t.includes("3萬元以上15萬元以下")){
+      return "處3萬～15萬元罰鍰；如另涉及其他違規，再依相關規定處理。";
+    }
+
+    if(t.includes("2萬元以上10萬元以下")){
+      return "處2萬～10萬元罰鍰，並可能命停止收托及轉介兒童。";
+    }
+
+    if(t.includes("6萬元以上60萬元以下")){
+      return "情節重大者可能處6萬～60萬元罰鍰，並公布姓名；如符合不適任情形，並可能不得再擔任托育人員。";
+    }
+
+    return "依兒童托育服務法相關罰則辦理。";
+  }
+
+  function articleRefs(it){
+    const t=futureText(it);
+    const found=t.match(/第\d+(?:-\d+)?條/g) || [];
+    const unique=[];
+    found.forEach(x=>{ if(!unique.includes(x))unique.push(x); });
+    return unique.slice(0,4).join("、") || "兒童托育服務法相關規定";
+  }
+
+  function lawPoint(it){
+    const t=futureText(it);
+    if(!t)return "";
+    const cut=t.search(/罰則(?:一|二|三)?[：:]|罰則提醒[：:]/);
+    const main=cut>=0 ? t.slice(0,cut) : t;
+    return main.length>190 ? main.slice(0,189)+"…" : main;
+  }
+
+  function uniquePenaltyChoices(item,correct){
     const seen=new Set([correct]);
     const result=[];
-    for(const candidate of preferred.concat(others)){
-      const value=valueFn(candidate);
-      if(!value || seen.has(value))continue;
+    const others=quizShuffle(quizPool().filter(x=>x.id!==item.id));
+    for(const candidate of others){
+      const value=penaltySummary(candidate);
+      if(!value || value==="依兒童托育服務法相關罰則辦理。" || seen.has(value))continue;
       seen.add(value);
       result.push(value);
       if(result.length===3)break;
@@ -1491,28 +1562,26 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
     return result;
   }
 
-  function buildQuestion(item,index){
-    const type=index%3;
-    let prompt="",correct="",valueFn;
+  function buildQuestion(item){
+    const correct=penaltySummary(item);
+    const prompt=`違規情境：「${quizStripHtml(item.title)}」。依《兒童托育服務法》，下列哪一項處罰／處理最符合？`;
+    const distractors=uniquePenaltyChoices(item,correct);
+    return {item,prompt,correct,options:quizShuffle([correct].concat(distractors)).slice(0,4)};
+  }
 
-    if(type===0){
-      correct=quizShort(item.summary,105);
-      prompt=`依據「${quizStripHtml(item.law)}」，下列哪一項敘述最符合這筆法規內容？`;
-      valueFn=x=>quizShort(x.summary,105);
-    }else if(type===1){
-      correct=quizStripHtml(item.law);
-      prompt=`「${quizStripHtml(item.title)}」主要對應下列哪一項法規依據？`;
-      valueFn=x=>quizStripHtml(x.law);
-    }else{
-      const effect=quizShort(item.effect||item.penalty,105);
-      correct=effect || quizShort(item.summary,105);
-      prompt=`若發生「${quizStripHtml(item.title)}」，依目前工具資料，下列哪一項最符合可能處理／效果？`;
-      valueFn=x=>quizShort(x.effect||x.penalty||x.summary,105);
+  /* 每組盡量出不同罰鍰級距，避免3題答案都長得一樣 */
+  function pickThreeDifferentPenaltyTypes(pool){
+    const shuffled=quizShuffle(pool);
+    const picked=[];
+    const used=new Set();
+    for(const item of shuffled){
+      const key=penaltySummary(item);
+      if(!key || key==="依兒童托育服務法相關罰則辦理。" || used.has(key))continue;
+      used.add(key);
+      picked.push(item);
+      if(picked.length===3)break;
     }
-
-    const distractors=uniqueDistractors(item,valueFn,correct);
-    const options=quizShuffle([correct].concat(distractors)).slice(0,4);
-    return {item,prompt,correct,options};
+    return picked;
   }
 
   function renderLawQuiz(){
@@ -1524,14 +1593,15 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
     if(score){score.classList.remove("show");score.textContent="";}
 
     const pool=quizPool();
-    if(pool.length<4){
-      target.innerHTML='<div class="empty">目前可出題的法規資料不足，至少需要 4 筆具有法規依據與內容摘要的資料。</div>';
+    const distinctPenaltyCount=new Set(pool.map(penaltySummary).filter(x=>x!=="依兒童托育服務法相關罰則辦理。")).size;
+    if(pool.length<4 || distinctPenaltyCount<4){
+      target.innerHTML='<div class="empty">目前兒托法可供「違規情境＋處罰」出題的資料不足，至少需要 4 種不同罰則。</div>';
       currentQuiz=[];
       return;
     }
 
-    const picked=quizShuffle(pool).slice(0,3);
-    currentQuiz=picked.map((item,index)=>buildQuestion(item,index));
+    const picked=pickThreeDifferentPenaltyTypes(pool);
+    currentQuiz=picked.map(buildQuestion);
 
     target.innerHTML=currentQuiz.map((q,qi)=>{
       const letters=["A","B","C","D"];
@@ -1544,9 +1614,7 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
     }).join("");
   }
 
-  window.refreshLawQuiz=function(){
-    renderLawQuiz();
-  };
+  window.refreshLawQuiz=function(){ renderLawQuiz(); };
 
   window.submitLawQuiz=function(){
     const message=document.getElementById("lawQuizMessage");
@@ -1564,6 +1632,7 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
     currentQuiz.forEach((q,qi)=>{
       const selected=answers[qi].value;
       if(selected===q.correct)score++;
+
       document.querySelectorAll(`.quiz-option[data-q="${qi}"]`).forEach(label=>{
         const val=label.getAttribute("data-value")||"";
         label.classList.remove("correct","wrong");
@@ -1576,13 +1645,13 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
       const explain=document.getElementById(`lawQuizExplain${qi}`);
       if(explain){
         const answerText=selected===q.correct?"✅ 答對":"❌ 答錯";
-        explain.innerHTML=`<strong>${answerText}</strong><br><strong>正確答案：</strong>${quizEscape(q.correct)}<br><strong>法規依據：</strong>${quizEscape(quizStripHtml(q.item.law))}<br><strong>法規重點：</strong>${quizEscape(quizShort(q.item.summary,180))}${q.item.effect?`<br><strong>可能處理／效果：</strong>${quizEscape(quizShort(q.item.effect,180))}`:""}`;
+        explain.innerHTML=`<strong>${answerText}</strong><br><strong>違規情境：</strong>${quizEscape(quizStripHtml(q.item.title))}<br><strong>正確處罰／處理：</strong>${quizEscape(q.correct)}<br><strong>兒托法依據：</strong>${quizEscape(articleRefs(q.item))}<br><strong>規定重點：</strong>${quizEscape(lawPoint(q.item))}`;
         explain.classList.add("show");
       }
     });
 
     if(scoreBox){
-      const remark=score===3?"全部答對！法規雷達很準 🎯":score===2?"答對 2 題，再複習 1 題就滿分。":score===1?"答對 1 題，解析看完再來一組。":"這組剛好適合當複習題，解析看完再挑戰。";
+      const remark=score===3?"全部答對！違規和罰則配對很熟 🎯":score===2?"答對 2 題，錯的那個罰鍰級距再看一次。":score===1?"答對 1 題，先記『什麼違規 → 罰多少 → 後續會怎樣』。":"這組先看解析，下一組再挑戰。";
       scoreBox.textContent=`本次得分：${score} / 3｜${remark}`;
       scoreBox.classList.add("show");
     }
