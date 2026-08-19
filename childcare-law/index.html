@@ -283,6 +283,138 @@ input[placeholder*="搜尋"],
 
 
 
+
+<style>
+/* v36：法規隨機練習區 */
+.quiz-section{
+  margin-top:28px;
+  padding:18px;
+  border:2px solid #d9c9ad;
+  border-radius:16px;
+  background:#fffdf8;
+}
+.quiz-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.quiz-title{
+  margin:0;
+  color:#5a432b;
+  font-size:23px;
+  line-height:1.4;
+}
+.quiz-note{
+  margin-top:5px;
+  color:#777;
+  font-size:14px;
+  line-height:1.65;
+}
+.quiz-refresh{
+  flex:0 0 auto;
+  background:#eee1c9;
+  color:#5a432b;
+  padding:10px 14px;
+  font-size:15px;
+}
+.quiz-card{
+  margin:14px 0;
+  padding:16px;
+  border:1px solid #eadcc6;
+  border-radius:14px;
+  background:#fff;
+}
+.quiz-q{
+  font-weight:800;
+  color:#3f3329;
+  line-height:1.7;
+  font-size:17px;
+  margin-bottom:10px;
+}
+.quiz-options{
+  display:grid;
+  gap:9px;
+}
+.quiz-option{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:11px 12px;
+  border:1px solid #e5d8c4;
+  border-radius:11px;
+  background:#fffdf8;
+  cursor:pointer;
+  line-height:1.65;
+}
+.quiz-option:hover{
+  border-color:#b99a68;
+  background:#fff8ec;
+}
+.quiz-option input{
+  margin-top:5px;
+  transform:scale(1.18);
+  flex:0 0 auto;
+}
+.quiz-option.correct{
+  border-color:#4f8a61;
+  background:#eef8f0;
+}
+.quiz-option.wrong{
+  border-color:#c9673f;
+  background:#fff0ea;
+}
+.quiz-explain{
+  display:none;
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:11px;
+  background:#f8f4ec;
+  border-left:5px solid #c9a46a;
+  line-height:1.75;
+}
+.quiz-explain.show{display:block}
+.quiz-score{
+  display:none;
+  margin-top:14px;
+  padding:14px;
+  border-radius:12px;
+  background:#f8f1e5;
+  color:#5a432b;
+  font-weight:800;
+  text-align:center;
+  font-size:18px;
+}
+.quiz-score.show{display:block}
+.quiz-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:16px;
+}
+.quiz-submit{
+  background:#8b6f47;
+  color:#fff;
+}
+.quiz-message{
+  min-height:1.5em;
+  margin-top:10px;
+  color:#b85c38;
+  font-weight:700;
+  text-align:center;
+}
+@media(max-width:760px){
+  .quiz-section{padding:13px;margin-top:20px;border-radius:12px}
+  .quiz-head{display:block}
+  .quiz-refresh{width:100%;margin-top:10px}
+  .quiz-actions{grid-template-columns:1fr}
+  .quiz-card{padding:13px}
+  .quiz-q{font-size:16px}
+  .quiz-option{font-size:16px}
+}
+</style>
+
 <script>
 let role = null;
 try { role = sessionStorage.getItem("toolRole"); } catch (_) {}
@@ -304,6 +436,24 @@ if (!isStandaloneFile && window.top !== window.self && !(role === "admin")) {
 <div class="panel active" id="p1"><div class="title">步驟一：選擇問題類型</div><div class="helper">可複選。兒童托育服務法不放在這裡，會依勾選內容於結果中補充。</div><div class="grid" id="cats"></div><div class="buttons"><button class="ghost" onclick="clearAll()">清除全部</button><button class="primary" onclick="go2()">下一步：勾選細項</button></div></div>
 <div class="panel" id="p2"><div class="title">步驟二：勾選細項／填寫收托人數</div><div class="helper"></div><div class="search"></div><div id="details"></div><div class="buttons"><button class="secondary" onclick="go1()">上一步：問題類型</button><button class="primary" onclick="go3()">下一步：產生結果</button></div></div>
 <div class="panel" id="p3"><div class="title">步驟三：法規對照結果</div><div class="helper">每一項會優先檢視：是否有罰鍰、是否廢止登記、是否命中準公共第8點退場，再列其他處分與兒托法補充。</div><div class="buttons"><button class="secondary" onclick="go2()">上一步：修改細項</button><button class="primary" onclick="generate()">重新產生結果</button></div><div class="result" id="result"></div></div>
+
+<div class="quiz-section" id="lawQuizSection">
+  <div class="quiz-head">
+    <div>
+      <h2 class="quiz-title">📚 法規隨機練習</h2>
+      <div class="quiz-note">每次隨機 3 題。完成全部題目後送出，即可查看分數、正確答案與法規解析。</div>
+    </div>
+    <button type="button" class="quiz-refresh" onclick="refreshLawQuiz()">🔄 換 3 題</button>
+  </div>
+  <div id="lawQuizQuestions"></div>
+  <div class="quiz-message" id="lawQuizMessage"></div>
+  <div class="quiz-actions">
+    <button type="button" class="quiz-submit" onclick="submitLawQuiz()">✅ 送出答案</button>
+    <button type="button" class="secondary" onclick="refreshLawQuiz()">重新刷新 3 題</button>
+  </div>
+  <div class="quiz-score" id="lawQuizScore"></div>
+</div>
+
 </div>
 <script>
 const categories=[
@@ -1275,6 +1425,174 @@ function clearAll(){qsa("input").forEach(i=>{if(i.type==="checkbox")i.checked=fa
   r.innerHTML=html;
  };
  renderCats();
+})();
+</script>
+
+<script>
+/* v36：從既有 items 法規資料自動產生隨機 3 題 */
+(function(){
+  let currentQuiz=[];
+
+  function quizStripHtml(value){
+    const box=document.createElement("div");
+    box.innerHTML=String(value||"").replace(/<br\s*\/?>/gi,"。 ");
+    return (box.textContent||box.innerText||"").replace(/\s+/g," ").trim();
+  }
+
+  function quizShort(value,maxLen){
+    const text=quizStripHtml(value);
+    if(!text)return "";
+    const first=text.split(/(?<=[。！？；])/)[0] || text;
+    if(first.length<=maxLen)return first;
+    return first.slice(0,maxLen-1)+"…";
+  }
+
+  function quizShuffle(arr){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function quizEscape(value){
+    return String(value||"")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function quizPool(){
+    if(typeof items==="undefined" || !Array.isArray(items))return [];
+    return items.filter(it=>
+      it && !it.futureOnly && !it.neutral &&
+      quizStripHtml(it.title).length>0 &&
+      quizStripHtml(it.law).length>0 &&
+      quizStripHtml(it.summary).length>0
+    );
+  }
+
+  function uniqueDistractors(item, valueFn, correct){
+    const pool=quizPool();
+    const preferred=quizShuffle(pool.filter(x=>x.id!==item.id && x.cat===item.cat));
+    const others=quizShuffle(pool.filter(x=>x.id!==item.id && x.cat!==item.cat));
+    const seen=new Set([correct]);
+    const result=[];
+    for(const candidate of preferred.concat(others)){
+      const value=valueFn(candidate);
+      if(!value || seen.has(value))continue;
+      seen.add(value);
+      result.push(value);
+      if(result.length===3)break;
+    }
+    return result;
+  }
+
+  function buildQuestion(item,index){
+    const type=index%3;
+    let prompt="",correct="",valueFn;
+
+    if(type===0){
+      correct=quizShort(item.summary,105);
+      prompt=`依據「${quizStripHtml(item.law)}」，下列哪一項敘述最符合這筆法規內容？`;
+      valueFn=x=>quizShort(x.summary,105);
+    }else if(type===1){
+      correct=quizStripHtml(item.law);
+      prompt=`「${quizStripHtml(item.title)}」主要對應下列哪一項法規依據？`;
+      valueFn=x=>quizStripHtml(x.law);
+    }else{
+      const effect=quizShort(item.effect||item.penalty,105);
+      correct=effect || quizShort(item.summary,105);
+      prompt=`若發生「${quizStripHtml(item.title)}」，依目前工具資料，下列哪一項最符合可能處理／效果？`;
+      valueFn=x=>quizShort(x.effect||x.penalty||x.summary,105);
+    }
+
+    const distractors=uniqueDistractors(item,valueFn,correct);
+    const options=quizShuffle([correct].concat(distractors)).slice(0,4);
+    return {item,prompt,correct,options};
+  }
+
+  function renderLawQuiz(){
+    const target=document.getElementById("lawQuizQuestions");
+    const message=document.getElementById("lawQuizMessage");
+    const score=document.getElementById("lawQuizScore");
+    if(!target)return;
+    if(message)message.textContent="";
+    if(score){score.classList.remove("show");score.textContent="";}
+
+    const pool=quizPool();
+    if(pool.length<4){
+      target.innerHTML='<div class="empty">目前可出題的法規資料不足，至少需要 4 筆具有法規依據與內容摘要的資料。</div>';
+      currentQuiz=[];
+      return;
+    }
+
+    const picked=quizShuffle(pool).slice(0,3);
+    currentQuiz=picked.map((item,index)=>buildQuestion(item,index));
+
+    target.innerHTML=currentQuiz.map((q,qi)=>{
+      const letters=["A","B","C","D"];
+      const opts=q.options.map((opt,oi)=>`<label class="quiz-option" data-q="${qi}" data-value="${quizEscape(opt)}"><input type="radio" name="lawQuiz${qi}" value="${quizEscape(opt)}"><span><strong>${letters[oi]}.</strong> ${quizEscape(opt)}</span></label>`).join("");
+      return `<div class="quiz-card" data-question="${qi}">
+        <div class="quiz-q">第 ${qi+1} 題　${quizEscape(q.prompt)}</div>
+        <div class="quiz-options">${opts}</div>
+        <div class="quiz-explain" id="lawQuizExplain${qi}"></div>
+      </div>`;
+    }).join("");
+  }
+
+  window.refreshLawQuiz=function(){
+    renderLawQuiz();
+  };
+
+  window.submitLawQuiz=function(){
+    const message=document.getElementById("lawQuizMessage");
+    const scoreBox=document.getElementById("lawQuizScore");
+    if(!currentQuiz.length)return;
+
+    const answers=currentQuiz.map((_,i)=>document.querySelector(`input[name="lawQuiz${i}"]:checked`));
+    if(answers.some(x=>!x)){
+      if(message)message.textContent="請先完成 3 題，再查看答案。";
+      return;
+    }
+    if(message)message.textContent="";
+
+    let score=0;
+    currentQuiz.forEach((q,qi)=>{
+      const selected=answers[qi].value;
+      if(selected===q.correct)score++;
+      document.querySelectorAll(`.quiz-option[data-q="${qi}"]`).forEach(label=>{
+        const val=label.getAttribute("data-value")||"";
+        label.classList.remove("correct","wrong");
+        if(val===q.correct)label.classList.add("correct");
+        else if(val===selected)label.classList.add("wrong");
+        const input=label.querySelector("input");
+        if(input)input.disabled=true;
+      });
+
+      const explain=document.getElementById(`lawQuizExplain${qi}`);
+      if(explain){
+        const answerText=selected===q.correct?"✅ 答對":"❌ 答錯";
+        explain.innerHTML=`<strong>${answerText}</strong><br><strong>正確答案：</strong>${quizEscape(q.correct)}<br><strong>法規依據：</strong>${quizEscape(quizStripHtml(q.item.law))}<br><strong>法規重點：</strong>${quizEscape(quizShort(q.item.summary,180))}${q.item.effect?`<br><strong>可能處理／效果：</strong>${quizEscape(quizShort(q.item.effect,180))}`:""}`;
+        explain.classList.add("show");
+      }
+    });
+
+    if(scoreBox){
+      const remark=score===3?"全部答對！法規雷達很準 🎯":score===2?"答對 2 題，再複習 1 題就滿分。":score===1?"答對 1 題，解析看完再來一組。":"這組剛好適合當複習題，解析看完再挑戰。";
+      scoreBox.textContent=`本次得分：${score} / 3｜${remark}`;
+      scoreBox.classList.add("show");
+    }
+  };
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",renderLawQuiz);
+  }else{
+    renderLawQuiz();
+  }
 })();
 </script>
 <script>
