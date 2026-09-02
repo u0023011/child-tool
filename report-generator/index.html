@@ -2309,13 +2309,17 @@
       );
       const genderTotal = maleTotal + femaleTotal;
 
-      // 整體概況包含其他區來的人員；一致性檢查時改用扣除其他區後的人數。
+      // 整體概況可比數：排除K欄（本區到他區收托），算入L欄（其他區來）——與登記在案保母數規則相同。
       const localRegisteredCount = countWhere(rows,r =>
         isCaregiverRow(r) &&
-        !isOutboundToOtherTainanArea(r) &&
-        normalize(r.otherArea) === ""
+        !isOutboundToOtherTainanArea(r)
       );
-      const otherAreaCaregiverCount = registeredCount - localRegisteredCount;
+      // 其他區來人數僅供顯示參考，不再從整體概況可比數中扣除。
+      const otherAreaCaregiverCount = countWhere(rows,r =>
+        isCaregiverRow(r) &&
+        !isOutboundToOtherTainanArea(r) &&
+        normalize(r.otherArea) !== ""
+      );
 
       const dynamicDistricts = getDynamicDistricts(rows);
 
@@ -2429,7 +2433,6 @@
 
     function renderConsistencyCheck(report){
       const caregiverValues = [
-        report.localRegisteredCount,
         report.qualificationTotal,
         report.genderTotal
       ];
@@ -2456,9 +2459,7 @@
       list.innerHTML = `
         <div class="validation-item">
           <div>
-            <strong>本區托育人員總數（排除其他區來）</strong><br>
-            整體概況可比數：${displayNumber(report.localRegisteredCount)}
-            （原總數 ${displayNumber(report.registeredCount)}－其他區來 ${displayNumber(report.otherAreaCaregiverCount)}）｜
+            <strong>本區托育人員總數</strong><br>
             資格統計：${displayNumber(report.qualificationTotal)}｜
             性別統計：${displayNumber(report.genderTotal)}
           </div>
