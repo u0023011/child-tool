@@ -2260,7 +2260,8 @@
       const activeCount = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0);
       const childrenTotal = sumWhere(rows,"total",r => isCaregiverRow(r));
       const eligibleActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizeEligible(r.eligible) === "符合");
-      const signedActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizePublicStatus(r.publicStatus) === "已簽約");
+      const signedActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizePublicStatus(r.publicStatus) === "已簽約" && normalize(r.otherArea) === "");
+      const generalActive = countWhere(rows,r => isCaregiverRow(r) && toNumber(r.total) > 0 && normalizePublicStatus(r.publicStatus) === "未簽約" && normalize(r.otherArea) === "");
 
       const maleNon = QUALS.map(q => countWhere(rows,r =>
         isCaregiverRow(r) &&
@@ -2375,8 +2376,8 @@
         childrenTotal,
         eligibleActive,
         signedActive,
-        noChildCount:genderTotal-activeCount,
-        generalCaregiverCount:activeCount-signedActive,
+        noChildCount:genderTotal-generalActive-signedActive,
+        generalCaregiverCount:generalActive,
         publicCaregiverCount:signedActive,
 
         qualificationTotal,
