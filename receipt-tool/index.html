@@ -2418,16 +2418,32 @@
       button.setAttribute("aria-pressed",String(active));
     }
 
-    function applyRegistrationPreset(active){
-      const labels=[
-        "體檢表","良民證","環境自評表","刑事紀錄同意書",
+    function applyRegistrationPreset(active,type){
+      const commonLabels=[
+        "良民證","環境自評表","刑事紀錄同意書",
         "登記切結書","個資同意書"
       ];
 
-      labels.forEach(label=>{
+      commonLabels.forEach(label=>{
         const button=document.querySelector(`#registrationDetails .toggle[data-label="${label}"]`);
         if(button) setButtonActive(button,active);
       });
+
+      const physicalButton=document.querySelector('#registrationDetails .toggle[data-label="體檢表"]');
+      const certButton=document.querySelector('#registrationDetails .toggle[data-label="登記證書"]');
+
+      if(active){
+        if(type==="renewal"){
+          if(physicalButton) setButtonActive(physicalButton,false);
+          if(certButton) setButtonActive(certButton,true);
+        }else{
+          if(physicalButton) setButtonActive(physicalButton,true);
+          if(certButton) setButtonActive(certButton,false);
+        }
+      }else{
+        if(physicalButton) setButtonActive(physicalButton,false);
+        if(certButton) setButtonActive(certButton,false);
+      }
 
       const photoButton=document.querySelector(".photo-count-toggle");
       if(photoButton){
@@ -2445,7 +2461,8 @@
             if(other!==button) setButtonActive(other,false);
           });
         }
-        applyRegistrationPreset(active);
+        const type=button.dataset.label==="屆期換證申請書"?"renewal":"new";
+        applyRegistrationPreset(active,type);
       });
     });
 
